@@ -61,6 +61,7 @@
     color:var(--text);
     -webkit-font-smoothing:antialiased;
     overscroll-behavior-y:contain;
+    zoom:1.5;
   }
   #app{
     max-width:480px;
@@ -453,6 +454,7 @@
   .sheet-row{
     display:flex;align-items:center;gap:14px;padding:14px 4px;border:none;background:none;
     width:100%;text-align:left;font-size:15px;color:var(--text);border-radius:var(--radius-sm);
+    text-decoration:none;cursor:pointer;
   }
   .sheet-row:active{background:var(--surface-container);}
   .sheet-row svg{width:20px;height:20px;color:var(--text-secondary);flex-shrink:0;}
@@ -464,8 +466,14 @@
     display:flex;align-items:center;justify-content:space-between;gap:12px;
     padding:12px 4px;
   }
+  .sheet-toggle-row.is-disabled{opacity:.45;}
+  .sheet-toggle-row.is-disabled .switch{pointer-events:none;cursor:default;}
   .sheet-toggle-label{display:flex;align-items:center;gap:14px;font-size:15px;color:var(--text);}
   .sheet-toggle-label svg{width:20px;height:20px;color:var(--text-secondary);flex-shrink:0;}
+  .sheet-toggle-soon{
+    font-size:10px;font-weight:700;color:var(--text-tertiary);background:var(--surface-container-high);
+    padding:2px 7px;border-radius:100px;text-transform:uppercase;letter-spacing:.3px;margin-left:-4px;
+  }
   .switch{
     width:46px;height:27px;border-radius:100px;border:none;background:var(--outline);
     position:relative;flex-shrink:0;transition:background .18s ease;padding:0;
@@ -659,18 +667,24 @@
     <button class="switch" id="theme-switch" role="switch" aria-checked="false"><span class="switch-knob"></span></button>
   </div>
 
-  <div class="sheet-toggle-row">
+  <div class="sheet-toggle-row is-disabled">
     <div class="sheet-toggle-label">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
       Демо-режим на экране входа
+      <span class="sheet-toggle-soon">скоро</span>
     </div>
-    <button class="switch" id="demo-switch" role="switch" aria-checked="false"><span class="switch-knob"></span></button>
+    <button class="switch" id="demo-switch" role="switch" aria-checked="false" aria-disabled="true"><span class="switch-knob"></span></button>
   </div>
 
   <button class="sheet-row" id="sheet-share">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
     Поделиться
   </button>
+
+  <a class="sheet-row" id="sheet-center" href="https://patrlza.github.io/Center/" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+    Перейти в центр
+  </a>
 
   <button class="sheet-row" id="sheet-contact">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.94 4.6 18.6 20.36c-.25 1.1-.9 1.37-1.83.85l-5.06-3.73-2.44 2.35c-.27.27-.5.5-1.02.5l.36-5.16 9.4-8.5c.41-.36-.09-.56-.63-.2L6.3 13.1l-5.02-1.57c-1.09-.34-1.11-1.09.23-1.61L20.57 3.6c.91-.34 1.7.2 1.37 1z"/></svg>
@@ -807,6 +821,7 @@
       if(p.theme==='dark' || p.theme==='light') prefs.theme = p.theme;
       prefs.demoEnabled = !!p.demoEnabled;
     }catch(e){}
+    prefs.demoEnabled = false; // demo mode is temporarily disabled in the UI — never honor a stored "on"
   }
   async function savePrefs(){
     try{ await kvSet(PREFS_KEY, JSON.stringify(prefs)); }catch(e){}
@@ -1926,20 +1941,15 @@
   });
 
   // ---------- demo mode toggle ----------
+  // Temporarily disabled from the UI (kept in prefs/logic so it's a one-line
+  // flip to bring back later) — force it off regardless of any previously
+  // saved value, and ignore taps on the greyed-out switch.
+  prefs.demoEnabled = false;
   function applyDemoSwitch(){
-    $('demo-switch').setAttribute('aria-checked', prefs.demoEnabled ? 'true':'false');
+    $('demo-switch').setAttribute('aria-checked', 'false');
   }
-  $('demo-switch').addEventListener('click', function(){
-    prefs.demoEnabled = !prefs.demoEnabled;
-    applyDemoSwitch();
-    savePrefs();
-    markInteraction();
-    if(prefs.demoEnabled){
-      // Turning it on is itself the "show me" action — jump straight into the
-      // demo instead of making them wait another 10 idle minutes to see it.
-      closeSheet();
-      enterKioskLive();
-    }
+  $('demo-switch').addEventListener('click', function(e){
+    e.preventDefault();
   });
 
   // ---------- share sheet ----------
