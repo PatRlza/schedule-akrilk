@@ -2,7 +2,7 @@ name: Синхронизация расписания с Яндекс.Диска
 
 on:
   schedule:
-    # Проверяет папку на Яндекс.Диске каждые 15 минут.
+    # Проверяет обе папки на Яндекс.Диске (СПО и ВО) каждые 15 минут.
     # GitHub не гарантирует запуск ровно по расписанию (может быть с
     # задержкой в несколько минут при высокой нагрузке) — это нормально.
     - cron: '*/15 * * * *'
@@ -18,7 +18,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Проверить Яндекс.Диск и скачать новые файлы
+      - name: Проверить Яндекс.Диск (СПО и ВО) и скачать новые файлы
         id: sync
         run: python3 .github/scripts/sync_yandex.py
 
@@ -27,6 +27,10 @@ jobs:
         run: |
           git config user.name "schedule-sync-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add -- '*.xlsx' '*.xls'
-          git commit -m "Обновление расписания с Яндекс.Диска"
-          git push
+          git add -A -- spo/ vo/
+          if git diff --staged --quiet; then
+            echo "Скрипт сообщил об изменениях, но в git ничего не застейджилось — пропускаю коммит."
+          else
+            git commit -m "Обновление расписания с Яндекс.Диска (СПО/ВО)"
+            git push
+          fi
