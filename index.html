@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Mono:wght@500&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="teachers-data.js"></script>
 <style>
   :root{
     --primary:#4B4ADB;
@@ -30,7 +31,13 @@
     --radius-sm:10px;
     --shadow:0 1px 2px rgba(20,17,90,.06), 0 4px 16px rgba(20,17,90,.06);
   }
-  :root{ --on-secondary-container:#00514A; }
+  :root{
+    --on-secondary-container:#00514A;
+    --accent-solid:#4B4ADB;
+    --on-accent-solid:#FFFFFF;
+    --error-bg:#FCEEEE;
+    --error-border:#F3C6C4;
+  }
   html[data-theme="dark"]{
     --primary:#B4B2FF;
     --on-primary:#211F6B;
@@ -50,6 +57,37 @@
     --done:#4B4954;
     --error:#FF897D;
     --shadow:0 1px 2px rgba(0,0,0,.25), 0 4px 16px rgba(0,0,0,.3);
+    --accent-solid:#5654E8;
+    --on-accent-solid:#FFFFFF;
+    --error-bg:#3D2323;
+    --error-border:#5A2E2C;
+  }
+
+  /* ---------- Schedule type theming ----------
+     СПО (default) stays sine-green (blue/teal, already the base palette above).
+     ВО (higher education) gets a red/orange palette instead — same variables,
+     so every button, badge and the day-progress gradient repaint automatically. */
+  html[data-schedule-type="vo"]{
+    --primary:#D8432E;
+    --on-primary:#FFFFFF;
+    --primary-container:#FBDAD3;
+    --on-primary-container:#5E1B0E;
+    --secondary:#F0900B;
+    --secondary-container:#FFE4B8;
+    --on-secondary-container:#6B3D00;
+    --accent-solid:#D8432E;
+    --on-accent-solid:#FFFFFF;
+  }
+  html[data-theme="dark"][data-schedule-type="vo"]{
+    --primary:#FFB199;
+    --on-primary:#5C1400;
+    --primary-container:#7A2A11;
+    --on-primary-container:#FFDBCB;
+    --secondary:#FFC46B;
+    --secondary-container:#5C3D00;
+    --on-secondary-container:#FFE4B0;
+    --accent-solid:#E6532F;
+    --on-accent-solid:#FFFFFF;
   }
   html{transition:background-color .2s ease;}
   *{box-sizing:border-box;}
@@ -92,18 +130,18 @@
   .onboard h1{font-size:22px;line-height:1.2;font-weight:700;margin:0;letter-spacing:-.2px;color:var(--text);}
 
   .quick-continue{
-    background:var(--primary);border-radius:var(--radius-lg);padding:14px 16px;
+    background:var(--accent-solid);border-radius:var(--radius-lg);padding:14px 16px;
     display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow);
   }
   .qc-label{font-size:11px;font-weight:600;letter-spacing:.3px;color:rgba(255,255,255,.75);text-transform:uppercase;}
   .qc-btn{
-    border:none;background:rgba(255,255,255,.14);border-radius:var(--radius-md);
+    border:none;background:rgba(255,255,255,.16);border-radius:var(--radius-md);
     padding:12px 14px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;
-    color:#fff;text-align:left;
+    color:var(--on-accent-solid);text-align:left;
   }
-  .qc-btn:active{background:rgba(255,255,255,.22);}
+  .qc-btn:active{background:rgba(255,255,255,.26);}
   .qc-group{font-size:17px;font-weight:700;}
-  .qc-sub{font-size:12px;color:rgba(255,255,255,.8);}
+  .qc-sub{font-size:12px;color:rgba(255,255,255,.82);}
 
   .gh-block{display:flex;flex-direction:column;gap:8px;}
   .gh-label{font-size:12px;font-weight:600;color:var(--text-tertiary);letter-spacing:.3px;text-transform:uppercase;padding:0 2px;}
@@ -153,7 +191,7 @@
     padding:11px 14px;
   }
   .gh-older-item:active{background:var(--surface-container-high);}
-  .gh-older-item .gh-name{font-size:14px;font-weight:600;}
+  .gh-older-item .gh-name{font-size:14px;font-weight:600;color:var(--text);}
   .gh-older-item .gh-meta{font-size:12px;color:var(--text-tertiary);}
 
   .drop{
@@ -180,7 +218,7 @@
   .btn-block{width:100%;}
   .file-input{display:none;}
   .err-box{
-    background:#FCEEEE;border:1px solid #F3C6C4;color:var(--error);
+    background:var(--error-bg);border:1px solid var(--error-border);color:var(--error);
     border-radius:var(--radius-md);padding:14px 16px;font-size:14px;line-height:1.5;
     display:none;
   }
@@ -272,39 +310,55 @@
   .icon-btn svg{width:20px;height:20px;color:var(--text);}
   .icon-btn:active{background:var(--surface-container-high);}
 
-  .toggles-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;row-gap:8px;}
-  .mode-btn{
-    height:40px;box-sizing:border-box;
-    display:inline-flex;align-items:center;gap:6px;
-    border:none;background:var(--surface);border-radius:100px;box-shadow:var(--shadow);
-    padding:0 14px;font-size:12px;font-weight:600;color:var(--text-secondary);flex-shrink:0;
-  }
-  .mode-btn svg{width:14px;height:14px;flex-shrink:0;}
-  .mode-btn.active{background:var(--primary);color:var(--on-primary);}
-  .view-toggle{
-    height:40px;box-sizing:border-box;
+  .type-toggle{
+    height:34px;box-sizing:border-box;align-self:flex-start;
     display:inline-flex;align-items:center;background:var(--surface);border-radius:100px;
     box-shadow:var(--shadow);padding:3px;gap:3px;
   }
+  .type-toggle-btn{
+    height:100%;box-sizing:border-box;border:none;background:transparent;padding:0 15px;
+    border-radius:100px;font-size:12px;font-weight:700;letter-spacing:.2px;color:var(--text-secondary);
+  }
+  .type-toggle-btn.active{background:var(--primary);color:var(--on-primary);}
+
+  .toggles-row{
+    display:flex;align-items:center;gap:5px;flex-wrap:nowrap;
+    overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  }
+  .toggles-row::-webkit-scrollbar{display:none;}
+  .mode-btn{
+    height:34px;box-sizing:border-box;
+    display:inline-flex;align-items:center;justify-content:center;gap:4px;
+    border:none;background:var(--surface);border-radius:100px;box-shadow:var(--shadow);
+    padding:0 10px;font-size:11px;font-weight:600;color:var(--text-secondary);
+    flex:0 0 auto;white-space:nowrap;
+  }
+  .mode-btn svg{width:13px;height:13px;flex-shrink:0;}
+  .mode-btn.active{background:var(--primary);color:var(--on-primary);}
+  .view-toggle{
+    height:34px;box-sizing:border-box;
+    display:inline-flex;align-items:center;background:var(--surface);border-radius:100px;
+    box-shadow:var(--shadow);padding:2px;gap:2px;flex:0 0 auto;
+  }
   .vt-btn{
     height:100%;box-sizing:border-box;
-    border:none;background:transparent;padding:0 14px;border-radius:100px;
-    font-size:12px;font-weight:600;color:var(--text-secondary);
-    display:flex;align-items:center;justify-content:center;gap:5px;
+    border:none;background:transparent;padding:0 10px;border-radius:100px;
+    font-size:11px;font-weight:600;color:var(--text-secondary);white-space:nowrap;
+    display:flex;align-items:center;justify-content:center;gap:4px;
   }
-  .vt-btn svg{width:14px;height:14px;flex-shrink:0;}
+  .vt-btn svg{width:13px;height:13px;flex-shrink:0;}
   .vt-btn.active{background:var(--primary);color:var(--on-primary);}
 
   .week-badge{
-    height:40px;box-sizing:border-box;
-    display:inline-flex;align-items:center;gap:10px;
+    height:34px;box-sizing:border-box;
+    display:inline-flex;align-items:center;gap:7px;justify-content:center;
     background:var(--surface);border-radius:100px;box-shadow:var(--shadow);
-    padding:0 16px 0 14px;flex-shrink:0;
+    padding:0 12px 0 11px;flex:0 0 auto;white-space:nowrap;
   }
-  .week-badge .wb-text{display:flex;flex-direction:column;line-height:1.2;}
-  .week-badge .wb-word{font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.2px;}
-  .week-badge .wb-parity{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.2px;color:var(--text-tertiary);}
-  .week-badge .wb-num{font-family:'Roboto Mono',monospace;font-size:18px;font-weight:700;color:var(--text);}
+  .week-badge .wb-text{display:flex;flex-direction:column;line-height:1.15;}
+  .week-badge .wb-word{font-size:9px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.2px;}
+  .week-badge .wb-parity{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.2px;color:var(--text-tertiary);}
+  .week-badge .wb-num{font-family:'Roboto Mono',monospace;font-size:15px;font-weight:700;color:var(--text);}
   .week-badge.is-even .wb-parity{color:var(--secondary);}
   .week-badge.is-odd .wb-parity{color:var(--primary);}
 
@@ -374,8 +428,9 @@
   .lesson-dot{width:10px;height:10px;border-radius:50%;background:var(--outline);flex-shrink:0;}
   .lesson-line{width:2px;flex:1;background:var(--outline);margin-top:2px;min-height:16px;}
   .lesson-card{
-    flex:1;background:var(--surface);border-radius:var(--radius-md);padding:14px 16px;
+    flex:1;background:var(--surface);border-radius:var(--radius-md);padding:14px 16px 14px 13px;
     box-shadow:var(--shadow);min-width:0;
+    border-left:3px solid var(--primary);
   }
   .lesson-head{display:flow-root;margin-bottom:4px;}
   .lesson-subject{font-size:15px;font-weight:600;line-height:1.35;min-width:0;overflow-wrap:break-word;}
@@ -402,10 +457,14 @@
   .lesson.is-tappable .lesson-card{cursor:pointer;}
   .lesson-handle{width:32px;height:4px;border-radius:100px;background:var(--outline);margin:12px auto 0;clear:both;}
   .lesson-actions{
-    display:flex;gap:8px;max-height:0;opacity:0;overflow:hidden;margin-top:0;
+    display:flex;flex-direction:column;gap:8px;max-height:0;opacity:0;overflow:hidden;margin-top:0;
     transition:max-height .25s ease, opacity .2s ease, margin-top .25s ease;
   }
-  .lesson.expanded .lesson-actions{max-height:56px;opacity:1;margin-top:8px;}
+  .lesson.expanded .lesson-actions{max-height:96px;opacity:1;margin-top:8px;}
+  .lesson-teacher-full{
+    font-size:12px;font-weight:600;color:var(--text-secondary);line-height:1.3;
+  }
+  .lesson-actions-btns{display:flex;gap:8px;}
   .lesson-action-btn{
     flex:1;border:none;border-radius:100px;background:var(--surface-container-high);color:var(--text);
     font-size:12px;font-weight:600;padding:9px 10px;display:flex;align-items:center;justify-content:center;gap:6px;
@@ -517,6 +576,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 4v5"/><path d="M7.5 14h2M7.5 17h2M11.5 14h2M11.5 17h2M15.5 14h2M15.5 17h2"/></svg>
         </div>
         <h1>Расписание</h1>
+        <div class="type-toggle" style="margin-left:auto;">
+          <button class="type-toggle-btn active" data-type="spo">СПО</button>
+          <button class="type-toggle-btn" data-type="vo">ВО</button>
+        </div>
       </div>
 
       <div class="quick-continue" id="quick-continue" style="display:none;">
@@ -761,8 +824,40 @@
   var kioskTouchedSinceEntry = false;
   var kioskGroupIdx = 0;
 
+  // ---------- schedule type (СПО / ВО) ----------
+  // Two independent schedules, same file format/parser, published in separate
+  // GitHub subfolders (kept in sync by sync_yandex.py from two Yandex.Disk
+  // public folders). Each type has its own saved position (group/day) and its
+  // own colour palette (see the html[data-schedule-type] CSS rules).
+  var SCHEDULE_TYPES = {
+    spo: { label:'СПО', ghDir:'spo' },
+    vo:  { label:'ВО',  ghDir:'vo'  }
+  };
+  var currentType = 'spo';
+  function typeStorageKey(){ return STORAGE_KEY + '-' + currentType; }
+
+  // ---------- teacher full-name lookup ----------
+  // teachers-data.js sets window.TEACHERS_B64 (base64 of a UTF-8 JSON dict,
+  // "Фамилия И.О." -> "Фамилия Имя Отчество"), built from the college's public
+  // staff page. Kept out of plain sight in its own file rather than as a
+  // readable list here — decoded once at boot.
+  var TEACHERS_FULLNAMES = {};
+  (function decodeTeachers(){
+    try{
+      if(typeof window.TEACHERS_B64 === 'string' && window.TEACHERS_B64){
+        var json = decodeURIComponent(escape(atob(window.TEACHERS_B64)));
+        TEACHERS_FULLNAMES = JSON.parse(json);
+      }
+    }catch(e){ TEACHERS_FULLNAMES = {}; }
+  })();
+  function getTeacherFullName(shortName){
+    if(!shortName) return null;
+    var key = shortName.trim().replace(/\s+/g,' ').replace(/\.\s+/g,'.');
+    return TEACHERS_FULLNAMES[key] || null;
+  }
+
   var state = { parsed:null, selectedGroup:null, viewedDay:null, savedAt:null, fileName:null, viewMode:'day', browseMode:'group', selectedTeacher:null, ghName:null, ghDate:null };
-  var prefs = { theme:'light', demoEnabled:false };
+  var prefs = { theme:'light', demoEnabled:false, scheduleType:'spo' };
   var tickTimer=null;
   var BREAK_MIN_GAP = 15;   // minutes — shorter gaps are just passing time between pairs
   var BREAK_MAX_GAP = 100000; // effectively no cap — any free stretch gets its own tile now
@@ -794,13 +889,13 @@
   }
 
   async function loadStateRaw(){
-    var raw = await kvGet(STORAGE_KEY);
+    var raw = await kvGet(typeStorageKey());
     if(!raw) return null;
     try{ return JSON.parse(raw); }catch(e){ return null; }
   }
   async function saveState(){
     try{
-      await kvSet(STORAGE_KEY, JSON.stringify({
+      await kvSet(typeStorageKey(), JSON.stringify({
         parsed: state.parsed, selectedGroup: state.selectedGroup,
         savedAt: state.savedAt, fileName: state.fileName, parserVersion: PARSER_VERSION,
         ghName: state.ghName, ghDate: state.ghDate
@@ -808,7 +903,7 @@
     }catch(e){ /* best effort */ }
   }
   async function clearState(){
-    await kvDelete(STORAGE_KEY);
+    await kvDelete(typeStorageKey());
     state = { parsed:null, selectedGroup:null, viewedDay:null, savedAt:null, fileName:null, ghName:null, ghDate:null };
   }
 
@@ -819,6 +914,7 @@
       var p = JSON.parse(raw);
       if(p.theme==='dark' || p.theme==='light') prefs.theme = p.theme;
       prefs.demoEnabled = !!p.demoEnabled;
+      if(p.scheduleType==='spo' || p.scheduleType==='vo') prefs.scheduleType = p.scheduleType;
     }catch(e){}
     prefs.demoEnabled = false; // demo mode is temporarily disabled in the UI — never honor a stored "on"
   }
@@ -1160,7 +1256,8 @@
   }
 
   async function fetchGithubSchedules(){
-    var apiUrl = 'https://api.github.com/repos/'+GITHUB_OWNER+'/'+GITHUB_REPO+'/contents/';
+    var dir = SCHEDULE_TYPES[currentType].ghDir;
+    var apiUrl = 'https://api.github.com/repos/'+GITHUB_OWNER+'/'+GITHUB_REPO+'/contents/'+dir+'/';
     var res = await fetch(apiUrl);
     if(!res.ok) throw new Error('list_failed');
     var items = await res.json();
@@ -1625,10 +1722,14 @@
     var isAndroid = /Android/i.test(navigator.userAgent);
     var alarmHref = isAndroid ? buildAlarmHref(l) : null;
     var calHref = buildCalendarHref(day, l);
-    if(!alarmHref && !calHref) return '';
+    var fullName = l.teacher ? getTeacherFullName(l.teacher) : null;
+    if(!alarmHref && !calHref && !fullName) return '';
     return '<div class="lesson-actions">'+
-      (alarmHref? '<button type="button" class="lesson-action-btn" data-alarm-href="'+esc(alarmHref)+'">'+ALARM_ICON+'Будильник</button>' : '')+
-      (calHref? '<button type="button" class="lesson-action-btn" data-cal-href="'+esc(calHref)+'">'+CAL_ICON+'Календарь</button>' : '')+
+      (fullName? '<div class="lesson-teacher-full">'+esc(fullName)+'</div>' : '')+
+      (alarmHref || calHref ? '<div class="lesson-actions-btns">'+
+        (alarmHref? '<button type="button" class="lesson-action-btn" data-alarm-href="'+esc(alarmHref)+'">'+ALARM_ICON+'Будильник</button>' : '')+
+        (calHref? '<button type="button" class="lesson-action-btn" data-cal-href="'+esc(calHref)+'">'+CAL_ICON+'Календарь</button>' : '')+
+      '</div>' : '')+
     '</div>';
   }
 
@@ -1939,6 +2040,61 @@
     savePrefs();
   });
 
+  // ---------- schedule type (СПО / ВО) ----------
+  function applyScheduleTypeTheme(){
+    document.documentElement.setAttribute('data-schedule-type', currentType);
+  }
+  function renderTypeSwitchUI(){
+    document.querySelectorAll('.type-toggle-btn').forEach(function(btn){
+      btn.classList.toggle('active', btn.getAttribute('data-type')===currentType);
+    });
+  }
+  async function switchScheduleType(newType){
+    if(newType!=='spo' && newType!=='vo') return;
+    if(newType===currentType) return;
+    markInteraction();
+    if(state.parsed){ await saveState(); } // don't lose unsaved position in the type we're leaving
+
+    currentType = newType;
+    prefs.scheduleType = currentType;
+    savePrefs();
+    applyScheduleTypeTheme();
+    renderTypeSwitchUI();
+    kioskLive = false;
+
+    var saved = await loadStateRaw();
+    var isStale = saved && saved.parserVersion !== PARSER_VERSION;
+    var validSaved = (saved && !isStale && saved.parsed && saved.selectedGroup && saved.parsed.byGroup[saved.selectedGroup]) ? saved : null;
+
+    closeSheet();
+    if(validSaved){
+      state = {
+        parsed: validSaved.parsed, selectedGroup: validSaved.selectedGroup, savedAt: validSaved.savedAt,
+        fileName: validSaved.fileName, ghName: validSaved.ghName||null, ghDate: validSaved.ghDate||null,
+        viewMode:'day', browseMode:'group', selectedTeacher:null, viewedDay:null
+      };
+      var today = WEEKDAY_INDEX[new Date().getDay()];
+      state.viewedDay = state.parsed.dayOrder.indexOf(today)>=0 ? today : state.parsed.dayOrder[0];
+      renderMain();
+      show('screen-main');
+      startTicking();
+    } else {
+      state = { parsed:null, selectedGroup:null, viewedDay:null, savedAt:null, fileName:null, viewMode:'day', browseMode:'group', selectedTeacher:null, ghName:null, ghDate:null };
+      pendingFile = null;
+      $('drop-zone').querySelector('.drop-title').textContent = 'Загрузить своё';
+      $('drop-zone').querySelector('.drop-sub').textContent = 'выбрать файл .xls / .xlsx или перетащить сюда';
+      $('btn-parse').style.display='none';
+      $('file-input').value='';
+      setUploadError('');
+      renderQuickContinue(null);
+      show('screen-upload');
+      initGithubSchedules();
+    }
+  }
+  document.querySelectorAll('.type-toggle-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){ switchScheduleType(btn.getAttribute('data-type')); });
+  });
+
   // ---------- demo mode toggle ----------
   // Temporarily disabled from the UI (kept in prefs/logic so it's a one-line
   // flip to bring back later) — force it off regardless of any previously
@@ -2051,7 +2207,10 @@
   // ---------- boot ----------
   (async function init(){
     await loadPrefs();
+    currentType = prefs.scheduleType==='vo' ? 'vo' : 'spo';
     applyTheme();
+    applyScheduleTypeTheme();
+    renderTypeSwitchUI();
     applyDemoSwitch();
 
     var saved = await loadStateRaw();
