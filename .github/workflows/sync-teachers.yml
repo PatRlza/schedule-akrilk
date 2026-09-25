@@ -1,0 +1,31 @@
+name: Синхронизация ФИО преподавателей с сайта колледжа
+
+on:
+  schedule:
+    # Сайт с составом преподавателей меняется редко — раз в сутки достаточно,
+    # в отличие от расписания (которое обновляется каждые 15 минут).
+    - cron: '0 3 * * *'
+  workflow_dispatch: {}   # позволяет запустить вручную кнопкой "Run workflow"
+
+permissions:
+  contents: write
+
+jobs:
+  sync-teachers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Пересобрать словарь ФИО с сайта колледжа
+        id: sync
+        run: python3 .github/scripts/build_teachers.py
+
+      - name: Закоммитить изменения
+        if: steps.sync.outputs.changed == 'true'
+        run: |
+          git config user.name "teachers-sync-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -- teachers-data.js
+          git commit -m "Обновление словаря ФИО преподавателей с сайта колледжа"
+          git push
