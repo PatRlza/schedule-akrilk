@@ -321,26 +321,26 @@
   }
   .type-toggle-btn.active{background:var(--primary);color:var(--on-primary);}
 
-  .toggles-row{
-    display:flex;align-items:center;gap:5px;flex-wrap:nowrap;
-    overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
-  }
-  .toggles-row::-webkit-scrollbar{display:none;}
+  /* Кнопки режимов сами делят ширину экрана: если все три не влезают в строку —
+     лишняя переносится вниз и растягивается на всю ширину (никакой прокрутки). */
+  .toggles-row{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;}
+  .toggles-row > *{flex:1 1 128px;min-width:0;}
   .mode-btn{
     height:34px;box-sizing:border-box;
     display:inline-flex;align-items:center;justify-content:center;gap:4px;
     border:none;background:var(--surface);border-radius:100px;box-shadow:var(--shadow);
     padding:0 10px;font-size:11px;font-weight:600;color:var(--text-secondary);
-    flex:0 0 auto;white-space:nowrap;
+    white-space:nowrap;
   }
   .mode-btn svg{width:13px;height:13px;flex-shrink:0;}
   .mode-btn.active{background:var(--primary);color:var(--on-primary);}
   .view-toggle{
     height:34px;box-sizing:border-box;
     display:inline-flex;align-items:center;background:var(--surface);border-radius:100px;
-    box-shadow:var(--shadow);padding:2px;gap:2px;flex:0 0 auto;
+    box-shadow:var(--shadow);padding:2px;gap:2px;
   }
   .vt-btn{
+    flex:1 1 0;min-width:0;
     height:100%;box-sizing:border-box;
     border:none;background:transparent;padding:0 10px;border-radius:100px;
     font-size:11px;font-weight:600;color:var(--text-secondary);white-space:nowrap;
@@ -353,9 +353,10 @@
     height:34px;box-sizing:border-box;
     display:inline-flex;align-items:center;gap:7px;justify-content:center;
     background:var(--surface);border-radius:100px;box-shadow:var(--shadow);
-    padding:0 12px 0 11px;flex:0 0 auto;white-space:nowrap;
+    padding:0 12px 0 11px;white-space:nowrap;
+    border:none;font-family:inherit;color:inherit;cursor:pointer;
   }
-  .week-badge .wb-text{display:flex;flex-direction:column;line-height:1.15;}
+  .week-badge .wb-text{display:flex;flex-direction:column;line-height:1.15;text-align:left;}
   .week-badge .wb-word{font-size:9px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.2px;}
   .week-badge .wb-parity{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.2px;color:var(--text-tertiary);}
   .week-badge .wb-num{font-family:'Roboto Mono',monospace;font-size:15px;font-weight:700;color:var(--text);}
@@ -369,7 +370,7 @@
   }
   .day-tabs::-webkit-scrollbar{display:none;}
   .day-tab{
-    flex-shrink:0;border:none;border-radius:100px;padding:9px 16px;
+    flex:1 1 0;min-width:0;text-align:center;border:none;border-radius:100px;padding:9px 4px;
     font-size:14px;font-weight:500;background:var(--surface-container);color:var(--text-secondary);
     position:relative;
   }
@@ -562,6 +563,21 @@
   }
   .share-copy-btn.copied{background:var(--secondary-container);color:var(--on-secondary-container);}
 
+  .week-badge .wb-chev{width:12px;height:12px;color:var(--text-tertiary);flex-shrink:0;}
+  .week-badge:active{background:var(--surface-container);}
+
+  /* ---------- Week parity sheet ---------- */
+  .week-info-row{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:12px 14px;background:var(--surface-container);border-radius:var(--radius-md);margin-bottom:8px;
+  }
+  .wi-label{font-size:11px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.3px;}
+  .wi-main{font-size:16px;font-weight:700;margin-top:2px;}
+  .wi-main .wi-odd{color:var(--primary);}
+  .wi-main .wi-even{color:var(--secondary);}
+  .wi-dates{font-size:12px;color:var(--text-secondary);text-align:right;font-family:'Roboto Mono',monospace;}
+  .week-source{font-size:12px;color:var(--text-secondary);line-height:1.55;padding:6px 4px 0;}
+
   a{color:inherit;}
 </style>
 </head>
@@ -687,13 +703,14 @@
             Неделя
           </button>
         </div>
-        <div class="week-badge" id="week-badge" title="Пары другой недели показаны серым">
+        <button type="button" class="week-badge" id="week-badge" title="Пары другой недели показаны серым">
           <span class="wb-num" id="wb-num">—</span>
-          <div class="wb-text">
+          <span class="wb-text">
             <span class="wb-word">неделя</span>
             <span class="wb-parity" id="wb-parity">—</span>
-          </div>
-        </div>
+          </span>
+          <svg class="wb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
       </div>
 
       <div class="day-tabs" id="day-tabs"></div>
@@ -754,6 +771,14 @@
   </button>
 </div>
 
+<!-- Week parity sheet -->
+<div class="scrim" id="week-scrim"></div>
+<div class="sheet" id="week-sheet">
+  <div class="sheet-handle"></div>
+  <div class="share-title">Чётность недель</div>
+  <div id="week-sheet-body"></div>
+</div>
+
 <!-- Share sheet -->
 <div class="scrim" id="share-scrim"></div>
 <div class="sheet" id="share-sheet">
@@ -794,10 +819,73 @@
     firstThursday.setUTCDate(firstThursday.getUTCDate()-firstDayNum+3);
     return 1 + Math.round((d-firstThursday)/(7*24*3600*1000));
   }
-  function getCurrentWeekInfo(){
-    var num = getISOWeekNumber(new Date());
-    return { num: num, parity: (num%2===0) ? 'even' : 'odd' };
+  // ---- График недель колледжа (weeks.json в корне репозитория) ----
+  // Колледж считает чётность по своему графику (на объявлении), а не по ISO.
+  // Если сегодняшняя дата попадает в график — берём неделю оттуда, иначе
+  // (файла нет / он закончился) считаем по ISO с начала года.
+  var weekCalendar = null;   // { weeks:[{n,parity,from,to}], lastTo:'YYYY-MM-DD' } | null
+  var weekCalendarMissing = true;
+  var WEEKS_KEY = 'schedule-weeks-cache-v1';
+
+  function pad2(n){ return (n<10?'0':'')+n; }
+  function dateKey(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+  function isoToRu(iso, withYear){
+    var p = iso.split('-');
+    return p[2]+'.'+p[1]+(withYear? '.'+p[0] : '');
   }
+  function normParity(v){
+    v = (v||'').toString().trim().toLowerCase();
+    if(v.indexOf('неч')===0 || v==='odd') return 'odd';
+    if(v.indexOf('чет')===0 || v==='even') return 'even';
+    return null;
+  }
+  // Принимает формат прямо с объявления: { "n":5, "parity":"Нечетная", "dates":"28.09.2026-04.10.2026" }
+  function normalizeWeekCalendar(json){
+    var list = json && json.weeks;
+    if(!Array.isArray(list)) return null;
+    var weeks = [];
+    list.forEach(function(w){
+      var par = normParity(w.parity);
+      var m = (w.dates||'').toString().match(/(\d{2})\.(\d{2})\.(\d{4})\s*[-–—]\s*(\d{2})\.(\d{2})\.(\d{4})/);
+      var n = parseInt(w.n, 10);
+      if(!par || !m || isNaN(n)) return;
+      weeks.push({ n:n, parity:par, from:m[3]+'-'+m[2]+'-'+m[1], to:m[6]+'-'+m[5]+'-'+m[4] });
+    });
+    if(!weeks.length) return null;
+    var lastTo = weeks.reduce(function(a,w){ return w.to>a? w.to : a; }, '0000-00-00');
+    return { weeks: weeks, lastTo: lastTo };
+  }
+  async function loadWeekCalendar(){
+    var text = null, notFound = false;
+    try{
+      var ctrl = (typeof AbortController!=='undefined') ? new AbortController() : null;
+      var t = ctrl ? setTimeout(function(){ ctrl.abort(); }, 4000) : null;
+      var res = await fetch('weeks.json?_='+Date.now(), { cache:'no-store', signal: ctrl? ctrl.signal : undefined });
+      if(t) clearTimeout(t);
+      if(res.status===404){ notFound = true; }
+      else if(res.ok){ text = await res.text(); JSON.parse(text); kvSet(WEEKS_KEY, text); }
+    }catch(e){ text = null; }
+    if(notFound){ await kvDelete(WEEKS_KEY); }          // файл убрали — не держим старую копию
+    else if(!text){ text = await kvGet(WEEKS_KEY); }    // нет сети — берём последнюю удачную копию
+    try{ weekCalendar = text ? normalizeWeekCalendar(JSON.parse(text)) : null; }catch(e){ weekCalendar = null; }
+    weekCalendarMissing = !weekCalendar;
+  }
+
+  function getWeekInfoForDate(date){
+    if(weekCalendar){
+      var key = dateKey(date);
+      for(var i=0;i<weekCalendar.weeks.length;i++){
+        var w = weekCalendar.weeks[i];
+        if(w.from<=key && key<=w.to) return { num:w.n, parity:w.parity, from:w.from, to:w.to, source:'file' };
+      }
+    }
+    var num = getISOWeekNumber(date);
+    var mon = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    mon.setDate(mon.getDate() - ((mon.getDay()+6)%7));
+    var sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate()+6);
+    return { num:num, parity:(num%2===0)?'even':'odd', from:dateKey(mon), to:dateKey(sun), source:'iso' };
+  }
+  function getCurrentWeekInfo(){ return getWeekInfoForDate(new Date()); }
   // Every lesson keeps its place on the timeline regardless of week parity — one
   // that belongs to the other parity just gets flagged as a "ghost" so it can be
   // rendered greyed out instead of disappearing. Progress/gap math below only
@@ -1280,14 +1368,27 @@
     return withDates;
   }
 
+  var ghInitToken = 0;
   async function initGithubSchedules(){
+    var token = ++ghInitToken;
     var wrap = $('gh-latest-wrap');
+    // сбрасываем то, что осталось от другого типа (СПО/ВО), пока грузится новое
+    ghSchedules = [];
+    wrap.innerHTML = '<div class="gh-card gh-loading" id="gh-loading-card"><span class="spinner spinner-dark"></span><span>Ищу файлы на GitHub…</span></div>';
+    $('gh-older-wrap').style.display = 'none';
+    $('gh-older-list').style.display = 'none';
+    $('gh-expand-btn').classList.remove('open');
+    $('gh-expand-label').textContent = 'Показать старые версии';
+    var fetched;
     try{
-      ghSchedules = await fetchGithubSchedules();
+      fetched = await fetchGithubSchedules();
     }catch(e){
+      if(token!==ghInitToken) return;
       wrap.innerHTML = '<div class="gh-error">Не удалось получить список файлов с GitHub. Можно загрузить файл вручную ниже.</div>';
       return;
     }
+    if(token!==ghInitToken) return;   // за это время переключили СПО/ВО — этот ответ уже не нужен
+    ghSchedules = fetched;
     if(!ghSchedules.length){
       wrap.innerHTML = '<div class="gh-error">На GitHub рядом с приложением пока нет файлов расписания.</div>';
       return;
@@ -1902,6 +2003,7 @@
     if(tickTimer) clearInterval(tickTimer);
     tickTimer = setInterval(function(){
       if($('screen-main').classList.contains('active')){
+        renderWeekBadge();
         renderDayTabs();
         renderContentDispatch();
       }
@@ -2029,6 +2131,41 @@
     initGithubSchedules();
   });
 
+  // ---------- week parity sheet ----------
+  function weekRowHtml(label, info){
+    var parWord = info.parity==='even' ? 'чётная' : 'нечётная';
+    return '<div class="week-info-row">'+
+      '<div><div class="wi-label">'+label+'</div>'+
+      '<div class="wi-main">'+info.num+' неделя · <span class="'+(info.parity==='even'?'wi-even':'wi-odd')+'">'+parWord+'</span></div></div>'+
+      '<div class="wi-dates">'+isoToRu(info.from)+' – '+isoToRu(info.to)+'</div>'+
+    '</div>';
+  }
+  function weekSourceText(cur, nxt){
+    if(cur.source==='file' && nxt.source==='file'){
+      return 'Источник: график недель колледжа из файла weeks.json (по объявлению в колледже). График действует до '+isoToRu(weekCalendar.lastTo, true)+', дальше счёт идёт по календарю с начала года.';
+    }
+    if(cur.source==='file'){
+      return 'Текущая неделя взята из графика колледжа (weeks.json). Для следующей недели в графике данных уже нет, поэтому она посчитана по календарной нумерации с начала года (ISO) — чётность может отличаться от колледжа.';
+    }
+    if(weekCalendar){
+      return 'График недель в weeks.json закончился (он действовал до '+isoToRu(weekCalendar.lastTo, true)+'), поэтому используется календарная нумерация с начала года (ISO). Чётность может отличаться от колледжа — нужно обновить файл.';
+    }
+    return 'Файл с графиком недель (weeks.json) не найден, поэтому используется календарная нумерация с начала года (ISO). Чётность может отличаться от колледжа.';
+  }
+  function openWeekSheet(){
+    var now = new Date();
+    var nd = new Date(now.getFullYear(), now.getMonth(), now.getDate()+7);
+    var cur = getWeekInfoForDate(now);
+    var nxt = getWeekInfoForDate(nd);
+    $('week-sheet-body').innerHTML =
+      weekRowHtml('Сейчас', cur) +
+      weekRowHtml('Следующая неделя', nxt) +
+      '<div class="week-source">'+esc(weekSourceText(cur, nxt))+'</div>';
+    openGenericSheet('week-sheet','week-scrim');
+  }
+  $('week-badge').addEventListener('click', function(){ markInteraction(); openWeekSheet(); });
+  $('week-scrim').addEventListener('click', function(){ closeGenericSheet('week-sheet','week-scrim'); });
+
   // ---------- theme ----------
   function applyTheme(){
     document.documentElement.setAttribute('data-theme', prefs.theme==='dark' ? 'dark' : 'light');
@@ -2049,11 +2186,12 @@
       btn.classList.toggle('active', btn.getAttribute('data-type')===currentType);
     });
   }
+  // Переключатель СПО/ВО только переключает тип: остаёмся на экране входа,
+  // а «Продолжить» для выбранного типа человек нажимает сам.
   async function switchScheduleType(newType){
     if(newType!=='spo' && newType!=='vo') return;
     if(newType===currentType) return;
     markInteraction();
-    if(state.parsed){ await saveState(); } // don't lose unsaved position in the type we're leaving
 
     currentType = newType;
     prefs.scheduleType = currentType;
@@ -2062,34 +2200,26 @@
     renderTypeSwitchUI();
     kioskLive = false;
 
+    state = { parsed:null, selectedGroup:null, viewedDay:null, savedAt:null, fileName:null, viewMode:'day', browseMode:'group', selectedTeacher:null, ghName:null, ghDate:null };
+    pendingFile = null;
+    $('drop-zone').querySelector('.drop-title').textContent = 'Загрузить своё';
+    $('drop-zone').querySelector('.drop-sub').textContent = 'выбрать файл .xls / .xlsx или перетащить сюда';
+    $('btn-parse').style.display='none';
+    $('file-input').value='';
+    setUploadError('');
+    renderQuickContinue(null);
+
+    var myType = currentType;
     var saved = await loadStateRaw();
+    if(myType!==currentType) return;   // успели переключить ещё раз
     var isStale = saved && saved.parserVersion !== PARSER_VERSION;
     var validSaved = (saved && !isStale && saved.parsed && saved.selectedGroup && saved.parsed.byGroup[saved.selectedGroup]) ? saved : null;
-
-    closeSheet();
-    if(validSaved){
-      state = {
-        parsed: validSaved.parsed, selectedGroup: validSaved.selectedGroup, savedAt: validSaved.savedAt,
-        fileName: validSaved.fileName, ghName: validSaved.ghName||null, ghDate: validSaved.ghDate||null,
-        viewMode:'day', browseMode:'group', selectedTeacher:null, viewedDay:null
-      };
-      var today = WEEKDAY_INDEX[new Date().getDay()];
-      state.viewedDay = state.parsed.dayOrder.indexOf(today)>=0 ? today : state.parsed.dayOrder[0];
-      renderMain();
-      show('screen-main');
-      startTicking();
-    } else {
-      state = { parsed:null, selectedGroup:null, viewedDay:null, savedAt:null, fileName:null, viewMode:'day', browseMode:'group', selectedTeacher:null, ghName:null, ghDate:null };
-      pendingFile = null;
-      $('drop-zone').querySelector('.drop-title').textContent = 'Загрузить своё';
-      $('drop-zone').querySelector('.drop-sub').textContent = 'выбрать файл .xls / .xlsx или перетащить сюда';
-      $('btn-parse').style.display='none';
-      $('file-input').value='';
-      setUploadError('');
-      renderQuickContinue(null);
-      show('screen-upload');
-      initGithubSchedules();
+    if(isStale){
+      setUploadError('Разбор расписания был улучшен — загрузите файл ещё раз, чтобы обновить данные.', true);
     }
+    renderQuickContinue(validSaved);
+    show('screen-upload');
+    initGithubSchedules();
   }
   document.querySelectorAll('.type-toggle-btn').forEach(function(btn){
     btn.addEventListener('click', function(){ switchScheduleType(btn.getAttribute('data-type')); });
@@ -2207,6 +2337,7 @@
   // ---------- boot ----------
   (async function init(){
     await loadPrefs();
+    await loadWeekCalendar();
     currentType = prefs.scheduleType==='vo' ? 'vo' : 'spo';
     applyTheme();
     applyScheduleTypeTheme();
