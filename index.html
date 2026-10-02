@@ -323,8 +323,8 @@
 
   /* Кнопки режимов сами делят ширину экрана: если все три не влезают в строку —
      лишняя переносится вниз и растягивается на всю ширину (никакой прокрутки). */
-  .toggles-row{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;}
-  .toggles-row > *{flex:1 1 128px;min-width:0;}
+  .toggles-row{display:flex;flex-wrap:nowrap;align-items:stretch;gap:6px;}
+  .toggles-row > *{flex:1 1 auto;min-width:0;}
   .mode-btn{
     height:34px;box-sizing:border-box;
     display:inline-flex;align-items:center;justify-content:center;gap:4px;
@@ -577,6 +577,23 @@
   .wi-main .wi-even{color:var(--secondary);}
   .wi-dates{font-size:12px;color:var(--text-secondary);text-align:right;font-family:'Roboto Mono',monospace;}
   .week-source{font-size:12px;color:var(--text-secondary);line-height:1.55;padding:6px 4px 0;}
+
+  /* Три плитки всегда в одну строку: на узких экранах убираем иконки
+     и ужимаем отступы/шрифт, чтобы всё влезало без второго ряда. */
+  @media (max-width:410px){
+    .toggles-row{gap:5px;}
+    .mode-btn svg, .vt-btn svg, .week-badge .wb-chev{display:none;}
+    .mode-btn{padding:0 8px;font-size:10.5px;}
+    .vt-btn{padding:0 8px;font-size:10.5px;}
+    .week-badge{padding:0 9px;gap:6px;}
+  }
+  @media (max-width:340px){
+    .toggles-row{gap:4px;}
+    .mode-btn{padding:0 5px;font-size:10px;}
+    .vt-btn{padding:0 6px;font-size:10px;}
+    .week-badge{padding:0 6px;gap:4px;}
+    .week-badge .wb-num{font-size:14px;}
+  }
 
   a{color:inherit;}
 </style>
