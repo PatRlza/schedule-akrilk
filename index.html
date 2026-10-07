@@ -595,6 +595,19 @@
     .week-badge .wb-num{font-size:14px;}
   }
 
+  /* Плитка "Информация" на воскресенье — зелёно-фиолетовый градиент (как полоска прогресса) */
+  .sunday-info-card{
+    --info-from:#4B4ADB; --info-to:#00897B;
+    background:linear-gradient(135deg,var(--info-from),var(--info-to));
+    color:#fff;border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:6px;
+    box-shadow:var(--shadow);
+  }
+  html[data-theme="dark"] .sunday-info-card{ --info-from:#5654E8; --info-to:#00796B; }
+  .sunday-info-tag{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;opacity:.8;margin-bottom:6px;}
+  .sunday-info-main{font-size:19px;font-weight:700;line-height:1.3;margin-bottom:6px;}
+  .sunday-info-sub{font-size:13.5px;line-height:1.5;opacity:.92;}
+  .sunday-info-card + .empty-state{padding-top:34px;}
+
   a{color:inherit;}
 </style>
 </head>
@@ -919,7 +932,7 @@
   var PREFS_KEY = 'schedule-app-prefs-v1';
   // Bump this whenever the parsing logic changes — it guards against silently
   // showing a schedule that was parsed by an older, buggier version of this app.
-  var PARSER_VERSION = 4;
+  var PARSER_VERSION = 5;
   var GITHUB_OWNER = 'PatRlza';
   var GITHUB_REPO = 'schedule-akrilk';
   var PAGE_URL = 'https://patrlza.github.io/schedule-akrilk/';
@@ -1116,6 +1129,20 @@
 
     var termTitle = ((rows[headerRowIdx-1]||[])[0]||'').toString().replace(/\n/g,' ').replace(/\s+/g,' ').trim();
 
+    // Merge info. In this sheet an ordinary every-week lesson is ONE cell merged
+    // over both rows of its slot, while a lesson that runs on only one parity of
+    // week is left as a single UNmerged cell (top row = чётная, bottom = нечётная).
+    // Without looking at merges, "top cell filled, bottom empty" is ambiguous.
+    // If a sheet has no such merges at all (hand-made file), we fall back to
+    // treating a lone top cell as "every week", exactly as before.
+    var rng = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+    var mergedDown = {};
+    var mergedDownCount = 0;
+    (ws['!merges'] || []).forEach(function(m){
+      if(m.e.r > m.s.r){ mergedDown[m.s.r+','+m.s.c] = true; mergedDownCount++; }
+    });
+    var useMerges = mergedDownCount >= 10;
+
     // discover day order from first block's day column, top to bottom
     var dayOrder = [];
     var seenDays = {};
@@ -1180,7 +1207,12 @@
             pushLesson(byGroup[gname][currentDay], rawHere, tp.startMin, tp.endMin, 'even');
             pushLesson(byGroup[gname][currentDay], rawNext, tp.startMin, tp.endMin, 'odd');
           } else if(hasHere){
-            pushLesson(byGroup[gname][currentDay], rawHere, tp.startMin, tp.endMin, null);
+            // Lone top cell. Merged over the slot -> every week. Left unmerged with
+            // the row below empty -> only on even weeks (its odd-week counterpart,
+            // if any, sits in the lower cell of the neighbouring subgroup).
+            var spareRowExists = !nextIsOwnTimeRow && (r3+1 < rows.length);
+            var evenOnly = useMerges && spareRowExists && !mergedDown[(r3+rng.s.r)+','+(col+rng.s.c)];
+            pushLesson(byGroup[gname][currentDay], rawHere, tp.startMin, tp.endMin, evenOnly ? 'even' : null);
           } else if(hasNext){
             // Only present in the lower cell — this specific subject only happens
             // on odd weeks; the slot is free on even weeks.
@@ -1464,7 +1496,7 @@
         state.ghName = saved.ghName || null;
         state.ghDate = saved.ghDate || null;
         var today = WEEKDAY_INDEX[new Date().getDay()];
-        state.viewedDay = state.parsed.dayOrder.indexOf(today)>=0 ? today : state.parsed.dayOrder[0];
+        state.viewedDay = resolveTodayViewedDay();
         renderMain();
         show('screen-main');
         startTicking();
@@ -1537,6 +1569,75 @@
     return 'пар';
   }
 
+  // ---------- Воскресенье: сводка про ближайший понедельник / следующую неделю ----------
+  // В файле расписания воскресенья нет, поэтому это "лишний" 7-й день: пар в нём
+  // никогда не бывает, зато на нём показывается плитка "Информация".
+  function displayDayOrder(){
+    var order = state.parsed.dayOrder;
+    return order.indexOf('ВОСКРЕСЕНЬЕ')>=0 ? order : order.concat(['ВОСКРЕСЕНЬЕ']);
+  }
+  function resolveTodayViewedDay(){
+    var today = WEEKDAY_INDEX[new Date().getDay()];
+    if(today==='ВОСКРЕСЕНЬЕ') return 'ВОСКРЕСЕНЬЕ';
+    return state.parsed.dayOrder.indexOf(today)>=0 ? today : state.parsed.dayOrder[0];
+  }
+  function annotateParityFor(lessons, parity){
+    return lessons.map(function(l){
+      return Object.assign({}, l, {isGhost: !!(l.parity && l.parity!==parity)});
+    });
+  }
+  // Номер пары = порядковый номер времени начала среди всех групп в этот день недели
+  function getPeriodNumberMap(day){
+    var starts = {};
+    state.parsed.groups.forEach(function(g){
+      ((state.parsed.byGroup[g] && state.parsed.byGroup[g][day]) || []).forEach(function(l){
+        if(l.startMin!=null) starts[l.startMin] = true;
+      });
+    });
+    var map = {};
+    Object.keys(starts).map(Number).sort(function(a,b){ return a-b; }).forEach(function(m,i){ map[m]=i+1; });
+    return map;
+  }
+  var PERIOD_ORDINALS = ['первой','второй','третьей','четвёртой','пятой','шестой','седьмой','восьмой','девятой','десятой'];
+
+  function sundayInfoHtml(){
+    var now = new Date();
+    var isSunday = now.getDay()===0;
+    var monday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
+    var add = (8 - now.getDay()) % 7; if(add===0) add = 7;      // вс -> завтра, иначе ближайший понедельник
+    monday.setDate(monday.getDate() + add);
+    var wk = getWeekInfoForDate(monday);                          // чётность БУДУЩЕЙ недели (по weeks.json)
+    var when = isSunday ? 'Завтра' : 'В понедельник';
+
+    var monLessons = annotateParityFor(getRawLessons('ПОНЕДЕЛЬНИК'), wk.parity)
+      .filter(function(l){ return !l.isGhost && l.startMin!=null; })
+      .sort(function(a,b){ return a.startMin-b.startMin; });
+
+    var weekTotal = 0;
+    state.parsed.dayOrder.forEach(function(d){
+      weekTotal += annotateParityFor(getRawLessons(d), wk.parity).filter(function(l){ return !l.isGhost; }).length;
+    });
+    var weekLine = 'На следующей неделе ('+wk.num+'-я, '+(wk.parity==='even'?'чётная':'нечётная')+') — '+weekTotal+' '+pluralPairs(weekTotal)+'.';
+
+    var main, sub;
+    if(!monLessons.length){
+      main = when+' пар нет';
+      sub = '';
+    }else{
+      var first = monLessons[0];
+      var num = getPeriodNumberMap('ПОНЕДЕЛЬНИК')[first.startMin] || 1;
+      var word = PERIOD_ORDINALS[num-1];
+      main = when+' вам к '+num+'-й'+(word? ' ('+word+')' : '')+' паре';
+      sub = when+' — '+monLessons.length+' '+pluralPairs(monLessons.length)+', начало в '+first.startLabel+'.';
+    }
+    return '<div class="sunday-info-card">'+
+      '<div class="sunday-info-tag">Информация</div>'+
+      '<div class="sunday-info-main">'+esc(main)+'</div>'+
+      (sub? '<div class="sunday-info-sub">'+esc(sub)+'</div>' : '')+
+      '<div class="sunday-info-sub">'+esc(weekLine)+'</div>'+
+    '</div>';
+  }
+
   $('group-search').addEventListener('input', function(e){
     var q = e.target.value.trim().toLowerCase();
     var groups = state.parsed.groups;
@@ -1549,7 +1650,7 @@
     state.browseMode = 'group';
     state.selectedGroup = g;
     var today = WEEKDAY_INDEX[new Date().getDay()];
-    state.viewedDay = state.parsed.dayOrder.indexOf(today)>=0 ? today : state.parsed.dayOrder[0];
+    state.viewedDay = resolveTodayViewedDay();
     if(kioskLive){
       var gi = state.parsed.groups.indexOf(g);
       if(gi>=0) kioskGroupIdx = gi;
@@ -1635,7 +1736,7 @@
     state.browseMode = 'teacher';
     state.selectedTeacher = name;
     var today = WEEKDAY_INDEX[new Date().getDay()];
-    state.viewedDay = state.parsed.dayOrder.indexOf(today)>=0 ? today : state.parsed.dayOrder[0];
+    state.viewedDay = resolveTodayViewedDay();
     renderMain();
     show('screen-main');
     startTicking();
@@ -1661,7 +1762,7 @@
   function renderDayTabs(){
     var wrap = $('day-tabs');
     var today = WEEKDAY_INDEX[new Date().getDay()];
-    wrap.innerHTML = state.parsed.dayOrder.map(function(d){
+    wrap.innerHTML = displayDayOrder().map(function(d){
       var active = d===state.viewedDay;
       var isToday = d===today;
       return '<button class="day-tab'+(active?' active':'')+'" data-day="'+esc(d)+'">'+
@@ -1738,6 +1839,9 @@
 
   function getDayRelation(day){
     var today = WEEKDAY_INDEX[new Date().getDay()];
+    if(day==='ВОСКРЕСЕНЬЕ' && state.parsed.dayOrder.indexOf('ВОСКРЕСЕНЬЕ')===-1){
+      return today==='ВОСКРЕСЕНЬЕ' ? 'today' : 'future';
+    }
     var idxToday = state.parsed.dayOrder.indexOf(today);
     var idxDay = state.parsed.dayOrder.indexOf(day);
     if(idxToday===-1 || idxDay===-1) return 'future';
@@ -1939,7 +2043,7 @@
 
   function emptyStateHtml(day){
     var title = DAY_TITLE[day]||day;
-    return '<div class="empty-state">'+
+    return (day==='ВОСКРЕСЕНЬЕ' ? sundayInfoHtml() : '')+'<div class="empty-state">'+
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 4v5"/></svg>'+
       '<div class="es-title">'+title+' — пар нет</div>'+
       '<div class="es-sub">В расписании этой группы на '+title.toLowerCase()+' занятий не найдено.</div>'+
@@ -2310,7 +2414,7 @@
     state.browseMode = 'group';
     state.selectedGroup = state.parsed.groups[kioskGroupIdx];
     var today = WEEKDAY_INDEX[new Date().getDay()];
-    state.viewedDay = state.parsed.dayOrder.indexOf(today)>=0 ? today : state.parsed.dayOrder[0];
+    state.viewedDay = resolveTodayViewedDay();
     state.viewMode = 'day';
     renderMain();
     show('screen-main');
@@ -2323,7 +2427,7 @@
     kioskGroupIdx = (kioskGroupIdx+1) % state.parsed.groups.length;
     state.selectedGroup = state.parsed.groups[kioskGroupIdx];
     var today = WEEKDAY_INDEX[new Date().getDay()];
-    state.viewedDay = state.parsed.dayOrder.indexOf(today)>=0 ? today : state.parsed.dayOrder[0];
+    state.viewedDay = resolveTodayViewedDay();
     renderMain();
     kioskTouchedSinceEntry = false;
     lastInteractionAt = Date.now();
