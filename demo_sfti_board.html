@@ -1,11 +1,9 @@
 <!DOCTYPE html>
-<!-- BUILD: SFTI demo board corrected package 2026-10-08 -->
-
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Расписание СФТИ — деморежим</title>
+<title>Расписание</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Mono:wght@500&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -612,149 +610,70 @@
 
   a{color:inherit;}
 
-/* ===== Demo kiosk layout: wide interactive college display ===== */
-html.demo-kiosk, html.demo-kiosk body {height:100%; overflow:hidden;}
-html.demo-kiosk #app {max-width:none;width:100%;height:100vh;min-height:100vh;margin:0;display:block;}
-html.demo-kiosk #screen-main.active {height:100vh;min-height:0;display:grid;grid-template-columns:minmax(270px,22vw) minmax(0,1fr);gap:0;overflow:hidden;}
-html.demo-kiosk .header-sticky {position:relative;top:auto;z-index:2;height:100%;overflow-y:auto;display:flex;flex-direction:column;gap:16px;padding:24px 18px;background:var(--surface);border-right:1px solid var(--outline);box-shadow:8px 0 24px rgba(22,20,50,.04);}
-html.demo-kiosk .topbar {align-items:flex-start;gap:10px;flex-wrap:wrap;}
-html.demo-kiosk .topbar-left {width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:10px;}
-html.demo-kiosk .term-title {font-size:13px;}
-html.demo-kiosk .group-btn {font-size:clamp(21px,2vw,30px);padding:10px 12px;max-width:100%;}
-html.demo-kiosk .toggles-row {display:flex;flex-direction:column;align-items:stretch;gap:10px;}
-html.demo-kiosk .view-toggle {width:100%;}
-html.demo-kiosk .view-toggle .vt-btn {flex:1;justify-content:center;}
-html.demo-kiosk .week-badge {width:100%;justify-content:flex-start;}
-html.demo-kiosk .day-tabs {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;overflow:visible;padding:0;}
-html.demo-kiosk .day-tab {min-width:0;justify-content:center;}
-html.demo-kiosk .content {height:100%;min-height:0;overflow-y:auto;padding:24px clamp(18px,2.2vw,38px) 30px;}
-html.demo-kiosk .content > * {max-width:1500px;margin-left:auto;margin-right:auto;}
-html.demo-kiosk .lesson-card, html.demo-kiosk .lesson-tile {font-size:1.04em;}
-html.demo-kiosk .demo-status {margin-top:auto;border-radius:18px;padding:16px;background:linear-gradient(135deg,var(--primary-container),var(--secondary-container));color:var(--text);}
-html.demo-kiosk .demo-status-label {font-size:11px;text-transform:uppercase;letter-spacing:.12em;font-weight:700;opacity:.7;}
-html.demo-kiosk .demo-status-main {font-size:20px;font-weight:800;margin-top:7px;line-height:1.2;}
-html.demo-kiosk .demo-status-sub {font-size:13px;line-height:1.45;margin-top:7px;opacity:.8;}
-html.demo-kiosk .demo-countdown {font-family:'Roboto Mono',monospace;font-size:clamp(24px,2vw,32px);font-weight:700;letter-spacing:.02em;margin-top:10px;}
-html.demo-kiosk #settings-btn {margin-left:auto;}
-html.demo-kiosk .scrim, html.demo-kiosk .sheet {z-index:50;}
-.demo-lunch {position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;background:radial-gradient(ellipse at 50% 38%,#fff8e8 0%,#f3e2c4 42%,#d4c2a6 100%);color:#4b3324;opacity:0;visibility:hidden;pointer-events:none;transition:opacity 1.2s ease,visibility 1.2s ease;}
-.demo-lunch.visible {opacity:1;visibility:visible;pointer-events:auto;}
-.demo-lunch-art {width:min(34vw,340px);height:min(34vw,340px);min-width:190px;min-height:190px;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.52);box-shadow:0 24px 80px rgba(85,55,25,.12);font-size:clamp(100px,16vw,190px);}
-.demo-lunch-title {font-size:clamp(30px,4vw,54px);font-weight:800;letter-spacing:-.03em;}
-.demo-lunch-sub {font-size:clamp(16px,1.8vw,22px);opacity:.72;}
-.demo-lunch-clock {font-family:'Roboto Mono',monospace;font-size:20px;opacity:.75;margin-top:8px;}
-html.demo-kiosk .screen:not(#screen-main) {display:none!important;}
-@media(max-width:900px){html.demo-kiosk #screen-main.active{grid-template-columns:240px minmax(0,1fr)}html.demo-kiosk .header-sticky{padding:14px 12px}html.demo-kiosk .content{padding:14px}}
-@media(max-width:650px){html.demo-kiosk{overflow:auto}html.demo-kiosk #app{height:auto;min-height:100vh}html.demo-kiosk #screen-main.active{height:auto;min-height:100vh;grid-template-columns:1fr;overflow:visible}html.demo-kiosk .header-sticky{height:auto;overflow:visible;border-right:0;border-bottom:1px solid var(--outline)}html.demo-kiosk .content{height:auto;overflow:visible}.demo-lunch-art{width:200px;height:200px}}
+/* ===== Clean 16:9 college display — one source of truth ===== */
+:root{color-scheme:dark;--board-bg:#121116;--board-panel:#1c1a22;--board-card:#26232d;--board-muted:#aaa4b7;--board-border:#373340;}
+html,body{width:100%;height:100%;margin:0;background:var(--board-bg);color:#f5f2fa;}
+html.demo-kiosk,html.demo-kiosk body{height:100%;overflow:hidden;background:var(--board-bg)!important;color:#f5f2fa!important;}
+html.demo-kiosk #app{width:100%;max-width:none;height:100dvh;min-height:0;margin:0;background:var(--board-bg);}
+html.demo-kiosk #screen-main.active{display:grid!important;grid-template-columns:minmax(300px,31fr) minmax(400px,38fr) minmax(300px,31fr);gap:0;width:100vw;height:100dvh;min-height:0;overflow:hidden;background:var(--board-bg);}
+html.demo-kiosk .header-sticky{grid-column:1;grid-row:1;position:relative;top:auto;z-index:2;display:flex;flex-direction:column;gap:14px;box-sizing:border-box;width:auto;height:100%;min-width:0;overflow-y:auto;padding:clamp(16px,1.6vw,28px);background:var(--board-panel);border:0;border-right:1px solid var(--board-border);box-shadow:none;}
+html.demo-kiosk .topbar{gap:10px;align-items:flex-start;flex-wrap:wrap;background:#24212b;border:1px solid #302c39;border-radius:22px;padding:16px;box-shadow:none;}
+html.demo-kiosk .topbar-left{min-width:0;flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:8px;}
+html.demo-kiosk .term-title{color:var(--board-muted);font-size:clamp(10px,.8vw,13px);white-space:normal;line-height:1.35;}
+html.demo-kiosk .group-btn{max-width:100%;font-size:clamp(22px,1.8vw,32px);font-weight:800;padding:3px 0;box-shadow:none;}
+html.demo-kiosk #settings-btn{flex:0 0 auto;}
+html.demo-kiosk .toggles-row{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px;}
+html.demo-kiosk .mode-btn,html.demo-kiosk .view-toggle,html.demo-kiosk .week-badge{min-width:0;}
+html.demo-kiosk .view-toggle{flex:1;}
+html.demo-kiosk .view-toggle .vt-btn{flex:1;justify-content:center;padding-inline:9px;}
+html.demo-kiosk .week-badge{width:100%;justify-content:center;}
+html.demo-kiosk .day-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;overflow:visible;padding:0;}
+html.demo-kiosk .day-tab{min-width:0;justify-content:center;padding:10px 4px;border-radius:13px;}
+html.demo-kiosk .content{grid-column:2;grid-row:1;box-sizing:border-box;width:100%;height:100%;min-width:0;min-height:0;overflow:auto;padding:clamp(16px,1.6vw,30px);background:var(--board-bg);color:#f5f2fa;}
+html.demo-kiosk .content>*{max-width:none;}
+html.demo-kiosk .lesson{gap:12px;}
+html.demo-kiosk .lesson-time{color:#aaa4b7;font-size:clamp(11px,.8vw,14px);}
+html.demo-kiosk .lesson-card{background:var(--board-card);border-color:#302c39;border-radius:18px;box-shadow:none;padding:clamp(13px,1.1vw,20px);}
+html.demo-kiosk .lesson-subject{font-size:clamp(14px,1vw,18px);color:#f2eff8;}
+html.demo-kiosk .lesson-meta{font-size:clamp(11px,.78vw,14px);color:#b6b0c1;}
+html.demo-kiosk .lesson-line{background:#393541;}
+html.demo-kiosk .announcement-rail{grid-column:3;grid-row:1;display:flex;flex-direction:column;gap:clamp(14px,1.4vw,24px);box-sizing:border-box;width:100%;height:100%;min-width:0;min-height:0;overflow-y:auto;padding:clamp(18px,1.8vw,32px);background:var(--board-bg);border:0;border-left:1px solid #211e28;color:#f5f2fa;}
+.announcement-head{display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.announcement-head-icon{display:grid;place-items:center;flex:0 0 48px;height:48px;border-radius:17px;color:white;font-size:25px;background:linear-gradient(145deg,#6158e8,#31bca9);box-shadow:0 9px 20px #5148d83b;}
+.announcement-head h2{font-size:clamp(21px,1.65vw,30px);margin:0;color:#f7f4fc;line-height:1.1;}
+.announcement-head p{margin:5px 0 0;color:#aaa4b7;font-size:clamp(11px,.8vw,14px);}
+.announcement-eyebrow{font-size:10px;font-weight:800;letter-spacing:.12em;color:#aaa4b7;margin-bottom:4px;}
+.announcement-live{margin-left:auto;flex:0 0 10px;width:10px;height:10px;border-radius:50%;background:#25b7a5;box-shadow:0 0 0 6px #25b7a51c;}
+.announcement-feature{position:relative;overflow:hidden;flex-shrink:0;border-radius:23px;padding:clamp(17px,1.3vw,24px);color:white;background:linear-gradient(140deg,#554ce0 0%,#7564e9 53%,#2eb9a6 125%);box-shadow:0 14px 30px #5148d82e;}
+.announcement-feature:after{content:"";position:absolute;width:160px;height:160px;right:-60px;top:-80px;border-radius:50%;background:#ffffff19;border:1px solid #ffffff20;pointer-events:none;}
+.announcement-feature-icon{font-size:26px;margin-bottom:12px;}
+.announcement-feature h3{position:relative;margin:0 0 7px;font-size:clamp(19px,1.3vw,25px);}
+.announcement-feature p{position:relative;margin:0;font-size:clamp(12px,.9vw,16px);line-height:1.55;color:#f4f1ff;}
+.announcement-list-title{display:flex;align-items:center;gap:9px;font-size:11px;font-weight:800;letter-spacing:.12em;color:#d4cfdf;}
+.announcement-list-title span{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 5px;border-radius:8px;background:#292631;color:#d4cfdf;box-sizing:border-box;}
+.announcement-list{display:flex;flex-direction:column;gap:clamp(13px,1.2vw,22px);}
+.announcement-card{position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:center;min-height:clamp(120px,10vw,175px);box-sizing:border-box;overflow:hidden;border:0;border-radius:24px;padding:clamp(18px,1.45vw,25px);color:#fff;background:linear-gradient(115deg,#514de4 0%,#316fb7 58%,#008b7d 100%);box-shadow:0 12px 24px #0003;background-size:cover;background-position:center;}
+.announcement-card:after{content:"";position:absolute;z-index:-1;inset:0;background:linear-gradient(100deg,#3437b9d9,#005b62b8);}
+.announcement-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;}
+.announcement-tag{font-size:10px;font-weight:800;letter-spacing:.09em;color:#ffffffc7;text-transform:uppercase;}
+.announcement-date{font-size:11px;color:#ffffffb8;}
+.announcement-card h3{margin:0 0 8px;font-size:clamp(17px,1.25vw,23px);line-height:1.25;color:white;}
+.announcement-card p{margin:0;font-size:clamp(12px,.92vw,16px);line-height:1.5;color:#fffffff0;white-space:pre-line;}
+.announcement-empty{display:flex;flex-direction:column;gap:7px;padding:22px;border-radius:18px;background:#211f29;border:1px solid #393542;color:#f5f2fa;}
+.announcement-empty strong{font-size:15px;}.announcement-empty span{font-size:12px;line-height:1.5;color:#b0aabc;}
+.announcement-foot{margin-top:auto;padding-top:10px;font-size:11px;color:#8f899d;}
+/* Other screens remain available for the group picker and settings sheets. */
+/* 16:9 boards are the target; on small windows stack panels rather than hiding announcements. */
+@media(max-width:1100px){html.demo-kiosk #screen-main.active{grid-template-columns:minmax(240px,30fr) minmax(320px,40fr) minmax(250px,30fr)}html.demo-kiosk .header-sticky,html.demo-kiosk .announcement-rail{padding:14px;}html.demo-kiosk .day-tabs{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media(max-width:820px){html.demo-kiosk,html.demo-kiosk body{height:auto;overflow:auto;}html.demo-kiosk #app{height:auto;min-height:100vh;}html.demo-kiosk #screen-main.active{height:auto;min-height:100vh;overflow:visible;grid-template-columns:1fr;}html.demo-kiosk .header-sticky,html.demo-kiosk .content,html.demo-kiosk .announcement-rail{grid-column:1;grid-row:auto;height:auto;overflow:visible;border:0;border-bottom:1px solid var(--board-border);}html.demo-kiosk .announcement-rail{min-height:300px;}}
 
 
-
-/* ===== Polished wide-screen demo / announcement board ===== */
-html.demo-kiosk { --demo-violet:#5148d8; --demo-mint:#24b7a6; --demo-peach:#ffb77e; }
-html.demo-kiosk body { background:var(--bg); }
-html.demo-kiosk #screen-main.active {
-  grid-template-columns:minmax(260px,20.5vw) minmax(0,1fr) minmax(280px,22vw);
-  background:linear-gradient(135deg,#f7f6ff 0%,#f5f8fc 55%,#f2fbf9 100%);
-}
-html[data-theme="dark"].demo-kiosk #screen-main.active { background:var(--bg); }
-html.demo-kiosk .header-sticky {
-  background:rgba(255,255,255,.78); backdrop-filter:blur(18px);
-  border-right:1px solid rgba(92,85,160,.12); box-shadow:8px 0 30px rgba(51,47,104,.055);
-  padding:clamp(18px,2vw,30px) clamp(14px,1.4vw,24px); gap:18px;
-}
-html[data-theme="dark"].demo-kiosk .header-sticky { background:var(--surface); }
-html.demo-kiosk .topbar { padding:18px 16px; border:1px solid rgba(92,85,160,.08); border-radius:22px; box-shadow:0 8px 26px rgba(56,50,122,.07); animation:demoRise .55s both; }
-html.demo-kiosk .onboard-mark, html.demo-kiosk .group-btn, html.demo-kiosk .view-toggle, html.demo-kiosk .week-badge, html.demo-kiosk .mode-btn { transition:transform .22s ease, box-shadow .22s ease, background .22s ease; }
-html.demo-kiosk .group-btn { box-shadow:0 8px 20px rgba(75,74,219,.16); border-radius:16px; }
-html.demo-kiosk .group-btn:hover, html.demo-kiosk .mode-btn:hover, html.demo-kiosk .vt-btn:hover { transform:translateY(-2px); }
-html.demo-kiosk .day-tab { border-radius:12px; transition:transform .2s ease, box-shadow .2s ease; }
-html.demo-kiosk .day-tab:hover { transform:translateY(-2px); }
-html.demo-kiosk .content { padding:clamp(18px,2vw,32px); background:transparent; }
-html.demo-kiosk .content > * { animation:demoRise .42s both; }
-html.demo-kiosk .lesson-card, html.demo-kiosk .lesson-tile { border-radius:18px; transition:transform .2s ease, box-shadow .2s ease; }
-html.demo-kiosk .lesson-card:hover, html.demo-kiosk .lesson-tile:hover { transform:translateY(-2px); box-shadow:0 12px 28px rgba(47,43,110,.1); }
-html.demo-kiosk .demo-status { border:1px solid rgba(255,255,255,.75); box-shadow:0 12px 28px rgba(65,61,155,.12); background:linear-gradient(135deg,#e8e6ff 0%,#e1f8f3 100%); position:relative; overflow:hidden; }
-html.demo-kiosk .demo-status:after { content:""; position:absolute; width:110px;height:110px;border-radius:50%;right:-36px;top:-44px;background:rgba(255,255,255,.42); }
-html.demo-kiosk .demo-countdown { letter-spacing:.04em; }
-html.demo-kiosk .announcement-rail {
-  position:relative; display:flex; flex-direction:column; gap:20px; min-height:0; overflow-y:auto;
-  padding:clamp(18px,1.7vw,28px) clamp(14px,1.35vw,22px);
-  border-left:1px solid rgba(92,85,160,.12);
-  background:linear-gradient(180deg,rgba(255,255,255,.94),rgba(247,249,255,.94));
-  box-shadow:-10px 0 30px rgba(51,47,104,.035);
-}
-html[data-theme="dark"].demo-kiosk .announcement-rail { background:var(--surface); }
-.announcement-head { display:flex; align-items:center; gap:12px; position:relative; }
-.announcement-head-icon { display:grid;place-items:center; flex:0 0 48px;height:48px;border-radius:17px;color:white;font-size:25px;background:linear-gradient(145deg,#6158e8,#31bca9);box-shadow:0 9px 20px rgba(81,72,216,.23);animation:announceFloat 4s ease-in-out infinite; }
-.announcement-eyebrow { color:var(--text-tertiary);font-size:10px;font-weight:800;letter-spacing:.13em;margin-bottom:3px; }
-.announcement-head h2 { margin:0;font-size:clamp(21px,1.8vw,28px);letter-spacing:-.04em;line-height:1.1;color:var(--text); }
-.announcement-head p { margin:5px 0 0;color:var(--text-secondary);font-size:12px; }
-.announcement-live-dot { margin-left:auto; flex:0 0 9px;height:9px;border-radius:50%;background:#29b69e;box-shadow:0 0 0 5px rgba(41,182,158,.12); }
-.announcement-feature { position:relative; overflow:hidden; border-radius:23px; padding:21px 19px 22px; color:white; background:linear-gradient(140deg,#554ce0 0%,#7564e9 53%,#2eb9a6 125%); box-shadow:0 14px 30px rgba(81,72,216,.18); isolation:isolate; }
-.announcement-feature:after { content:""; position:absolute; z-index:-1; width:190px;height:190px;right:-90px;bottom:-100px;border:1px solid rgba(255,255,255,.25);border-radius:50%;box-shadow:0 0 0 20px rgba(255,255,255,.045),0 0 0 42px rgba(255,255,255,.035); }
-.announcement-feature-glow { position:absolute;z-index:-1;width:100px;height:100px;right:5px;top:-55px;border-radius:50%;background:rgba(255,255,255,.15);filter:blur(2px); }
-.announcement-feature-icon { font-size:28px;margin-bottom:14px;filter:drop-shadow(0 5px 6px rgba(0,0,0,.12)); }
-.announcement-feature-title { font-size:clamp(17px,1.45vw,22px);font-weight:800;letter-spacing:-.025em;margin-bottom:7px; }
-.announcement-feature-copy { font-size:clamp(12px,1vw,14px);line-height:1.55;color:rgba(255,255,255,.87);max-width:28em; }
-.announcement-list-title { display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--text);font-size:13px;font-weight:800;letter-spacing:-.01em;margin:0 1px -8px; }
-.announcement-count { display:grid;place-items:center;min-width:25px;height:25px;padding:0 7px;border-radius:9px;background:var(--surface-container);color:var(--text-secondary);font-size:11px; }
-.announcement-list { display:flex;flex-direction:column;gap:11px; }
-.announcement-empty { border:1px dashed var(--outline);border-radius:18px;padding:20px 16px;text-align:center;background:rgba(255,255,255,.55); }
-.announcement-empty-icon { display:grid;place-items:center;width:46px;height:46px;margin:0 auto 10px;border-radius:15px;background:linear-gradient(135deg,#eeedff,#dff8f2);font-size:23px; }
-.announcement-empty strong { display:block;font-size:13px;color:var(--text);margin-bottom:5px; }
-.announcement-empty span { display:block;font-size:11px;line-height:1.5;color:var(--text-tertiary); }
-.announcement-card { position:relative;border-radius:17px;padding:15px 15px 16px;background:var(--surface);border:1px solid rgba(92,85,160,.09);box-shadow:0 6px 17px rgba(56,50,122,.045);animation:demoRise .45s both; }
-.announcement-card:before { content:"";position:absolute;left:0;top:15px;bottom:15px;width:3px;border-radius:0 4px 4px 0;background:var(--announcement-accent,#5b52dc); }
-.announcement-card-top { display:flex;align-items:center;gap:7px;margin-bottom:9px; }
-.announcement-tag { font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:5px 7px;border-radius:7px;color:var(--announcement-accent,#5b52dc);background:color-mix(in srgb,var(--announcement-accent,#5b52dc) 11%,white); }
-.announcement-date { margin-left:auto;font-size:10px;color:var(--text-tertiary); }
-.announcement-card h3 { margin:0 0 7px;font-size:14px;line-height:1.3;letter-spacing:-.02em;color:var(--text); }
-.announcement-card p { margin:0;font-size:12px;line-height:1.55;color:var(--text-secondary);white-space:pre-line; }
-.announcement-foot { margin-top:auto;display:flex;align-items:center;gap:8px;padding-top:13px;color:var(--text-tertiary);font-size:10px;font-weight:700;letter-spacing:.08em; }
-.announcement-foot-mark { display:grid;place-items:center;width:25px;height:25px;border-radius:9px;background:linear-gradient(135deg,#5b52dc,#28b9a6);color:#fff;font-size:13px;letter-spacing:0; }
-.announcement-foot-line { height:1px;flex:1;background:var(--outline); }
-@keyframes demoRise { from { opacity:0;transform:translateY(10px); } to { opacity:1;transform:translateY(0); } }
-@keyframes announceFloat { 0%,100% { transform:translateY(0) rotate(0); } 50% { transform:translateY(-3px) rotate(-3deg); } }
-.demo-lunch { backdrop-filter:blur(10px); }
-.demo-lunch-art { animation:lunchBob 3s ease-in-out infinite; border:1px solid rgba(255,255,255,.8); }
-.demo-lunch-title { animation:demoRise .7s .12s both; }
-.demo-lunch-sub { animation:demoRise .7s .22s both; }
-@keyframes lunchBob { 0%,100% { transform:translateY(0) rotate(-2deg); } 50% { transform:translateY(-9px) rotate(2deg); } }
-@media(max-width:1120px) { html.demo-kiosk #screen-main.active { grid-template-columns:240px minmax(0,1fr) 260px; } html.demo-kiosk .announcement-rail { padding:16px 13px;gap:15px; } }
-@media(max-width:900px) { html.demo-kiosk #screen-main.active { grid-template-columns:220px minmax(0,1fr); } html.demo-kiosk .announcement-rail { display:none; } }
-@media(max-width:650px) { html.demo-kiosk .announcement-rail { display:flex; min-height:480px; border-left:0;border-top:1px solid var(--outline); } }
-@media(prefers-reduced-motion:reduce) { *,*:before,*:after { animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important; } }
-
-/* ===== Final 16:9 kiosk board: dark three-column layout ===== */
-html.demo-kiosk, html.demo-kiosk body { background:#121116 !important; color:#f4f1fa; }
-html.demo-kiosk #app { background:#121116; }
-html.demo-kiosk #screen-main.active { display:grid !important; grid-template-columns:minmax(0, 34fr) minmax(0, 32fr) minmax(0, 34fr); gap:0; width:100vw; max-width:none; height:100dvh; min-height:0; overflow:hidden; background:#121116 !important; }
-html.demo-kiosk .header-sticky { min-width:0; min-height:0; height:100%; overflow-y:auto; background:#1c1a22 !important; color:#f4f1fa; border-right:0; box-shadow:none; }
-html.demo-kiosk .content { min-width:0; min-height:0; height:100%; overflow-y:auto; background:#121116; color:#f4f1fa; padding:clamp(16px,1.8vw,30px); }
-html.demo-kiosk .announcement-rail { min-width:0; min-height:0; height:100%; overflow-y:auto; background:#121116 !important; border-left:0; box-shadow:none; padding:clamp(18px,2vw,32px); gap:18px; }
-html.demo-kiosk .announcement-head h2 { color:#f7f4fc; }
-html.demo-kiosk .announcement-head p, html.demo-kiosk .announcement-eyebrow { color:#9893a5; }
-html.demo-kiosk .announcement-feature { display:none; }
-html.demo-kiosk .announcement-list-title { color:#d8d3e3; margin:0 1px; }
-html.demo-kiosk .announcement-list { gap:20px; }
-html.demo-kiosk .announcement-card { min-height:118px; border:0; border-radius:24px; padding:23px 21px; color:#fff; background:linear-gradient(115deg,#514de4 0%,#316fb7 58%,#008b7d 100%); box-shadow:0 12px 24px rgba(0,0,0,.17); overflow:hidden; isolation:isolate; display:flex; flex-direction:column; justify-content:center; }
-html.demo-kiosk .announcement-card:before { display:none; }
-html.demo-kiosk .announcement-card:after { content:""; position:absolute; z-index:-1; inset:0; background:linear-gradient(90deg,rgba(54,57,180,.72),rgba(0,93,100,.55)); opacity:1; transition:opacity .35s ease; }
-html.demo-kiosk .announcement-card.has-image { background-size:cover; background-position:center; }
-html.demo-kiosk .announcement-card.has-image:after { background:linear-gradient(90deg,rgba(40,42,130,.84),rgba(0,82,85,.68)); }
-html.demo-kiosk .announcement-card-top { margin-bottom:9px; }
-html.demo-kiosk .announcement-tag { padding:0; border:0; background:transparent; color:rgba(255,255,255,.76); font-size:10px; letter-spacing:.08em; }
-html.demo-kiosk .announcement-date { color:rgba(255,255,255,.7); font-size:11px; }
-html.demo-kiosk .announcement-card h3 { color:#fff; font-size:clamp(17px,1.3vw,23px); line-height:1.24; margin:0 0 8px; }
-html.demo-kiosk .announcement-card p { color:rgba(255,255,255,.9); font-size:clamp(12px,.95vw,15px); line-height:1.5; }
-html.demo-kiosk .announcement-empty { color:#fff; background:#211f29; border-color:#3c3948; }
-html.demo-kiosk .announcement-empty strong { color:#f5f2fa; }
-html.demo-kiosk .announcement-empty span { color:#b0aabc; }
-html.demo-kiosk .announcement-foot { color:#8f899d; }
-html.demo-kiosk .announcement-count { background:#292631; color:#d4cfdf; }
-@media(max-width:1250px) and (min-width:901px) { html.demo-kiosk #screen-main.active { grid-template-columns:minmax(0, 31fr) minmax(0, 38fr) minmax(0, 31fr); } html.demo-kiosk .announcement-rail { padding:16px; } }
-@media(max-width:900px) { html.demo-kiosk #screen-main.active { display:grid !important; height:auto; min-height:100vh; overflow:visible; grid-template-columns:1fr; } html.demo-kiosk .header-sticky, html.demo-kiosk .content, html.demo-kiosk .announcement-rail { height:auto; overflow:visible; } html.demo-kiosk .announcement-rail { display:flex; grid-column:1 / -1; min-height:360px; } }
-@media(prefers-reduced-motion:reduce) { html.demo-kiosk .announcement-card { animation:none; } }
+html.demo-kiosk .board-status{margin-top:auto;padding:18px;border-radius:19px;background:#24212b;border:1px solid #302c39;color:#f5f2fa;}
+.board-status-label{font-size:10px;font-weight:800;letter-spacing:.12em;color:#aaa4b7;}
+.board-status-main{font-size:clamp(18px,1.3vw,24px);font-weight:800;line-height:1.25;margin-top:8px;}
+.board-status-sub{font-size:clamp(12px,.85vw,15px);color:#c4becf;line-height:1.45;margin-top:7px;}
+.board-status-time{font-family:'Roboto Mono',monospace;font-size:clamp(15px,1.1vw,20px);font-weight:700;color:#5ed9c7;margin-top:10px;}
+.board-status-foot{font-size:11px;color:#8f899d;margin-top:12px;}
 
 </style>
 </head>
@@ -891,35 +810,23 @@ html.demo-kiosk .announcement-count { background:#292631; color:#d4cfdf; }
       </div>
 
       <div class="day-tabs" id="day-tabs"></div>
+      <section id="board-status" class="board-status"><div class="board-status-label">СЕЙЧАС</div><div id="board-status-main" class="board-status-main">Загружаем расписание…</div><div id="board-status-sub" class="board-status-sub">Подключение к GitHub</div><div id="board-status-time" class="board-status-time"></div><div class="board-status-foot">Автосмена группы каждые 10 минут</div></section>
     </div>
 
     <div class="content" id="content"></div>
-
     <aside class="announcement-rail" id="announcement-rail" aria-label="Объявления колледжа">
-      <div class="announcement-head">
-        <div class="announcement-head-icon" aria-hidden="true">✦</div>
+      <header class="announcement-head">
+        <div class="announcement-head-icon">✦</div>
         <div><div class="announcement-eyebrow">СФТИ · ИНФОЦЕНТР</div><h2>Объявления</h2><p>Важное для студентов</p></div>
-        <span class="announcement-live-dot" title="Информационный стенд"></span>
-      </div>
-      <div class="announcement-feature">
-        <div class="announcement-feature-glow"></div>
-        <div class="announcement-feature-icon" aria-hidden="true">📣</div>
-        <div class="announcement-feature-title">Будьте в курсе</div>
-        <div class="announcement-feature-copy">Новости, изменения расписания и важная информация колледжа — в этом блоке.</div>
-      </div>
-      <div class="announcement-list-title"><span>Лента объявлений</span><span class="announcement-count" id="announcement-count">0</span></div>
-      <div class="announcement-list" id="announcement-list"></div>
-      <div class="announcement-foot"><span class="announcement-foot-mark">S</span><span>СФТИ НИЯУ МИФИ</span><span class="announcement-foot-line"></span></div>
+        <span class="announcement-live" aria-label="Обновление включено"></span>
+      </header>
+      <div class="announcement-feature"><div class="announcement-feature-icon">📣</div><h3>Будьте в курсе</h3><p>Новости, изменения расписания и важная информация колледжа — в этом блоке.</p></div>
+      <div class="announcement-list-title">АКТУАЛЬНОЕ <span id="announcement-count">0</span></div>
+      <div class="announcement-list" id="announcement-list"><div class="announcement-empty"><strong>Загружаем объявления…</strong><span>Пожалуйста, подождите</span></div></div>
+      <div class="announcement-foot">Информация обновляется автоматически</div>
     </aside>
   </section>
 
-</div>
-
-<div class="demo-lunch" id="demo-lunch" aria-live="polite">
-  <div class="demo-lunch-art" aria-hidden="true">☕</div>
-  <div class="demo-lunch-title">Время обеда</div>
-  <div class="demo-lunch-sub">Перерыв с 11:50 до 12:50 · Приятного аппетита!</div>
-  <div class="demo-lunch-clock" id="demo-lunch-clock">11:50 — 12:50</div>
 </div>
 
 <!-- Lesson-tile expand scrim -->
@@ -2564,101 +2471,6 @@ html.demo-kiosk .announcement-count { background:#292631; color:#d4cfdf; }
   // itself moving so it doesn't just sit on one group's schedule forever:
   // if nobody ever touches the screen it advances every 10 minutes; once
   // someone touches it, the next advance happens 5 minutes after they stop.
-  function chooseKioskGroupIndex(){
-    if(!state.parsed || !state.parsed.groups.length) return 0;
-    var now = new Date(), day = resolveTodayViewedDay(), minute = now.getHours()*60+now.getMinutes();
-    if(day==='ВОСКРЕСЕНЬЕ') return 0;
-    var active=[], upcoming=[];
-    state.parsed.groups.forEach(function(group, idx){
-      var lessons = ((state.parsed.byGroup[group]||{})[day]||[]);
-      lessons = annotateParity(lessons).filter(function(l){return !l.isGhost && l.startMin!=null && l.endMin!=null;});
-      lessons.forEach(function(l){
-        if(l.startMin<=minute && minute<l.endMin) active.push({idx:idx,start:l.startMin,end:l.endMin});
-        else if(l.startMin>minute) upcoming.push({idx:idx,start:l.startMin,end:l.endMin});
-      });
-    });
-    if(active.length){
-      // If several groups are in class now, rotate among those on each 10-minute pass.
-      active.sort(function(a,b){return a.start-b.start || a.idx-b.idx;});
-      var previous = kioskGroupIdx;
-      if(active.some(function(a){return a.idx===previous;})) return active[(active.findIndex(function(a){return a.idx===previous;})+1)%active.length].idx;
-      return active[0].idx;
-    }
-    if(upcoming.length){upcoming.sort(function(a,b){return a.start-b.start || a.idx-b.idx;});return upcoming[0].idx;}
-    return (kioskGroupIdx+1)%state.parsed.groups.length;
-  }
-  function installDemoStatus(){
-    var header=document.querySelector('#screen-main .header-sticky');
-    if(!header || document.getElementById('demo-status')) return;
-    var card=document.createElement('div'); card.className='demo-status'; card.id='demo-status';
-    card.innerHTML='<div class="demo-status-label">Сейчас по расписанию</div><div class="demo-status-main" id="demo-status-main">Загрузка…</div><div class="demo-status-sub" id="demo-status-sub">Автоматическое обновление каждые 10 минут</div><div class="demo-countdown" id="demo-countdown">--:--</div><div class="demo-status-sub" id="demo-next-switch">Следующая смена группы через 10:00</div>';
-    header.appendChild(card);
-  }
-  function updateDemoStatus(){
-    var now=new Date(), minute=now.getHours()*60+now.getMinutes(), lunch=document.getElementById('demo-lunch');
-    var inLunch=minute>=710 && minute<770;
-    if(lunch){lunch.classList.toggle('visible',inLunch);var clock=document.getElementById('demo-lunch-clock');if(clock) clock.textContent=now.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})+' · до 12:50';}
-    var main=document.getElementById('demo-status-main'), sub=document.getElementById('demo-status-sub'), countdown=document.getElementById('demo-countdown'), next=document.getElementById('demo-next-switch');
-    if(!main||!state.parsed||!state.selectedGroup) return;
-    var day=resolveTodayViewedDay(), lessons=((state.parsed.byGroup[state.selectedGroup]||{})[day]||[]);
-    lessons=annotateParity(lessons).filter(function(l){return !l.isGhost && l.startMin!=null && l.endMin!=null;}).sort(function(a,b){return a.startMin-b.startMin;});
-    var active=lessons.find(function(l){return l.startMin<=minute&&minute<l.endMin;});
-    var upcoming=lessons.find(function(l){return l.startMin>minute;});
-    if(active){main.textContent='Идёт пара';sub.textContent=active.subject+' · '+(active.room||'аудитория не указана')+' · '+active.startLabel+'–'+active.endLabel;countdown.textContent=formatSeconds(Math.max(0,active.endMin*60-(now.getHours()*3600+now.getMinutes()*60+now.getSeconds())));}
-    else if(upcoming){main.textContent='Следующая пара';sub.textContent=upcoming.subject+' · '+(upcoming.room||'аудитория не указана')+' · начало в '+upcoming.startLabel;countdown.textContent=formatSeconds(Math.max(0,upcoming.startMin*60-(now.getHours()*3600+now.getMinutes()*60+now.getSeconds())));}
-    else {main.textContent='Занятий больше нет';sub.textContent='На сегодня пары закончились';countdown.textContent='—:—';}
-    var ms=Date.now(), elapsed=ms-(window.demoLastSwitchAt||ms), remaining=Math.max(0,10*60*1000-(elapsed%(10*60*1000)));
-    if(next) next.textContent='Автосмена группы через '+formatSeconds(Math.ceil(remaining/1000));
-  }
-  // Объявления загружаются из announcements.json в корне GitHub-репозитория.
-  // У объявления может быть одно фоновое изображение: image: "announcements/poster.jpg".
-  var DEMO_ANNOUNCEMENTS = [];
-  var ANNOUNCEMENTS_URLS = ['https://patrlza.github.io/schedule-akrilk/announcements.json','https://raw.githubusercontent.com/PatRlza/schedule-akrilk/refs/heads/main/announcements.json'];
-  function safeAnnouncementImage(value){
-    if(!value || typeof value !== 'string') return '';
-    if(/^https:\/\//i.test(value)) return value;
-    if(/^\//.test(value)) return 'https://patrlza.github.io'+value;
-    return 'https://patrlza.github.io/schedule-akrilk/'+value.replace(/^\.\//,'');
-  }
-  async function loadDemoAnnouncements(){
-    try{
-      var data=null, lastError=null;
-      for(var i=0;i<ANNOUNCEMENTS_URLS.length;i++){
-        try{
-          var response=await fetch(ANNOUNCEMENTS_URLS[i]+'?v='+Date.now(),{cache:'no-store'});
-          if(!response.ok) throw new Error('HTTP '+response.status);
-          data=await response.json(); break;
-        }catch(fetchError){ lastError=fetchError; }
-      }
-      if(data===null) throw lastError||new Error('announcements_not_found');
-      DEMO_ANNOUNCEMENTS=Array.isArray(data)?data:(Array.isArray(data.announcements)?data.announcements:[]);
-      window.demoAnnouncementsLoadError=false;
-    }catch(e){ window.demoAnnouncementsLoadError=true; if(!DEMO_ANNOUNCEMENTS.length) DEMO_ANNOUNCEMENTS=[]; }
-    renderDemoAnnouncements();
-  }
-  function renderDemoAnnouncements(){
-    var list=document.getElementById('announcement-list'), count=document.getElementById('announcement-count');
-    if(!list) return;
-    if(count) count.textContent=String(DEMO_ANNOUNCEMENTS.length);
-    if(!DEMO_ANNOUNCEMENTS.length){
-      list.innerHTML='<div class="announcement-empty"><div class="announcement-empty-icon">✧</div><strong>'+(window.demoAnnouncementsLoadError?'Не удалось загрузить объявления':'Пока без новых объявлений')+'</strong><span>'+(window.demoAnnouncementsLoadError?'Проверьте, что announcements.json опубликован в корне репозитория и доступен по GitHub Pages.':'Добавьте объявления в файл announcements.json в репозитории GitHub.')+'</span></div>';
-      return;
-    }
-    list.innerHTML=DEMO_ANNOUNCEMENTS.map(function(a){
-      var image=safeAnnouncementImage(a.image||'');
-      var imageStyle=image?"background-image:url('"+image.replace(/[\\'()]/g,'')+"')":"";
-      return '<article class="announcement-card '+(image?'has-image':'')+'" style="'+imageStyle+'"><div class="announcement-card-top"><span class="announcement-tag">'+esc(a.tag||'ИНФОРМАЦИЯ')+'</span><span class="announcement-date">'+esc(a.date||'')+'</span></div><h3>'+esc(a.title||'')+'</h3><p>'+esc(a.text||'')+'</p></article>';
-    }).join('');
-  }
-  loadDemoAnnouncements();
-  setInterval(loadDemoAnnouncements, 5*60*1000);
-
-  function formatSeconds(totalSeconds){
-    totalSeconds=Math.max(0,Math.floor(totalSeconds));
-    var h=Math.floor(totalSeconds/3600),m=Math.floor((totalSeconds%3600)/60),sec=totalSeconds%60;
-    return (h?String(h).padStart(2,'0')+':':'')+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
-  }
-
   async function enterKioskLive(){
     if(!state.parsed){
       try{
@@ -2676,7 +2488,7 @@ html.demo-kiosk .announcement-count { background:#292631; color:#d4cfdf; }
 
     kioskLive = true;
     kioskTouchedSinceEntry = false;
-    kioskGroupIdx = chooseKioskGroupIndex();
+    kioskGroupIdx = 0;
     state.browseMode = 'group';
     state.selectedGroup = state.parsed.groups[kioskGroupIdx];
     var today = WEEKDAY_INDEX[new Date().getDay()];
@@ -2702,85 +2514,72 @@ html.demo-kiosk .announcement-count { background:#292631; color:#d4cfdf; }
   // Single watcher covers both halves: waiting on the upload screen for the
   // idle timeout to trigger kiosk-live, and — once live — deciding when to
   // roll on to the next group.
-  setInterval(function(){
-    var idleMs = Date.now() - lastInteractionAt;
-    if(!kioskLive){
-      if(!prefs.demoEnabled) return;
-      if(!$('screen-upload').classList.contains('active')) return;
-      if(idleMs < IDLE_DEMO_MS) return;
-      enterKioskLive();
-      return;
-    }
-    if(!prefs.demoEnabled){ kioskLive = false; return; }
-    var threshold = kioskTouchedSinceEntry ? IDLE_DEMO_TOUCHED_MS : IDLE_DEMO_MS;
-    if(idleMs < threshold) return;
-    advanceKioskGroup();
-  }, 15000);
+  // Original idle-switch watcher disabled on this board; one dedicated timer below controls rotation.
+
 
   document.addEventListener('pointerdown', function(){
     markInteraction();
   });
 
-  // ---------- boot ----------
-  (async function init(){
-    await loadPrefs();
-    await loadWeekCalendar();
-    currentType = prefs.scheduleType==='vo' ? 'vo' : 'spo';
-    applyTheme();
-    applyScheduleTypeTheme();
-    renderTypeSwitchUI();
-    applyDemoSwitch();
-    renderDemoAnnouncements();
-
-    // Demo mode boots straight into the latest schedule from GitHub.
-    document.documentElement.classList.add('demo-kiosk');
-    prefs.demoEnabled = true;
-    show('screen-upload');
-    await enterKioskLive();
-    if(!kioskLive){
-      // Keep the kiosk layout even if GitHub is temporarily unavailable.
-      // This avoids silently falling back to the old upload UI.
-      var boardError = document.getElementById('demo-board-error');
-      if(!boardError){
-        boardError=document.createElement('div');
-        boardError.id='demo-board-error';
-        boardError.style.cssText='position:fixed;z-index:10000;left:50%;top:18px;transform:translateX(-50%);max-width:min(760px,90vw);padding:16px 22px;border:1px solid #514b60;border-radius:16px;background:#24212c;color:#fff;font:600 14px/1.5 system-ui,sans-serif;box-shadow:0 12px 36px #0008;text-align:center';
-        document.body.appendChild(boardError);
-      }
-      boardError.textContent='Не удалось загрузить расписание с GitHub. Проверяется папка spo в репозитории. Стенд сохранит оформление и повторит попытку через 30 секунд.';
-      document.documentElement.classList.add('demo-kiosk');
-      show('screen-main');
-      renderDemoAnnouncements();
-      setTimeout(async function(){
-        try { ghSchedules = await fetchGithubSchedules(); await enterKioskLive(); }
-        catch(e) {}
-        if(kioskLive){ boardError.remove(); installDemoStatus(); updateDemoStatus(); }
-      },30000);
-      return;
+  // ===== Public schedule board boot: reuses the original parser and parity logic =====
+  var DEMO_ANNOUNCEMENTS = [];
+  var ANNOUNCEMENTS_URLS = [PAGE_URL+'announcements.json','https://raw.githubusercontent.com/PatRlza/schedule-akrilk/main/announcements.json'];
+  function safeAnnouncementImage(value){
+    if(!value || typeof value!=='string') return '';
+    if(/^https:\/\//i.test(value)) return value;
+    return PAGE_URL+value.replace(/^\.\//,'').replace(/^\//,'');
+  }
+  async function loadDemoAnnouncements(){
+    var data=null;
+    for(var i=0;i<ANNOUNCEMENTS_URLS.length;i++){
+      try{var r=await fetch(ANNOUNCEMENTS_URLS[i]+'?v='+Date.now(),{cache:'no-store'});if(!r.ok)continue;data=await r.json();break;}catch(e){}
     }
-    window.demoLastSwitchAt = Date.now();
-    installDemoStatus();
-    updateDemoStatus();
-    setInterval(updateDemoStatus, 1000);
-    setInterval(function(){
-      if(!kioskLive || !state.parsed || !state.parsed.groups.length) return;
-      var nextIndex = chooseKioskGroupIndex();
-      window.demoLastSwitchAt = Date.now();
-      if(nextIndex !== kioskGroupIdx){
-        kioskGroupIdx = nextIndex;
-        state.selectedGroup = state.parsed.groups[kioskGroupIdx];
-        state.viewedDay = resolveTodayViewedDay();
-        renderMain();
-      }
-    }, 10*60*1000);
-    // Refresh the active-group choice periodically as classes begin/end.
-    setInterval(function(){
-      if(!kioskLive || !state.parsed || !state.parsed.groups.length) return;
-      var idx = chooseKioskGroupIndex();
-      if(idx !== kioskGroupIdx){ kioskGroupIdx = idx; window.demoLastSwitchAt = Date.now(); state.selectedGroup = state.parsed.groups[idx]; state.viewedDay = resolveTodayViewedDay(); renderMain(); }
-    }, 30*1000);
+    DEMO_ANNOUNCEMENTS=Array.isArray(data)?data:(data&&Array.isArray(data.announcements)?data.announcements:[]);
+    var list=$('announcement-list'),count=$('announcement-count');if(!list)return;
+    if(count)count.textContent=String(DEMO_ANNOUNCEMENTS.length);
+    if(!DEMO_ANNOUNCEMENTS.length){list.innerHTML='<div class="announcement-empty"><strong>'+(data===null?'Объявления пока недоступны':'Пока без новых объявлений')+'</strong><span>'+(data===null?'Проверьте публикацию announcements.json в корне репозитория.':'Добавьте объявления в announcements.json.')+'</span></div>';return;}
+    list.innerHTML=DEMO_ANNOUNCEMENTS.map(function(a){var img=safeAnnouncementImage(a.image||'');var bg=img?"background-image:url('"+img.replace(/[\\'()]/g,'')+"')":"";return '<article class="announcement-card '+(img?'has-image':'')+'" style="'+bg+'"><div class="announcement-card-top"><span class="announcement-tag">'+esc(a.tag||'ИНФОРМАЦИЯ')+'</span><span class="announcement-date">'+esc(a.date||'')+'</span></div><h3>'+esc(a.title||'')+'</h3><p>'+esc(a.text||'')+'</p></article>';}).join('');
+  }
+  function updateBoardStatus(){
+    var now=new Date(),minute=now.getHours()*60+now.getMinutes();
+    var card=$('board-status');if(!card)return;
+    var day=resolveTodayViewedDay(),lessons=state.parsed&&state.selectedGroup?((state.parsed.byGroup[state.selectedGroup]||{})[day]||[]):[];
+    lessons=annotateParity(lessons).filter(function(l){return !l.isGhost&&l.startMin!=null&&l.endMin!=null;}).sort(function(a,b){return a.startMin-b.startMin;});
+    var active=lessons.find(function(l){return l.startMin<=minute&&minute<l.endMin;}),upcoming=lessons.find(function(l){return l.startMin>minute;});
+    if(active){$('board-status-main').textContent='Идёт занятие';$('board-status-sub').textContent=active.subject+' · '+(active.room||'аудитория не указана');$('board-status-time').textContent=active.startLabel+'–'+active.endLabel;}
+    else if(upcoming){$('board-status-main').textContent='Следующее занятие';$('board-status-sub').textContent=upcoming.subject+' · '+(upcoming.room||'аудитория не указана');$('board-status-time').textContent='Начало в '+upcoming.startLabel;}
+    else{$('board-status-main').textContent=minute>=710&&minute<770?'Обед':'Занятия закончились';$('board-status-sub').textContent=minute>=710&&minute<770?'Перерыв с 11:50 до 12:50':'На сегодня пар больше нет';$('board-status-time').textContent='';}
+  }
+  async function boardLoadSchedule(){
+    try{
+      currentType='spo';
+      ghSchedules=await fetchGithubSchedules();
+      if(!ghSchedules.length)throw new Error('В папке spo нет файлов .xls/.xlsx');
+      var f=ghSchedules[0],res=await fetch(f.url,{cache:'no-store'});if(!res.ok)throw new Error('Не удалось скачать '+f.name);
+      var wb=XLSX.read(new Uint8Array(await res.arrayBuffer()),{type:'array'});
+      state.parsed=parseWorkbook(wb);state.fileName=f.name;
+      if(!state.parsed||!state.parsed.groups||!state.parsed.groups.length)throw new Error('В Excel не найдены группы');
+      kioskGroupIdx=chooseKioskGroupIndex();state.browseMode='group';state.selectedGroup=state.parsed.groups[kioskGroupIdx];state.viewMode='day';state.viewedDay=resolveTodayViewedDay();
+      prefs.demoEnabled=true;kioskLive=true;window.demoLastSwitchAt=Date.now();
+      renderMain();show('screen-main');startTicking();
+      $('content').insertAdjacentHTML('afterbegin','<div id="board-source" style="font-size:11px;color:#898394;margin:0 0 12px 3px">Актуальный файл: '+esc(f.name)+'</div>');
+      updateBoardStatus();setInterval(updateBoardStatus,1000);
+      setInterval(async function(){try{if(!kioskLive||!state.parsed||!state.parsed.groups.length)return;var idx=chooseKioskGroupIndex();if(idx!==kioskGroupIdx){kioskGroupIdx=idx;state.selectedGroup=state.parsed.groups[idx];state.viewedDay=resolveTodayViewedDay();window.demoLastSwitchAt=Date.now();renderMain();updateBoardStatus();}}catch(e){}},10*60*1000);
+      setInterval(function(){loadDemoAnnouncements();},5*60*1000);
+    }catch(e){
+      show('screen-main');
+      $('content').innerHTML='<div style="max-width:760px;margin:10vh auto;padding:28px;border:1px solid #403947;border-radius:20px;background:#211f29;color:#f5f2fa"><h2 style="margin-top:0">Не удалось загрузить расписание</h2><p>'+esc(e&&e.message?e.message:'Ошибка загрузки')+'</p><p style="color:#aaa4b7">Проверьте, что актуальный Excel лежит в папке <b>spo</b> репозитория. Стенд повторит попытку автоматически.</p></div>';
+      setTimeout(boardLoadSchedule,30000);
+    }
+  }
+  // Replace the normal upload-first boot: the public board opens straight into the schedule.
+  (async function initBoard(){
+    document.documentElement.classList.add('demo-kiosk');
+    await loadPrefs();await loadWeekCalendar();currentType='spo';
+    prefs.demoEnabled=true;applyTheme();applyScheduleTypeTheme();renderTypeSwitchUI();
+    loadDemoAnnouncements();
+    await boardLoadSchedule();
   })();
-
 })();
 </script>
 </body>
