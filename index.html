@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Расписание</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%234B4ADB'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round' transform='translate(11 11) scale(1.75)'%3E%3Crect x='3' y='4' width='18' height='18' rx='3'/%3E%3Cpath d='M3 9h18M8 4v5'/%3E%3Cpath d='M7.5 14h2M7.5 17h2M11.5 14h2M11.5 17h2M15.5 14h2M15.5 17h2'/%3E%3C/g%3E%3C/svg%3E">
+<meta name="theme-color" content="#4B4ADB">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Mono:wght@500&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -461,11 +463,16 @@
     display:flex;flex-direction:column;gap:8px;max-height:0;opacity:0;overflow:hidden;margin-top:0;
     transition:max-height .25s ease, opacity .2s ease, margin-top .25s ease;
   }
-  .lesson.expanded .lesson-actions{max-height:96px;opacity:1;margin-top:8px;}
+  .lesson.expanded .lesson-actions{max-height:220px;opacity:1;margin-top:8px;}
   .lesson-teacher-full{
     font-size:12px;font-weight:600;color:var(--text-secondary);line-height:1.3;
   }
   .lesson-actions-btns{display:flex;gap:8px;}
+  .lesson-room-info{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--text-secondary);line-height:1.35;}
+  .lesson-room-info .lr-room{font-weight:600;color:var(--text);}
+  .app-ico{display:inline-flex;align-items:center;justify-content:center;color:var(--primary);vertical-align:middle;}
+  .app-ico svg{width:22px;height:22px;}
+  .day-tab.active .app-ico{color:var(--on-primary);}
   .lesson-action-btn{
     flex:1;border:none;border-radius:100px;background:var(--surface-container-high);color:var(--text);
     font-size:12px;font-weight:600;padding:9px 10px;display:flex;align-items:center;justify-content:center;gap:6px;
@@ -837,6 +844,10 @@
     'ЧЕТВЕРГ':'Чт','ПЯТНИЦА':'Пт','СУББОТА':'Сб','ВОСКРЕСЕНЬЕ':'Вс'
   };
   // JS Date.getDay() -> canonical day name (used to find "today")
+  // Мини-иконка приложения (вместо «Вс» на вкладке информации)
+  var APP_ICON_HTML = '<span class="app-ico" aria-label="Информация"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 4v5"/><path d="M7.5 14h2M7.5 17h2M11.5 14h2M11.5 17h2M15.5 14h2M15.5 17h2"/></svg></span>';
+  // Кнопки «Будильник» и «Календарь» пока скрыты (код оставлен — вернутся в Android-приложении).
+  var SHOW_LESSON_ACTION_BUTTONS = false;
   var WEEKDAY_INDEX = {1:'ПОНЕДЕЛЬНИК',2:'ВТОРНИК',3:'СРЕДА',4:'ЧЕТВЕРГ',5:'ПЯТНИЦА',6:'СУББОТА',0:'ВОСКРЕСЕНЬЕ'};
 
   // ---------- week parity (some slots alternate subjects week to week) ----------
@@ -1766,7 +1777,7 @@
       var active = d===state.viewedDay;
       var isToday = d===today;
       return '<button class="day-tab'+(active?' active':'')+'" data-day="'+esc(d)+'">'+
-        (DAY_SHORT[d]||d)+(isToday?'<span class="dot"></span>':'')+
+        (d==='ВОСКРЕСЕНЬЕ' ? APP_ICON_HTML : (DAY_SHORT[d]||d))+(isToday?'<span class="dot"></span>':'')+
       '</button>';
     }).join('');
     wrap.querySelectorAll('.day-tab').forEach(function(btn){
@@ -1940,14 +1951,41 @@
       'END:VEVENT\r\nEND:VCALENDAR\r\n';
     return 'data:text/calendar;charset=utf-8,'+encodeURIComponent(ics);
   }
+  // Корпус и этаж по номеру аудитории: «У-409» -> учебный блок, 4 этаж.
+  // Буква в начале: У — учебный блок, Л — лабораторный, С — спортзал.
+  // Если буквы нет — это учебный блок (с пометкой, что буква не указана).
+  function describeRoom(raw){
+    var m = (raw||'').toString().trim().match(/^([А-Яа-яЁё]{1,2})?[\s.\-]*(\d+)/);
+    if(!m) return null;
+    var letter = m[1] ? m[1].toUpperCase() : '';
+    var num = m[2];
+    var blocks = { 'У':'Учебный блок', 'Л':'Лабораторный блок', 'СЗ':'Спортзал', 'С':'Спортзал' };
+    var block;
+    if(!letter) block = 'Учебный блок (буква не указана)';
+    else block = blocks[letter] || ('Корпус «'+letter+'»');
+    return { room: raw.toString().trim(), block: block, floor: num.charAt(0) };
+  }
+  function roomInfoHtml(roomStr){
+    if(!roomStr) return '';
+    var rooms = roomStr.split(',').map(function(x){ return x.trim(); }).filter(Boolean);
+    var parts = [];
+    rooms.forEach(function(r){
+      var d = describeRoom(r);
+      if(!d) return;
+      parts.push('<div><span class="lr-room">'+esc(d.room)+'</span> — '+esc(d.block)+'<br>'+esc(d.floor)+' этаж</div>');
+    });
+    return parts.length ? '<div class="lesson-room-info">'+parts.join('')+'</div>' : '';
+  }
   function lessonActionsHtml(day, l){
     var isAndroid = /Android/i.test(navigator.userAgent);
-    var alarmHref = isAndroid ? buildAlarmHref(l) : null;
-    var calHref = buildCalendarHref(day, l);
+    var alarmHref = (SHOW_LESSON_ACTION_BUTTONS && isAndroid) ? buildAlarmHref(l) : null;
+    var calHref = SHOW_LESSON_ACTION_BUTTONS ? buildCalendarHref(day, l) : null;
     var fullName = l.teacher ? getTeacherFullName(l.teacher) : null;
-    if(!alarmHref && !calHref && !fullName) return '';
+    var roomHtml = roomInfoHtml(l.room);
+    if(!alarmHref && !calHref && !fullName && !roomHtml) return '';
     return '<div class="lesson-actions">'+
       (fullName? '<div class="lesson-teacher-full">'+esc(fullName)+'</div>' : '')+
+      roomHtml+
       (alarmHref || calHref ? '<div class="lesson-actions-btns">'+
         (alarmHref? '<button type="button" class="lesson-action-btn" data-alarm-href="'+esc(alarmHref)+'">'+ALARM_ICON+'Будильник</button>' : '')+
         (calHref? '<button type="button" class="lesson-action-btn" data-cal-href="'+esc(calHref)+'">'+CAL_ICON+'Календарь</button>' : '')+
