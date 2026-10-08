@@ -675,6 +675,22 @@ html.demo-kiosk .board-status{margin-top:auto;padding:18px;border-radius:19px;ba
 .board-status-time{font-family:'Roboto Mono',monospace;font-size:clamp(15px,1.1vw,20px);font-weight:700;color:#5ed9c7;margin-top:10px;}
 .board-status-foot{font-size:11px;color:#8f899d;margin-top:12px;}
 
+
+/* Corrected demo board details */
+html.demo-kiosk .toggles-row{display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:8px!important}
+html.demo-kiosk #week-badge{display:none!important}
+html.demo-kiosk .lesson-time{font-size:clamp(14px,1.05vw,19px)!important;line-height:1.35;font-weight:700}
+html.demo-kiosk .board-clock{display:flex;align-items:center;gap:16px;padding:14px;border-radius:20px;background:#1d1b25;border:1px solid #302c39}
+html.demo-kiosk .board-clock-face{position:relative;flex:0 0 clamp(82px,6.7vw,118px);width:clamp(82px,6.7vw,118px);height:clamp(82px,6.7vw,118px);border-radius:50%;background:#f8f7fb;color:#191821;box-shadow:0 4px 15px #0004,inset 0 0 0 4px #e8e6ee}
+html.demo-kiosk .clock-number{position:absolute;font-weight:800;font-size:clamp(12px,.9vw,16px);transform:translate(-50%,-50%)}
+html.demo-kiosk .n12{left:50%;top:12%} html.demo-kiosk .n3{left:86%;top:50%} html.demo-kiosk .n6{left:50%;top:88%} html.demo-kiosk .n9{left:14%;top:50%}
+html.demo-kiosk .clock-hand{position:absolute;left:50%;bottom:50%;transform-origin:50% 100%;border-radius:5px;background:#262330} html.demo-kiosk .clock-hand.hour{height:25%;width:4px;transform:translateX(-50%) rotate(35deg)} html.demo-kiosk .clock-hand.minute{height:36%;width:3px;transform:translateX(-50%) rotate(130deg)} html.demo-kiosk .clock-pin{position:absolute;left:50%;top:50%;width:8px;height:8px;border-radius:50%;background:#504b5d;transform:translate(-50%,-50%)}
+html.demo-kiosk .board-clock-info{min-width:0} html.demo-kiosk .board-clock-label,.board-parity-title{font-size:11px;font-weight:800;letter-spacing:.09em;color:#aaa4b7;margin-bottom:8px} html.demo-kiosk .board-clock-time{font-size:clamp(23px,1.8vw,32px);font-weight:800;color:#f5f2fa;font-variant-numeric:tabular-nums} html.demo-kiosk .board-clock-date{margin-top:5px;color:#aaa4b7;font-size:clamp(11px,.8vw,14px)}
+html.demo-kiosk .board-parity{padding:16px;border-radius:20px;background:#1d1b25;border:1px solid #302c39;color:#f5f2fa} html.demo-kiosk .board-parity-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 12px;margin-top:8px;border-radius:15px;background:#292631} html.demo-kiosk .board-parity-row small{display:block;color:#8f899d;font-size:10px;font-weight:800;margin-bottom:4px} html.demo-kiosk .board-parity-row strong{font-size:clamp(12px,.85vw,15px)} html.demo-kiosk .board-parity-row>span{color:#b6b0c1;font-size:11px;white-space:nowrap} html.demo-kiosk .board-parity p{font-size:11px;line-height:1.5;color:#8f899d;margin:12px 0 0}
+#screen-pick.active,#screen-pick-teacher.active{position:fixed!important;z-index:1000!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:24px!important;background:#0e0d13ed!important;backdrop-filter:blur(8px)}
+#screen-pick .picker,#screen-pick-teacher .picker{width:min(680px,92vw)!important;height:min(78vh,760px)!important;max-height:78vh!important;flex:none!important;overflow:hidden!important;border:1px solid #393542!important;border-radius:24px!important;background:#1d1b25!important;box-shadow:0 24px 90px #0009!important}
+#screen-pick .picker-top,#screen-pick-teacher .picker-top{flex:none!important;padding:22px 24px 12px!important} #screen-pick .group-list,#screen-pick-teacher .group-list{flex:1!important;min-height:0!important;overflow-y:auto!important;padding:0 16px 18px!important;overscroll-behavior:contain} #screen-pick .group-item,#screen-pick-teacher .group-item{min-height:54px!important}
+
 </style>
 </head>
 <body>
@@ -810,6 +826,8 @@ html.demo-kiosk .board-status{margin-top:auto;padding:18px;border-radius:19px;ba
       </div>
 
       <div class="day-tabs" id="day-tabs"></div>
+      <section class="board-clock" aria-label="Текущее время"><div class="board-clock-face"><span class="clock-number n12">12</span><span class="clock-number n3">3</span><span class="clock-number n6">6</span><span class="clock-number n9">9</span><span class="clock-hand hour"></span><span class="clock-hand minute"></span><span class="clock-pin"></span></div><div class="board-clock-info"><div class="board-clock-label">ТЕКУЩЕЕ ВРЕМЯ</div><div id="board-clock-time" class="board-clock-time">--:--:--</div><div id="board-clock-date" class="board-clock-date">—</div></div></section>
+      <section class="board-parity" id="board-parity"><div class="board-parity-title">ЧЁТНОСТЬ НЕДЕЛЬ</div><div class="board-parity-row"><div><small>СЕЙЧАС</small><strong id="board-current-week">—</strong></div><span id="board-current-dates">—</span></div><div class="board-parity-row"><div><small>СЛЕДУЮЩАЯ НЕДЕЛЯ</small><strong id="board-next-week">—</strong></div><span id="board-next-dates">—</span></div><p id="board-parity-source">Источник: график недель колледжа.</p></section>
       <section id="board-status" class="board-status"><div class="board-status-label">СЕЙЧАС</div><div id="board-status-main" class="board-status-main">Загружаем расписание…</div><div id="board-status-sub" class="board-status-sub">Подключение к GitHub</div><div id="board-status-time" class="board-status-time"></div><div class="board-status-foot">Автосмена группы каждые 10 минут</div></section>
     </div>
 
@@ -2523,7 +2541,7 @@ html.demo-kiosk .board-status{margin-top:auto;padding:18px;border-radius:19px;ba
 
   // ===== Public schedule board boot: reuses the original parser and parity logic =====
   var DEMO_ANNOUNCEMENTS = [];
-  var ANNOUNCEMENTS_URLS = [PAGE_URL+'announcements.json','https://raw.githubusercontent.com/PatRlza/schedule-akrilk/main/announcements.json'];
+  var ANNOUNCEMENTS_URLS = ['https://raw.githubusercontent.com/PatRlza/schedule-akrilk/main/announcements.json',PAGE_URL+'announcements.json','https://raw.githubusercontent.com/PatRlza/schedule-akrilk/refs/heads/main/announcements.json'];
   function safeAnnouncementImage(value){
     if(!value || typeof value!=='string') return '';
     if(/^https:\/\//i.test(value)) return value;
@@ -2534,11 +2552,11 @@ html.demo-kiosk .board-status{margin-top:auto;padding:18px;border-radius:19px;ba
     for(var i=0;i<ANNOUNCEMENTS_URLS.length;i++){
       try{var r=await fetch(ANNOUNCEMENTS_URLS[i]+'?v='+Date.now(),{cache:'no-store'});if(!r.ok)continue;data=await r.json();break;}catch(e){}
     }
-    DEMO_ANNOUNCEMENTS=Array.isArray(data)?data:(data&&Array.isArray(data.announcements)?data.announcements:[]);
+    DEMO_ANNOUNCEMENTS=Array.isArray(data)?data:(data&&(Array.isArray(data.announcements)?data.announcements:Array.isArray(data.items)?data.items:Array.isArray(data.posts)?data.posts:[]));
     var list=$('announcement-list'),count=$('announcement-count');if(!list)return;
     if(count)count.textContent=String(DEMO_ANNOUNCEMENTS.length);
     if(!DEMO_ANNOUNCEMENTS.length){list.innerHTML='<div class="announcement-empty"><strong>'+(data===null?'Объявления пока недоступны':'Пока без новых объявлений')+'</strong><span>'+(data===null?'Проверьте публикацию announcements.json в корне репозитория.':'Добавьте объявления в announcements.json.')+'</span></div>';return;}
-    list.innerHTML=DEMO_ANNOUNCEMENTS.map(function(a){var img=safeAnnouncementImage(a.image||'');var bg=img?"background-image:url('"+img.replace(/[\\'()]/g,'')+"')":"";return '<article class="announcement-card '+(img?'has-image':'')+'" style="'+bg+'"><div class="announcement-card-top"><span class="announcement-tag">'+esc(a.tag||'ИНФОРМАЦИЯ')+'</span><span class="announcement-date">'+esc(a.date||'')+'</span></div><h3>'+esc(a.title||'')+'</h3><p>'+esc(a.text||'')+'</p></article>';}).join('');
+    list.innerHTML=DEMO_ANNOUNCEMENTS.map(function(a){var img=safeAnnouncementImage(a.image||a.background||a.imageUrl||a.backgroundImage||'');var bg=img?"background-image:url('"+img.replace(/[\\'()]/g,'')+"')":"";return '<article class="announcement-card '+(img?'has-image':'')+'" style="'+bg+'"><div class="announcement-card-top"><span class="announcement-tag">'+esc(a.tag||'ИНФОРМАЦИЯ')+'</span><span class="announcement-date">'+esc(a.date||'')+'</span></div><h3>'+esc(a.title||'')+'</h3><p>'+esc(a.text||'')+'</p></article>';}).join('');
   }
   function updateBoardStatus(){
     var now=new Date(),minute=now.getHours()*60+now.getMinutes();
@@ -2550,6 +2568,25 @@ html.demo-kiosk .board-status{margin-top:auto;padding:18px;border-radius:19px;ba
     else if(upcoming){$('board-status-main').textContent='Следующее занятие';$('board-status-sub').textContent=upcoming.subject+' · '+(upcoming.room||'аудитория не указана');$('board-status-time').textContent='Начало в '+upcoming.startLabel;}
     else{$('board-status-main').textContent=minute>=710&&minute<770?'Обед':'Занятия закончились';$('board-status-sub').textContent=minute>=710&&minute<770?'Перерыв с 11:50 до 12:50':'На сегодня пар больше нет';$('board-status-time').textContent='';}
   }
+  function chooseKioskGroupIndex(){
+    var groups=(state.parsed&&state.parsed.groups)||[]; if(!groups.length)return 0;
+    var now=new Date(),day=WEEKDAY_INDEX[now.getDay()],minute=now.getHours()*60+now.getMinutes(),next=-1,active=-1;
+    groups.forEach(function(g,i){var ls=annotateParity(((state.parsed.byGroup[g]||{})[day]||[])).filter(function(l){return !l.isGhost&&l.startMin!=null&&l.endMin!=null;});
+      if(active<0&&ls.some(function(l){return l.startMin<=minute&&minute<l.endMin;}))active=i;
+      if(next<0&&ls.some(function(l){return l.startMin>minute;}))next=i;});
+    if(active>=0)return active;if(next>=0)return next;return Math.floor(Date.now()/600000)%groups.length;
+  }
+  function updateBoardClock(){var n=new Date(),t=$('board-clock-time'),d=$('board-clock-date');if(t)t.textContent=n.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit'});if(d)d.textContent=n.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});}
+  function updateBoardParity(){
+    var now=new Date(),monday=new Date(now);monday.setDate(now.getDate()-((now.getDay()+6)%7));
+    var nextMonday=new Date(monday);nextMonday.setDate(monday.getDate()+7);
+    var cur=getWeekInfoForDate(monday),nxt=getWeekInfoForDate(nextMonday);
+    function label(w){return (w&&w.number!=null?w.number:(w&&w.n!=null?w.n:'—'))+' неделя · '+(w&&w.parity?w.parity:(w&&w.isEven?'чётная':'нечётная'));}
+    function range(d){var e=new Date(d);e.setDate(e.getDate()+6);return d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'})+' – '+e.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'});}
+    var a=$('board-current-week'),b=$('board-next-week'),c=$('board-current-dates'),d=$('board-next-dates');if(a)a.textContent=label(cur);if(b)b.textContent=label(nxt);if(c)c.textContent=range(monday);if(d)d.textContent=range(nextMonday);
+    var src=$('board-parity-source');if(src)src.textContent=weekCalendar?'Источник: график учебных недель колледжа.':'Источник: календарный расчёт; график weeks.json не загружен.';
+  }
+
   async function boardLoadSchedule(){
     try{
       currentType='spo';
@@ -2562,8 +2599,8 @@ html.demo-kiosk .board-status{margin-top:auto;padding:18px;border-radius:19px;ba
       kioskGroupIdx=chooseKioskGroupIndex();state.browseMode='group';state.selectedGroup=state.parsed.groups[kioskGroupIdx];state.viewMode='day';state.viewedDay=resolveTodayViewedDay();
       prefs.demoEnabled=true;kioskLive=true;window.demoLastSwitchAt=Date.now();
       renderMain();show('screen-main');startTicking();
-      $('content').insertAdjacentHTML('afterbegin','<div id="board-source" style="font-size:11px;color:#898394;margin:0 0 12px 3px">Актуальный файл: '+esc(f.name)+'</div>');
-      updateBoardStatus();setInterval(updateBoardStatus,1000);
+      if(!$('board-source'))$('content').insertAdjacentHTML('afterbegin','<div id="board-source" style="font-size:11px;color:#898394;margin:0 0 12px 3px">Актуальный файл: '+esc(f.name)+'</div>');
+      updateBoardStatus();updateBoardClock();updateBoardParity();setInterval(updateBoardStatus,1000);setInterval(updateBoardClock,1000);setInterval(updateBoardParity,60000);
       setInterval(async function(){try{if(!kioskLive||!state.parsed||!state.parsed.groups.length)return;var idx=chooseKioskGroupIndex();if(idx!==kioskGroupIdx){kioskGroupIdx=idx;state.selectedGroup=state.parsed.groups[idx];state.viewedDay=resolveTodayViewedDay();window.demoLastSwitchAt=Date.now();renderMain();updateBoardStatus();}}catch(e){}},10*60*1000);
       setInterval(function(){loadDemoAnnouncements();},5*60*1000);
     }catch(e){
