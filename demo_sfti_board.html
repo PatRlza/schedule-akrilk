@@ -726,10 +726,10 @@ html[data-theme="dark"].demo-kiosk .announcement-rail { background:var(--surface
 /* ===== Final 16:9 kiosk board: dark three-column layout ===== */
 html.demo-kiosk, html.demo-kiosk body { background:#121116 !important; color:#f4f1fa; }
 html.demo-kiosk #app { background:#121116; }
-html.demo-kiosk #screen-main.active { grid-template-columns:minmax(300px, 31.5%) minmax(360px, 1fr) minmax(330px, 31.5%); gap:0; background:#121116 !important; }
-html.demo-kiosk .header-sticky { background:#1c1a22 !important; color:#f4f1fa; border-right:0; box-shadow:none; }
-html.demo-kiosk .content { background:#121116; color:#f4f1fa; padding:clamp(16px,1.8vw,30px); }
-html.demo-kiosk .announcement-rail { background:#121116 !important; border-left:0; box-shadow:none; padding:clamp(18px,2vw,32px); gap:18px; }
+html.demo-kiosk #screen-main.active { display:grid !important; grid-template-columns:minmax(310px, 34%) minmax(360px, 32%) minmax(330px, 34%); gap:0; width:100%; height:100vh; min-height:0; overflow:hidden; background:#121116 !important; }
+html.demo-kiosk .header-sticky { min-width:0; min-height:0; height:100%; overflow-y:auto; background:#1c1a22 !important; color:#f4f1fa; border-right:0; box-shadow:none; }
+html.demo-kiosk .content { min-width:0; min-height:0; height:100%; overflow-y:auto; background:#121116; color:#f4f1fa; padding:clamp(16px,1.8vw,30px); }
+html.demo-kiosk .announcement-rail { min-width:0; min-height:0; height:100%; overflow-y:auto; background:#121116 !important; border-left:0; box-shadow:none; padding:clamp(18px,2vw,32px); gap:18px; }
 html.demo-kiosk .announcement-head h2 { color:#f7f4fc; }
 html.demo-kiosk .announcement-head p, html.demo-kiosk .announcement-eyebrow { color:#9893a5; }
 html.demo-kiosk .announcement-feature { display:none; }
@@ -750,8 +750,8 @@ html.demo-kiosk .announcement-empty strong { color:#f5f2fa; }
 html.demo-kiosk .announcement-empty span { color:#b0aabc; }
 html.demo-kiosk .announcement-foot { color:#8f899d; }
 html.demo-kiosk .announcement-count { background:#292631; color:#d4cfdf; }
-@media(max-width:1250px) { html.demo-kiosk #screen-main.active { grid-template-columns:minmax(255px,28%) minmax(330px,1fr) minmax(285px,29%); } html.demo-kiosk .announcement-rail { padding:16px; } }
-@media(max-width:900px) { html.demo-kiosk #screen-main.active { grid-template-columns:220px minmax(0,1fr); } html.demo-kiosk .announcement-rail { display:flex; grid-column:1 / -1; min-height:360px; } }
+@media(max-width:1250px) { html.demo-kiosk #screen-main.active { grid-template-columns:minmax(260px,31%) minmax(340px,1fr) minmax(285px,31%); } html.demo-kiosk .announcement-rail { padding:16px; } }
+@media(max-width:900px) { html.demo-kiosk #screen-main.active { display:grid !important; height:auto; min-height:100vh; overflow:visible; grid-template-columns:1fr; } html.demo-kiosk .header-sticky, html.demo-kiosk .content, html.demo-kiosk .announcement-rail { height:auto; overflow:visible; } html.demo-kiosk .announcement-rail { display:flex; grid-column:1 / -1; min-height:360px; } }
 @media(prefers-reduced-motion:reduce) { html.demo-kiosk .announcement-card { animation:none; } }
 
 </style>
@@ -2624,7 +2624,7 @@ html.demo-kiosk .announcement-count { background:#292631; color:#d4cfdf; }
       if(!response.ok) throw new Error('announcements_not_found');
       var data=await response.json();
       DEMO_ANNOUNCEMENTS=Array.isArray(data)?data:(Array.isArray(data.announcements)?data.announcements:[]);
-    }catch(e){ DEMO_ANNOUNCEMENTS=[]; }
+    }catch(e){ DEMO_ANNOUNCEMENTS=[]; window.demoAnnouncementsLoadError=true; }
     renderDemoAnnouncements();
   }
   function renderDemoAnnouncements(){
@@ -2632,7 +2632,7 @@ html.demo-kiosk .announcement-count { background:#292631; color:#d4cfdf; }
     if(!list) return;
     if(count) count.textContent=String(DEMO_ANNOUNCEMENTS.length);
     if(!DEMO_ANNOUNCEMENTS.length){
-      list.innerHTML='<div class="announcement-empty"><div class="announcement-empty-icon">✧</div><strong>Пока без новых объявлений</strong><span>Добавьте объявления в файл announcements.json в репозитории GitHub.</span></div>';
+      list.innerHTML='<div class="announcement-empty"><div class="announcement-empty-icon">✧</div><strong>'+(window.demoAnnouncementsLoadError?'Не удалось загрузить объявления':'Пока без новых объявлений')+'</strong><span>'+(window.demoAnnouncementsLoadError?'Проверьте, что announcements.json опубликован в корне репозитория и доступен по GitHub Pages.':'Добавьте объявления в файл announcements.json в репозитории GitHub.')+'</span></div>';
       return;
     }
     list.innerHTML=DEMO_ANNOUNCEMENTS.map(function(a){
