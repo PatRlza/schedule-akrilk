@@ -1,0 +1,39 @@
+name: Синхронизация расписания с сайта колледжа (через прокси)
+
+on:
+  schedule:
+    # Раз в 3 часа. GitHub может запускать с задержкой — это нормально.
+    - cron: '17 */3 * * *'
+  workflow_dispatch: {}   # ручной запуск кнопкой "Run workflow"
+
+permissions:
+  contents: write
+
+jobs:
+  sync-sfti:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Установить зависимости
+        run: python3 -m pip install "requests[socks]"
+
+      - name: Найти рабочий российский прокси и скачать расписание
+        id: sync
+        run: python3 .github/scripts/sync_sfti.py
+
+      - name: Закоммитить изменения
+        if: steps.sync.outputs.changed == 'true'
+        run: |
+          git config user.name "sfti-sync-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -- data/sfti.json
+          if git diff --staged --quiet; then
+            echo "Изменений в git нет — пропускаю коммит."
+          else
+            git commit -m "Обновление расписания с сайта колледжа"
+            git pull --rebase
+            git push
+          fi
