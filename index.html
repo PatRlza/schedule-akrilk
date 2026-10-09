@@ -150,7 +150,7 @@
     box-shadow:var(--shadow);
   }
   .onboard-mark svg{width:22px;height:22px;}
-  .onboard h1{display:none;font-size:22px;line-height:1.2;font-weight:700;margin:0;letter-spacing:-.2px;color:var(--text);}
+  .onboard h1{font-size:22px;line-height:1.2;font-weight:700;margin:0;letter-spacing:-.2px;color:var(--text);}
 
   .quick-continue{
     background:var(--accent-solid);border-radius:var(--radius-lg);padding:14px 16px;
@@ -343,14 +343,16 @@
     border-radius:100px;font-size:12px;font-weight:700;letter-spacing:.2px;color:var(--text-secondary);
   }
   .type-toggle-btn.active{background:var(--primary);color:var(--on-primary);}
-  @media (min-width:520px){ .onboard h1{display:block;} }
-  @media (max-width:400px){
-    .type-toggle{padding:2px;gap:1px;}
-    .type-toggle-btn{padding:0 8px;font-size:11.5px;letter-spacing:0;}
-  }
+  /* Вторая строка экрана входа: поиск + четыре раздела, всегда в один ряд и подстраиваются под ширину экрана */
+  .type-row{display:flex;align-items:center;gap:8px;}
+  .type-row .type-toggle{flex:1 1 auto;min-width:0;align-self:center;}
+  .type-row .type-toggle-btn{flex:1 1 0;min-width:0;padding:0 4px;white-space:nowrap;text-align:center;}
+  @media (max-width:400px){ .type-row .type-toggle-btn{font-size:11.5px;letter-spacing:0;} }
+  @media (max-width:340px){ .type-row{gap:6px;} .type-row .type-toggle-btn{font-size:10.5px;} }
 
   /* ---------- Поиск группы по всем расписаниям (экран входа) ---------- */
-  .icon-btn.search-open-btn{margin-left:auto;background:var(--surface);box-shadow:var(--shadow);}
+  .icon-btn.search-open-btn{width:34px;height:34px;flex-shrink:0;background:var(--surface);box-shadow:var(--shadow);}
+  .icon-btn.search-open-btn svg{width:18px;height:18px;}
   .icon-btn.search-open-btn.active{background:var(--primary);}
   .icon-btn.search-open-btn.active svg{color:var(--on-primary);}
   .onboard.searching{justify-content:flex-start;margin:0;}
@@ -655,7 +657,19 @@
   .sunday-info-tag{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;opacity:.8;margin-bottom:6px;}
   .sunday-info-main{font-size:19px;font-weight:700;line-height:1.3;margin-bottom:6px;}
   .sunday-info-sub{font-size:13.5px;line-height:1.5;opacity:.92;}
-  .sunday-info-card + .empty-state{padding-top:34px;}
+  .sunday-info-card + .empty-state, .ann-wrap + .empty-state{padding-top:34px;}
+  .ann-title{font-size:12px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--text-tertiary);padding:16px 4px 8px;}
+  .ann-card{
+    position:relative;isolation:isolate;overflow:hidden;border-radius:var(--radius-lg);padding:16px 18px;margin-bottom:10px;
+    color:#fff;box-shadow:var(--shadow);min-height:120px;
+    background:linear-gradient(115deg,#4B4ADB 0%,#2F6FB0 55%,#00897B 100%);background-size:cover;background-position:center;
+  }
+  .ann-card:after{content:"";position:absolute;z-index:-1;inset:0;background:linear-gradient(100deg,rgba(25,22,80,.80) 0%,rgba(25,22,80,.45) 100%);}
+  .ann-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;}
+  .ann-tag{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.85);}
+  .ann-date{font-size:11px;color:rgba(255,255,255,.75);}
+  .ann-card h3{margin:0 0 6px;font-size:17px;line-height:1.25;}
+  .ann-card p{margin:0;font-size:13.5px;line-height:1.5;white-space:pre-line;color:rgba(255,255,255,.95);}
 
   a{color:inherit;}
 </style>
@@ -671,21 +685,24 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 4v5"/><path d="M7.5 14h2M7.5 17h2M11.5 14h2M11.5 17h2M15.5 14h2M15.5 17h2"/></svg>
         </div>
         <h1>Расписание</h1>
+      </div>
+
+      <div class="type-row">
+        <button class="icon-btn search-open-btn" id="search-open-btn" aria-label="Поиск группы или преподавателя">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        </button>
         <div class="type-toggle">
           <button class="type-toggle-btn active" data-type="spo">СПО</button>
           <button class="type-toggle-btn" data-type="vo">ВО</button>
           <button class="type-toggle-btn" data-type="evening">Вечер</button>
           <button class="type-toggle-btn" data-type="mag">Маг</button>
         </div>
-        <button class="icon-btn search-open-btn" id="search-open-btn" aria-label="Поиск группы">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        </button>
       </div>
 
       <div id="search-panel" style="display:none;">
         <div class="search">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-          <input id="global-search" type="text" placeholder="Название группы, например ТМ34д" autocomplete="off" autocapitalize="characters">
+          <input id="global-search" type="text" placeholder="Группа или преподаватель, например ТМ34д" autocomplete="off" autocapitalize="characters">
         </div>
         <div class="search-status" id="search-status"></div>
         <div class="search-results" id="search-results"></div>
@@ -1052,6 +1069,61 @@
       }
       if($('screen-pick-teacher').classList.contains('active')) renderTeacherPicker();
     }catch(e){}
+  }
+
+  // ---------- объявления на вкладке воскресенья (announcements.json в корне репозитория) ----------
+  // Формат: массив объектов [{ "tag", "date", "title", "text", "image" }, ...];
+  // image — путь к фото внутри репозитория (например announcements/seal.jpg) или https-ссылка.
+  var announcements = [];
+  var annFetchedAt = 0;
+  var ANN_KEY = 'schedule-announcements-cache-v1';
+  function normalizeAnnouncements(data){
+    if(Array.isArray(data)) return data;
+    if(data && typeof data==='object'){
+      var arr = data.announcements || data.items || data.posts;
+      if(Array.isArray(arr)) return arr;
+      if(data.title || data.text) return [data];     // один объект без массива
+    }
+    return [];
+  }
+  async function loadAnnouncementsFromCache(){
+    var t = await kvGet(ANN_KEY);
+    if(!t) return;
+    try{ announcements = normalizeAnnouncements(JSON.parse(t)); }catch(e){}
+  }
+  async function refreshAnnouncements(){
+    annFetchedAt = Date.now();
+    try{
+      var ctrl = (typeof AbortController!=='undefined') ? new AbortController() : null;
+      var tm = ctrl ? setTimeout(function(){ ctrl.abort(); }, 10000) : null;
+      var res = await fetch('announcements.json?v='+Date.now(), { cache:'no-store', signal: ctrl? ctrl.signal : undefined });
+      if(tm) clearTimeout(tm);
+      if(!res.ok) return;
+      var text = await res.text();
+      var list = normalizeAnnouncements(JSON.parse(text));
+      var changed = JSON.stringify(list)!==JSON.stringify(announcements);
+      announcements = list;
+      kvSet(ANN_KEY, text);
+      if(changed && state.parsed && $('screen-main').classList.contains('active') && state.viewedDay==='ВОСКРЕСЕНЬЕ') renderContentDispatch(true);
+    }catch(e){ /* нет сети — остаётся копия из кеша */ }
+  }
+  function annImageUrl(v){
+    if(!v || typeof v!=='string') return '';
+    v = v.trim();
+    if(/^https:\/\//i.test(v)) return encodeURI(v).replace(/['"()\\]/g,'');
+    if(/^[a-z][a-z0-9+.-]*:/i.test(v) || v.indexOf('//')===0) return '';   // только https или файл из репозитория
+    return encodeURI(v.replace(/^\.?\//,'')).replace(/['"()\\]/g,'');
+  }
+  function announcementsHtml(){
+    if(!announcements.length) return '';
+    return '<div class="ann-wrap"><div class="ann-title">Объявления</div>'+announcements.map(function(a){
+      var img = annImageUrl(a.image || a.background || a.imageUrl || a.backgroundImage || '');
+      return '<article class="ann-card"'+(img? ' style="background-image:url(\''+img+'\')"' : '')+'>'+
+        '<div class="ann-top"><span class="ann-tag">'+esc(a.tag||'Объявление')+'</span>'+(a.date? '<span class="ann-date">'+esc(a.date)+'</span>' : '')+'</div>'+
+        (a.title? '<h3>'+esc(a.title)+'</h3>' : '')+
+        (a.text? '<p>'+esc(a.text)+'</p>' : '')+
+      '</article>';
+    }).join('')+'</div>';
   }
 
   var STORAGE_KEY = 'schedule-app-state-v1';
@@ -2017,6 +2089,7 @@
     wrap.querySelectorAll('.day-tab').forEach(function(btn){
       btn.addEventListener('click', function(){
         state.viewedDay = btn.getAttribute('data-day');
+        if(state.viewedDay==='ВОСКРЕСЕНЬЕ' && Date.now()-annFetchedAt > 5*60*1000) refreshAnnouncements();
         renderDayTabs();
         renderContentDispatch();
       });
@@ -2315,7 +2388,7 @@
 
   function emptyStateHtml(day){
     var title = DAY_TITLE[day]||day;
-    return (day==='ВОСКРЕСЕНЬЕ' ? sundayInfoHtml() : '')+'<div class="empty-state">'+
+    return (day==='ВОСКРЕСЕНЬЕ' ? sundayInfoHtml()+announcementsHtml() : '')+'<div class="empty-state">'+
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 4v5"/></svg>'+
       '<div class="es-title">'+title+' — пар нет</div>'+
       '<div class="es-sub">В расписании этой группы на '+title.toLowerCase()+' занятий не найдено.</div>'+
@@ -2858,17 +2931,24 @@
     var msg = ok.length ? ('Готово: '+total+' групп в разделах '+ok.map(function(k){ return SCHEDULE_TYPES[k].label; }).join(', ')+'.') : 'Не удалось загрузить расписания.';
     if(fromSaved.length) msg += ' Из сохранённой копии: '+fromSaved.join(', ')+'.';
     if(ok.length && missing.length) msg += ' Нет данных: '+missing.join(', ')+'.';
+    if(!sfti) msg += ' Преподавателей в поиске пока нет: данные с сайта колледжа не загружены.';
     box.textContent = msg;
   }
   function renderSearchResults(){
     var box = $('search-results');
     var q = normSearch($('global-search').value);
     if(!q){
-      box.innerHTML = '<div class="empty-note" style="grid-column:1/-1;">Начните вводить название группы — результаты появятся здесь</div>';
+      box.innerHTML = '<div class="empty-note" style="grid-column:1/-1;">Начните вводить группу или фамилию преподавателя — результаты появятся здесь</div>';
       return;
     }
     var items = [];
+    var teacherItems = [];
     var order = Object.keys(SCHEDULE_TYPES);
+    searchTeacherNames().forEach(function(n){
+      var full = getTeacherFullName(n) || '';
+      if(normSearch(n).indexOf(q)>=0 || (full && normSearch(full).indexOf(q)>=0)) teacherItems.push({ name:n, full:full });
+    });
+    teacherItems.sort(function(a,b){ return a.name.localeCompare(b.name,'ru'); });
     order.forEach(function(type){
       var e = searchIndex[type];
       if(!e) return;
@@ -2876,17 +2956,64 @@
         if(normSearch(g).indexOf(q)>=0) items.push({ type:type, group:g });
       });
     });
-    if(!items.length){
+    if(!items.length && !teacherItems.length){
       box.innerHTML = '<div class="empty-note" style="grid-column:1/-1;">'+(searchLoading ? 'Ищу…' : 'Ничего не нашлось. Проверьте написание.')+'</div>';
       return;
     }
     items.sort(function(a,b){ return a.group.localeCompare(b.group,'ru') || order.indexOf(a.type)-order.indexOf(b.type); });
-    box.innerHTML = items.slice(0,60).map(function(it){
-      return '<button class="group-item" data-type="'+esc(it.type)+'" data-group="'+esc(it.group)+'">'+
-        '<span class="g-name">'+esc(it.group)+'</span>'+
-        '<span class="g-hint">'+esc(SCHEDULE_TYPES[it.type].label)+'</span>'+
-      '</button>';
-    }).join('');
+    var both = items.length && teacherItems.length;
+    var html = '';
+    if(items.length){
+      if(both) html += '<div class="block-label" style="grid-column:1/-1;padding:4px 4px 0;">Группы</div>';
+      html += items.slice(0,40).map(function(it){
+        return '<button class="group-item" data-type="'+esc(it.type)+'" data-group="'+esc(it.group)+'">'+
+          '<span class="g-name">'+esc(it.group)+'</span>'+
+          '<span class="g-hint">'+esc(SCHEDULE_TYPES[it.type].label)+'</span>'+
+        '</button>';
+      }).join('');
+    }
+    if(teacherItems.length){
+      if(both) html += '<div class="block-label" style="grid-column:1/-1;padding:10px 4px 0;">Преподаватели</div>';
+      html += teacherItems.slice(0,24).map(function(t){
+        return '<button class="group-item" data-teacher="'+esc(t.name)+'">'+
+          '<span class="g-name">'+esc(t.name)+'</span>'+
+          '<span class="g-hint">'+esc(t.full || 'преподаватель')+'</span>'+
+        '</button>';
+      }).join('');
+    }
+    box.innerHTML = html;
+  }
+  var _sftiNamesFor = null, _sftiNames = [];
+  function searchTeacherNames(){
+    if(!sfti || !Array.isArray(sfti.rows)) return [];
+    if(_sftiNamesFor===sfti) return _sftiNames;
+    var seen = {};
+    sfti.rows.forEach(function(r){ var n = normSftiTeacher(r.teacher_name); if(n) seen[n] = true; });
+    _sftiNames = Object.keys(seen);
+    _sftiNamesFor = sfti;
+    return _sftiNames;
+  }
+  function openTeacherFromSearch(name){
+    var type = searchIndex[currentType] ? currentType : Object.keys(searchIndex)[0];
+    if(!type){ $('search-status').textContent = 'Расписания ещё загружаются — нажмите ещё раз через секунду.'; return; }
+    markInteraction();
+    if(type!==currentType){
+      currentType = type; prefs.scheduleType = type; savePrefs(); applyScheduleTypeTheme(); renderTypeSwitchUI();
+    }
+    var entry = searchIndex[type];
+    state.parsed = entry.parsed;
+    state.fileName = entry.fileName;
+    state.ghName = entry.ghName;
+    state.ghDate = entry.ghDate;
+    state.selectedGroup = null;
+    state.browseMode = 'teacher';
+    state.selectedTeacher = name;
+    state.viewMode = 'day';
+    state.viewedDay = resolveTodayViewedDay();
+    setSearchOpen(false);
+    renderMain();
+    show('screen-main');
+    startTicking();
   }
   function openFromSearch(type, group){
     var entry = searchIndex[type];
@@ -2910,7 +3037,9 @@
   $('global-search').addEventListener('input', renderSearchResults);
   $('search-results').addEventListener('click', function(e){
     var btn = e.target.closest('.group-item');
-    if(btn) openFromSearch(btn.getAttribute('data-type'), btn.getAttribute('data-group'));
+    if(!btn) return;
+    if(btn.hasAttribute('data-teacher')) openTeacherFromSearch(btn.getAttribute('data-teacher'));
+    else openFromSearch(btn.getAttribute('data-type'), btn.getAttribute('data-group'));
   });
 
   // ---------- boot ----------
@@ -2919,6 +3048,8 @@
     await loadWeekCalendar();
     await loadSftiFromCache();
     refreshSfti();
+    await loadAnnouncementsFromCache();
+    refreshAnnouncements();
     currentType = SCHEDULE_TYPES[prefs.scheduleType] ? prefs.scheduleType : 'spo';
     applyTheme();
     applyScheduleTypeTheme();
