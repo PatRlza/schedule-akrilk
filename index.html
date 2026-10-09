@@ -91,6 +91,27 @@
     --accent-solid:#E6532F;
     --on-accent-solid:#FFFFFF;
   }
+  /* Вечер (зелёная) и Магистратура (фиолетовая) — свои палитры, как у СПО/ВО */
+  html[data-schedule-type="evening"]{
+    --primary:#0E8A6B;--on-primary:#FFFFFF;--primary-container:#C6F1E3;--on-primary-container:#00382B;
+    --secondary:#6C5CE7;--secondary-container:#E3DEFF;--on-secondary-container:#241A6B;
+    --accent-solid:#0E8A6B;--on-accent-solid:#FFFFFF;
+  }
+  html[data-theme="dark"][data-schedule-type="evening"]{
+    --primary:#6FE0BE;--on-primary:#00382B;--primary-container:#005141;--on-primary-container:#C6F1E3;
+    --secondary:#BDB4FF;--secondary-container:#3D3485;--on-secondary-container:#E3DEFF;
+    --accent-solid:#0E8A6B;--on-accent-solid:#FFFFFF;
+  }
+  html[data-schedule-type="mag"]{
+    --primary:#9333B8;--on-primary:#FFFFFF;--primary-container:#F3D9FF;--on-primary-container:#46005F;
+    --secondary:#E0457B;--secondary-container:#FFD9E5;--on-secondary-container:#5E0A2B;
+    --accent-solid:#9333B8;--on-accent-solid:#FFFFFF;
+  }
+  html[data-theme="dark"][data-schedule-type="mag"]{
+    --primary:#E6B0FF;--on-primary:#46005F;--primary-container:#6A1B8A;--on-primary-container:#F3D9FF;
+    --secondary:#FF9DBB;--secondary-container:#6B1D3B;--on-secondary-container:#FFD9E5;
+    --accent-solid:#A63FD0;--on-accent-solid:#FFFFFF;
+  }
   html{transition:background-color .2s ease;}
   *{box-sizing:border-box;}
   html,body{height:100%;}
@@ -129,7 +150,7 @@
     box-shadow:var(--shadow);
   }
   .onboard-mark svg{width:22px;height:22px;}
-  .onboard h1{font-size:22px;line-height:1.2;font-weight:700;margin:0;letter-spacing:-.2px;color:var(--text);}
+  .onboard h1{display:none;font-size:22px;line-height:1.2;font-weight:700;margin:0;letter-spacing:-.2px;color:var(--text);}
 
   .quick-continue{
     background:var(--accent-solid);border-radius:var(--radius-lg);padding:14px 16px;
@@ -318,10 +339,26 @@
     box-shadow:var(--shadow);padding:3px;gap:3px;
   }
   .type-toggle-btn{
-    height:100%;box-sizing:border-box;border:none;background:transparent;padding:0 15px;
+    height:100%;box-sizing:border-box;border:none;background:transparent;padding:0 12px;
     border-radius:100px;font-size:12px;font-weight:700;letter-spacing:.2px;color:var(--text-secondary);
   }
   .type-toggle-btn.active{background:var(--primary);color:var(--on-primary);}
+  @media (min-width:520px){ .onboard h1{display:block;} }
+  @media (max-width:400px){
+    .type-toggle{padding:2px;gap:1px;}
+    .type-toggle-btn{padding:0 8px;font-size:11.5px;letter-spacing:0;}
+  }
+
+  /* ---------- Поиск группы по всем расписаниям (экран входа) ---------- */
+  .icon-btn.search-open-btn{margin-left:auto;background:var(--surface);box-shadow:var(--shadow);}
+  .icon-btn.search-open-btn.active{background:var(--primary);}
+  .icon-btn.search-open-btn.active svg{color:var(--on-primary);}
+  .onboard.searching{justify-content:flex-start;margin:0;}
+  .onboard.searching .hide-on-search{display:none !important;}
+  #search-panel{display:flex;flex-direction:column;gap:12px;}
+  .search-status{font-size:12px;color:var(--text-tertiary);display:flex;align-items:center;gap:8px;min-height:18px;line-height:1.4;}
+  .search-results{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+  #search-panel .search{background:var(--surface);box-shadow:var(--shadow);}
 
   /* Кнопки режимов сами делят ширину экрана: если все три не влезают в строку —
      лишняя переносится вниз и растягивается на всю ширину (никакой прокрутки). */
@@ -419,9 +456,14 @@
   .timeline{list-style:none;margin:0;padding:0;}
   .lesson{
     display:flex;gap:12px;margin-bottom:10px;
-    animation:rise .35s ease both;
   }
+  #content.rise .lesson{animation:rise .35s ease both;}
   @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  /* Плавное обновление по таймеру: плитки не перерисовываются, а только мягко меняют яркость там, где изменился текст/статус */
+  @keyframes tickfade{0%{opacity:.35;}100%{opacity:1;}}
+  .tick-fade{animation:tickfade .9s ease;}
+  .lesson-card, .status-chip{transition:background-color .6s ease, box-shadow .6s ease, color .6s ease;}
+  .progress-fill, .week-progress-fill{transition:width .8s ease;}
   .lesson-time{
     flex-shrink:0;width:56px;padding-top:16px;text-align:right;
     font-family:'Roboto Mono',monospace;font-size:12px;color:var(--text-tertiary);line-height:1.5;
@@ -629,13 +671,27 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 4v5"/><path d="M7.5 14h2M7.5 17h2M11.5 14h2M11.5 17h2M15.5 14h2M15.5 17h2"/></svg>
         </div>
         <h1>Расписание</h1>
-        <div class="type-toggle" style="margin-left:auto;">
+        <div class="type-toggle">
           <button class="type-toggle-btn active" data-type="spo">СПО</button>
           <button class="type-toggle-btn" data-type="vo">ВО</button>
+          <button class="type-toggle-btn" data-type="evening">Вечер</button>
+          <button class="type-toggle-btn" data-type="mag">Маг</button>
         </div>
+        <button class="icon-btn search-open-btn" id="search-open-btn" aria-label="Поиск группы">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        </button>
       </div>
 
-      <div class="quick-continue" id="quick-continue" style="display:none;">
+      <div id="search-panel" style="display:none;">
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="global-search" type="text" placeholder="Название группы, например ТМ34д" autocomplete="off" autocapitalize="characters">
+        </div>
+        <div class="search-status" id="search-status"></div>
+        <div class="search-results" id="search-results"></div>
+      </div>
+
+      <div class="quick-continue hide-on-search" id="quick-continue" style="display:none;">
         <div class="qc-label">Продолжить</div>
         <button class="qc-btn" id="qc-btn">
           <span class="qc-group" id="qc-group">—</span>
@@ -643,7 +699,7 @@
         </button>
       </div>
 
-      <div class="gh-block">
+      <div class="gh-block hide-on-search">
         <div class="gh-label">Актуальное расписание</div>
         <div id="gh-latest-wrap">
           <div class="gh-card gh-loading" id="gh-loading-card">
@@ -653,7 +709,7 @@
         </div>
       </div>
 
-      <label class="tile-upload" id="drop-zone" for="file-input">
+      <label class="tile-upload hide-on-search" id="drop-zone" for="file-input">
         <div class="tile-upload-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
         </div>
@@ -663,13 +719,13 @@
         </div>
       </label>
       <input class="file-input" id="file-input" type="file" accept=".xls,.xlsx">
-      <div class="err-box" id="upload-error"></div>
-      <button class="btn btn-filled btn-block" id="btn-parse" style="display:none;">
+      <div class="err-box hide-on-search" id="upload-error"></div>
+      <button class="btn btn-filled btn-block hide-on-search" id="btn-parse" style="display:none;">
         <span id="btn-parse-spinner" style="display:none;" class="spinner"></span>
         <span id="btn-parse-label">Разобрать файл</span>
       </button>
 
-      <div class="gh-older-wrap" id="gh-older-wrap" style="display:none;">
+      <div class="gh-older-wrap hide-on-search" id="gh-older-wrap" style="display:none;">
         <button class="gh-expand-btn" id="gh-expand-btn">
           <span id="gh-expand-label">Показать старые версии</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
@@ -912,7 +968,25 @@
     weekCalendarMissing = !weekCalendar;
   }
 
+  function addDaysIso(iso, n){
+    var p = iso.split('-');
+    var d = new Date(+p[0], +p[1]-1, +p[2]+n, 12, 0, 0);
+    return dateKey(d);
+  }
   function getWeekInfoForDate(date){
+    // 1) официальный сайт колледжа (data/sfti.json) — обновляется автоматически
+    if(sfti && sfti.weeks){
+      var skey = dateKey(date);
+      var names = ['current','next'];
+      for(var si=0; si<names.length; si++){
+        var sw = sfti.weeks[names[si]];
+        if(!sw || !sw.rangeStart || !sw.weekNumber) continue;
+        var spar = normParity(sw.weekType);
+        if(spar && sw.rangeStart<=skey && skey<=addDaysIso(sw.rangeStart, 6)){
+          return { num:sw.weekNumber, parity:spar, from:sw.rangeStart, to:addDaysIso(sw.rangeStart, 6), source:'sfti' };
+        }
+      }
+    }
     if(weekCalendar){
       var key = dateKey(date);
       for(var i=0;i<weekCalendar.weeks.length;i++){
@@ -939,6 +1013,47 @@
     });
   }
 
+  // ---------- данные с официального сайта колледжа (data/sfti.json) ----------
+  // Файл раз в несколько часов обновляет GitHub Actions (через российский прокси).
+  // Используется для: чётности/номера недели и для вкладки «Преподаватели»
+  // (там сразу все группы СПО, ВО и магистратуры).
+  var sfti = null;
+  var sftiTeacherIdx = null;
+  var SFTI_KEY = 'schedule-sfti-cache-v1';
+  var DAY_BY_NUM = {1:'ПОНЕДЕЛЬНИК',2:'ВТОРНИК',3:'СРЕДА',4:'ЧЕТВЕРГ',5:'ПЯТНИЦА',6:'СУББОТА'};
+
+  async function loadSftiFromCache(){
+    var t = await kvGet(SFTI_KEY);
+    if(!t) return;
+    try{ var j = JSON.parse(t); if(j && Array.isArray(j.rows)) sfti = j; }catch(e){}
+  }
+  async function refreshSfti(){
+    try{
+      var ctrl = (typeof AbortController!=='undefined') ? new AbortController() : null;
+      var tm = ctrl ? setTimeout(function(){ ctrl.abort(); }, 15000) : null;
+      var res = await fetch('data/sfti.json', { cache:'no-cache', signal: ctrl? ctrl.signal : undefined });
+      if(tm) clearTimeout(tm);
+      if(!res.ok) return;
+      var text = await res.text();
+      var j = JSON.parse(text);
+      if(!j || !Array.isArray(j.rows) || j.rows.length<100) return;
+      var changed = !sfti || sfti.hash!==j.hash;
+      sfti = j;
+      sftiTeacherIdx = null;
+      kvSet(SFTI_KEY, text);
+      if(changed) onSftiUpdated();
+    }catch(e){ /* нет сети — остаётся копия из кеша */ }
+  }
+  function onSftiUpdated(){
+    try{
+      if(state.parsed && $('screen-main').classList.contains('active')){
+        renderWeekBadge();
+        if(state.browseMode==='teacher') renderContentDispatch(true);
+      }
+      if($('screen-pick-teacher').classList.contains('active')) renderTeacherPicker();
+    }catch(e){}
+  }
+
   var STORAGE_KEY = 'schedule-app-state-v1';
   var PREFS_KEY = 'schedule-app-prefs-v1';
   // Bump this whenever the parsing logic changes — it guards against silently
@@ -959,9 +1074,16 @@
   // public folders). Each type has its own saved position (group/day) and its
   // own colour palette (see the html[data-schedule-type] CSS rules).
   var SCHEDULE_TYPES = {
-    spo: { label:'СПО', ghDir:'spo' },
-    vo:  { label:'ВО',  ghDir:'vo'  }
+    spo:     { label:'СПО',   ghDir:'spo' },
+    vo:      { label:'ВО',    ghDir:'vo',  excludeSheet:/веч|магист/i },
+    // «Вечер» и «Магистры» — отдельные листы в том же файле ВО
+    evening: { label:'Вечер', ghDir:'vo',  onlySheet:/веч/i },
+    mag:     { label:'Маг',   ghDir:'vo',  onlySheet:/магист/i }
   };
+  function parseOptsForType(type){
+    var t = SCHEDULE_TYPES[type] || {};
+    return { onlySheet: t.onlySheet || null, excludeSheet: t.excludeSheet || null };
+  }
   var currentType = 'spo';
   function typeStorageKey(){ return STORAGE_KEY + '-' + currentType; }
 
@@ -1017,6 +1139,11 @@
     try{ window.localStorage.removeItem(key); }catch(e){}
   }
 
+  async function loadStateRawForType(type){
+    var raw = await kvGet(STORAGE_KEY + '-' + type);
+    if(!raw) return null;
+    try{ return JSON.parse(raw); }catch(e){ return null; }
+  }
   async function loadStateRaw(){
     var raw = await kvGet(typeStorageKey());
     if(!raw) return null;
@@ -1043,7 +1170,7 @@
       var p = JSON.parse(raw);
       if(p.theme==='dark' || p.theme==='light') prefs.theme = p.theme;
       prefs.demoEnabled = !!p.demoEnabled;
-      if(p.scheduleType==='spo' || p.scheduleType==='vo') prefs.scheduleType = p.scheduleType;
+      if(SCHEDULE_TYPES[p.scheduleType]) prefs.scheduleType = p.scheduleType;
     }catch(e){}
     prefs.demoEnabled = false; // demo mode is temporarily disabled in the UI — never honor a stored "on"
   }
@@ -1129,7 +1256,8 @@
 
     var headerRowIdx = -1;
     for(var r=0;r<rows.length;r++){
-      if((rows[r][0]||'').toString().trim()==='Дни'){ headerRowIdx=r; break; }
+      var hasDays = (rows[r]||[]).some(function(c){ return (c||'').toString().trim()==='Дни'; });
+      if(hasDays){ headerRowIdx=r; break; }
     }
     if(headerRowIdx===-1) throw new Error('NO_HEADER');
 
@@ -1138,7 +1266,10 @@
     headerRow.forEach(function(v,i){ if(v.trim()==='Дни') blockStarts.push(i); });
     if(blockStarts.length<2) throw new Error('NO_BLOCKS');
 
-    var termTitle = ((rows[headerRowIdx-1]||[])[0]||'').toString().replace(/\n/g,' ').replace(/\s+/g,' ').trim();
+    var titleRow = rows[headerRowIdx-1]||[];
+    var titleCell = '';
+    for(var tc=0; tc<titleRow.length; tc++){ if((titleRow[tc]||'').toString().trim()){ titleCell = titleRow[tc]; break; } }
+    var termTitle = titleCell.toString().replace(/\n/g,' ').replace(/\s+/g,' ').trim();
 
     // Merge info. In this sheet an ordinary every-week lesson is ONE cell merged
     // over both rows of its slot, while a lesson that runs on only one parity of
@@ -1173,7 +1304,9 @@
       var groupColStart = S+2, groupColEnd = Snext-1; // exclusive
       var groupNames = [];
       for(var c=groupColStart;c<groupColEnd;c++){
-        groupNames.push((headerRow[c]||'').toString().trim());
+        var gn = (headerRow[c]||'').toString().trim();
+        if(/^(часы|дни)$/i.test(gn)) gn = '';   // служебные колонки времени/дней — не группы
+        groupNames.push(gn);
       }
       var hasAny = groupNames.some(function(n){return n;});
       if(!hasAny) continue;
@@ -1252,8 +1385,16 @@
     return { term: termTitle, dayOrder: dayOrder, groups: groups, byGroup: byGroup, totalLessons: totalLessons };
   }
 
-  function parseWorkbook(workbook){
+  function parseWorkbook(workbook, opts){
+    opts = opts || {};
     var cand = pickCandidateSheets(workbook);
+    function allowed(name){
+      if(opts.onlySheet && !opts.onlySheet.test(name)) return false;
+      if(opts.excludeSheet && opts.excludeSheet.test(name)) return false;
+      return true;
+    }
+    cand = { visible: cand.visible.filter(allowed), hidden: cand.hidden.filter(allowed) };
+    if(!cand.visible.length && !cand.hidden.length) throw new Error('NO_SHEET');
 
     function tryList(names){
       var best = null, lastError = null;
@@ -1308,7 +1449,7 @@
     try{
       var data = new Uint8Array(arrayBuffer);
       var wb = XLSX.read(data, {type:'array'});
-      var parsed = parseWorkbook(wb);
+      var parsed = parseWorkbook(wb, parseOptsForType(currentType));
       state.parsed = parsed;
       state.fileName = sourceLabel;
       state.savedAt = new Date().toISOString();
@@ -1318,6 +1459,10 @@
       show('screen-pick');
       return true;
     }catch(err){
+      if(err && err.message==='NO_SHEET'){
+        setUploadError('В этом файле нет листа для раздела «'+SCHEDULE_TYPES[currentType].label+'». Выберите файл ВО, в котором есть листы «Вечер» и «Магистры».');
+        return false;
+      }
       setUploadError('Не получилось разобрать файл. Убедитесь, что это тот же файл расписания (.xls/.xlsx), что выдаёт учебная часть, и структура листа не менялась.');
       return false;
     }
@@ -1403,8 +1548,16 @@
     setGhBusy(false);
   }
 
-  async function fetchGithubSchedules(){
-    var dir = SCHEDULE_TYPES[currentType].ghDir;
+  var ghListCache = {};   // папка -> {t, data}: СПО/ВО/Вечер/Маг делят одни и те же запросы
+  async function fetchGithubSchedules(dirOverride){
+    var dir = dirOverride || SCHEDULE_TYPES[currentType].ghDir;
+    var cached = ghListCache[dir];
+    if(cached && Date.now()-cached.t < 120000) return cached.data;
+    var result = await fetchGithubSchedulesUncached(dir);
+    ghListCache[dir] = { t: Date.now(), data: result };
+    return result;
+  }
+  async function fetchGithubSchedulesUncached(dir){
     var apiUrl = 'https://api.github.com/repos/'+GITHUB_OWNER+'/'+GITHUB_REPO+'/contents/'+dir+'/';
     var res = await fetch(apiUrl);
     if(!res.ok) throw new Error('list_failed');
@@ -1678,7 +1831,7 @@
   // lessons collapsed into a per-teacher view, each entry keeping which
   // group it belongs to (shown in place of the teacher's own name, since
   // that's now implied by which teacher you picked).
-  function getTeacherIndex(){
+  function getTeacherIndexFromFile(){
     if(state.parsed._teacherIndex) return state.parsed._teacherIndex;
     var byTeacher = {};
     state.parsed.groups.forEach(function(g){
@@ -1697,6 +1850,84 @@
     var idx = { byTeacher: byTeacher, teachers: teachers };
     state.parsed._teacherIndex = idx;
     return idx;
+  }
+
+  // Нормализуем фамилии с сайта: «Махмутова С.В» -> «Махмутова С.В.», «Григорьев А.Н./» -> «Григорьев А.Н.»
+  function normSftiTeacher(n){
+    n = (n||'').toString().replace(/[\/]+\s*$/,'').replace(/\s+/g,' ').replace(/\.\s+/g,'.').trim();
+    if(/\.[А-ЯЁ]$/.test(n)) n += '.';
+    return n;
+  }
+  function teacherKey(n){ return (n||'').replace(/\s+/g,'').toLowerCase(); }
+
+  // Преподаватели из data/sfti.json: все группы СПО, ВО и магистратуры сразу.
+  // Если в загруженном xls есть та же пара (группа+день+время+преподаватель) с чётностью —
+  // берём чётность оттуда: на сайте чётные/нечётные пары пока заполнены не везде.
+  function buildSftiTeacherIndex(){
+    var curPar = normParity(sfti.weeks && sfti.weeks.current && sfti.weeks.current.weekType);
+    var nxtPar = normParity(sfti.weeks && sfti.weeks.next && sfti.weeks.next.weekType);
+    var xlsParity = {};
+    if(state.parsed){
+      Object.keys(state.parsed.byGroup||{}).forEach(function(g){
+        Object.keys(state.parsed.byGroup[g]).forEach(function(day){
+          state.parsed.byGroup[g][day].forEach(function(l){
+            if(l.parity && l.startMin!=null) xlsParity[g+'|'+day+'|'+l.startMin+'|'+teacherKey(l.teacher)] = l.parity;
+          });
+        });
+      });
+    }
+    var merged = {};   // одна и та же пара у нескольких групп (поток) сливается в одну плитку
+    sfti.rows.forEach(function(r){
+      var teacher = normSftiTeacher(r.teacher_name);
+      var day = DAY_BY_NUM[r.day_of_week];
+      if(!teacher || !day || !r.time_start || !r.time_end) return;
+      var ts = r.time_start.split(':'), te = r.time_end.split(':');
+      var startMin = (+ts[0])*60 + (+ts[1]), endMin = (+te[0])*60 + (+te[1]);
+      var parity = r.w==='c' ? curPar : (r.w==='n' ? nxtPar : null);
+      if(!parity){
+        var xp = xlsParity[r.group_name+'|'+day+'|'+startMin+'|'+teacherKey(teacher)];
+        if(xp) parity = xp;
+      }
+      var noteParts = [];
+      if(r.half_pair==='Первый час') noteParts.push('1-й час');
+      else if(r.half_pair==='Второй час') noteParts.push('2-й час');
+      if(r.stream_label) noteParts.push(r.stream_label);
+      var note = noteParts.join(', ');
+      var subject = (r.lesson_type ? r.lesson_type+': ' : '') + (r.subject_name||'');
+      var key = [teacher, day, startMin, endMin, subject, r.room_number||'', parity||'', note].join('|');
+      if(!merged[key]){
+        merged[key] = { teacher:teacher, day:day, lesson:{
+          startMin:startMin, endMin:endMin, startLabel:labelFromMin(startMin), endLabel:labelFromMin(endMin),
+          time:labelFromMin(startMin)+'-'+labelFromMin(endMin), subject:subject, teacher:teacher,
+          room:r.room_number||'', note:note, parity:parity, groups:[]
+        }};
+      }
+      if(merged[key].lesson.groups.indexOf(r.group_name)<0) merged[key].lesson.groups.push(r.group_name);
+    });
+    var byTeacher = {};
+    Object.keys(merged).forEach(function(k){
+      var m = merged[k];
+      m.lesson.groups.sort(function(a,b){ return a.localeCompare(b,'ru'); });
+      m.lesson.group = m.lesson.groups.join(', ');
+      if(!byTeacher[m.teacher]) byTeacher[m.teacher] = {};
+      if(!byTeacher[m.teacher][m.day]) byTeacher[m.teacher][m.day] = [];
+      byTeacher[m.teacher][m.day].push(m.lesson);
+    });
+    Object.keys(byTeacher).forEach(function(t){
+      Object.keys(byTeacher[t]).forEach(function(d){
+        byTeacher[t][d].sort(function(a,b){ return a.startMin-b.startMin; });
+      });
+    });
+    var teachers = Object.keys(byTeacher).sort(function(a,b){ return a.localeCompare(b,'ru'); });
+    return { byTeacher:byTeacher, teachers:teachers, _forParsed:state.parsed };
+  }
+
+  function getTeacherIndex(){
+    if(sfti && Array.isArray(sfti.rows) && sfti.rows.length){
+      if(!sftiTeacherIdx || sftiTeacherIdx._forParsed!==state.parsed) sftiTeacherIdx = buildSftiTeacherIndex();
+      return sftiTeacherIdx;
+    }
+    return getTeacherIndexFromFile();   // запасной вариант: только то расписание, что загружено
   }
 
   function countLessonsForTeacher(name){
@@ -1738,7 +1969,7 @@
   $('teacher-search').addEventListener('input', function(e){
     var q = e.target.value.trim().toLowerCase();
     var teachers = getTeacherIndex().teachers;
-    var filtered = q ? teachers.filter(function(t){ return t.toLowerCase().indexOf(q)>=0; }) : teachers;
+    var filtered = q ? teachers.filter(function(t){ return t.toLowerCase().indexOf(q)>=0 || (getTeacherFullName(t)||'').toLowerCase().indexOf(q)>=0; }) : teachers;
     renderTeacherList(filtered);
   });
 
@@ -1773,13 +2004,16 @@
   function renderDayTabs(){
     var wrap = $('day-tabs');
     var today = WEEKDAY_INDEX[new Date().getDay()];
-    wrap.innerHTML = displayDayOrder().map(function(d){
+    var tabsHtml = displayDayOrder().map(function(d){
       var active = d===state.viewedDay;
       var isToday = d===today;
       return '<button class="day-tab'+(active?' active':'')+'" data-day="'+esc(d)+'">'+
         (d==='ВОСКРЕСЕНЬЕ' ? APP_ICON_HTML : (DAY_SHORT[d]||d))+(isToday?'<span class="dot"></span>':'')+
       '</button>';
     }).join('');
+    if(wrap._sig===tabsHtml) return;      // ничего не изменилось — не трогаем (нет мигания и сброса прокрутки)
+    wrap._sig = tabsHtml;
+    wrap.innerHTML = tabsHtml;
     wrap.querySelectorAll('.day-tab').forEach(function(btn){
       btn.addEventListener('click', function(){
         state.viewedDay = btn.getAttribute('data-day');
@@ -2088,8 +2322,8 @@
     '</div>';
   }
 
-  function renderContent(){
-    var box = $('content');
+  function renderContent(target){
+    var box = target || $('content');
     var day = state.viewedDay;
     var relation = getDayRelation(day);
     var lessons = annotateParity(getRawLessons(day));
@@ -2109,8 +2343,8 @@
     box.innerHTML = html;
   }
 
-  function renderWeekContent(){
-    var box = $('content');
+  function renderWeekContent(target){
+    var box = target || $('content');
     var html = '';
     state.parsed.dayOrder.forEach(function(d){
       var lessons = annotateParity(getRawLessons(d));
@@ -2131,9 +2365,54 @@
     box.innerHTML = html;
   }
 
-  function renderContentDispatch(){
-    if(state.viewMode==='week') renderWeekContent();
-    else renderContent();
+  // --- мягкое обновление: сравниваем новую разметку с текущей и меняем только отличия ---
+  function syncAttrs(o, n){
+    var i, a;
+    for(i=o.attributes.length-1; i>=0; i--){
+      a = o.attributes[i];
+      if(!n.hasAttribute(a.name)) o.removeAttribute(a.name);
+    }
+    for(i=0; i<n.attributes.length; i++){
+      a = n.attributes[i];
+      if(o.getAttribute(a.name)!==a.value) o.setAttribute(a.name, a.value);
+    }
+  }
+  function pulse(el){
+    if(!el || !el.classList) return;
+    el.classList.remove('tick-fade');
+    void el.offsetWidth;
+    el.classList.add('tick-fade');
+  }
+  function patchNode(o, n){
+    if(o.nodeType!==n.nodeType || o.nodeName!==n.nodeName){ o.parentNode.replaceChild(n.cloneNode(true), o); return; }
+    if(o.nodeType===3){
+      if(o.nodeValue!==n.nodeValue){ o.nodeValue = n.nodeValue; pulse(o.parentNode); }
+      return;
+    }
+    if(o.nodeType!==1) return;
+    syncAttrs(o, n);
+    patchChildren(o, n);
+  }
+  function patchChildren(o, n){
+    if(o.childNodes.length!==n.childNodes.length){ o.innerHTML = n.innerHTML; return; }
+    for(var i=0; i<o.childNodes.length; i++) patchNode(o.childNodes[i], n.childNodes[i]);
+  }
+
+  function renderContentDispatch(isTick){
+    var box = $('content');
+    if(isTick!==true || !box.firstChild){
+      // полная перерисовка (смена дня/группы): плитки плавно «выезжают» один раз
+      box.classList.add('rise');
+      clearTimeout(box._riseT);
+      box._riseT = setTimeout(function(){ box.classList.remove('rise'); }, 900);
+      if(state.viewMode==='week') renderWeekContent();
+      else renderContent();
+      return;
+    }
+    var holder = document.createElement('div');
+    if(state.viewMode==='week') renderWeekContent(holder);
+    else renderContent(holder);
+    patchChildren(box, holder);
   }
 
   function minToLabel(m){
@@ -2164,7 +2443,7 @@
       if($('screen-main').classList.contains('active')){
         renderWeekBadge();
         renderDayTabs();
-        renderContentDispatch();
+        renderContentDispatch(true);
       }
     }, 20000);
   }
@@ -2300,6 +2579,12 @@
     '</div>';
   }
   function weekSourceText(cur, nxt){
+    if(cur.source==='sfti' && nxt.source==='sfti'){
+      return 'Источник: официальный сайт расписания колледжа (raspisanie.sphti.ru). Данные подтягиваются автоматически несколько раз в день.';
+    }
+    if(cur.source==='sfti'){
+      return 'Текущая неделя взята с официального сайта расписания колледжа. Для следующей недели там данных ещё нет, поэтому она определена по запасному графику.';
+    }
     if(cur.source==='file' && nxt.source==='file'){
       return 'Источник: график недель колледжа из файла weeks.json (по объявлению в колледже). График действует до '+isoToRu(weekCalendar.lastTo, true)+', дальше счёт идёт по календарю с начала года.';
     }
@@ -2348,7 +2633,8 @@
   // Переключатель СПО/ВО только переключает тип: остаёмся на экране входа,
   // а «Продолжить» для выбранного типа человек нажимает сам.
   async function switchScheduleType(newType){
-    if(newType!=='spo' && newType!=='vo') return;
+    if(!SCHEDULE_TYPES[newType]) return;
+    if(searchOpen) setSearchOpen(false);
     if(newType===currentType) return;
     markInteraction();
 
@@ -2440,7 +2726,7 @@
         if(!res.ok) return;
         var buf = await res.arrayBuffer();
         var wb = XLSX.read(new Uint8Array(buf), {type:'array'});
-        state.parsed = parseWorkbook(wb);
+        state.parsed = parseWorkbook(wb, parseOptsForType(currentType));
         state.fileName = ghSchedules[0].name;
       }catch(e){ return; }
     }
@@ -2493,11 +2779,147 @@
     markInteraction();
   });
 
+  // ---------- поиск группы по всем расписаниям ----------
+  // По нажатию на лупу скачиваются свежие файлы СПО и ВО (из ВО берутся листы
+  // «Дневники», «Вечер», «Магистры»), и группа ищется сразу во всех четырёх разделах.
+  // Если файл не скачался — берём то, что уже сохранено на устройстве.
+  var searchIndex = {};
+  var searchLoadedAt = 0, searchLoading = false, searchOpen = false;
+  var LATIN_LOOKALIKE = {A:'А',B:'В',C:'С',E:'Е',H:'Н',K:'К',M:'М',O:'О',P:'Р',T:'Т',X:'Х',Y:'У'};
+  function normSearch(q){
+    return (q||'').toString().toUpperCase().replace(/[ABCEHKMOPTXY]/g, function(c){ return LATIN_LOOKALIKE[c]; }).replace(/\s+/g,'');
+  }
+  function setSearchOpen(open){
+    searchOpen = open;
+    document.querySelector('#screen-upload .onboard').classList.toggle('searching', open);
+    $('search-panel').style.display = open ? '' : 'none';
+    $('search-open-btn').classList.toggle('active', open);
+    if(open){
+      $('global-search').value = '';
+      renderSearchResults();
+      loadSearchIndex();
+      setTimeout(function(){ $('global-search').focus(); }, 60);
+    }
+  }
+  async function loadSearchIndex(){
+    if(searchLoading) return;
+    if(Object.keys(searchIndex).length && Date.now()-searchLoadedAt < 10*60*1000){ renderSearchStatus(); return; }
+    searchLoading = true;
+    renderSearchStatus();
+    var books = {};
+    var dirs = ['spo','vo'];
+    await Promise.all(dirs.map(async function(dir){
+      try{
+        var list = await fetchGithubSchedules(dir);
+        if(!list.length) return;
+        var res = await fetch(list[0].url);
+        if(!res.ok) return;
+        var buf = await res.arrayBuffer();
+        books[dir] = { wb: XLSX.read(new Uint8Array(buf), {type:'array'}), meta: list[0] };
+      }catch(e){}
+    }));
+    var next = {};
+    var types = Object.keys(SCHEDULE_TYPES);
+    for(var i=0; i<types.length; i++){
+      var type = types[i], t = SCHEDULE_TYPES[type], entry = null;
+      var book = books[t.ghDir];
+      if(book){
+        try{
+          var parsed = parseWorkbook(book.wb, parseOptsForType(type));
+          entry = { parsed: parsed, fileName: book.meta.name, ghName: book.meta.name, ghDate: book.meta.date||null, from:'github' };
+        }catch(e){ entry = null; }
+      }
+      if(!entry){
+        var saved = await loadStateRawForType(type);
+        if(saved && saved.parsed && saved.parserVersion===PARSER_VERSION){
+          entry = { parsed: saved.parsed, fileName: saved.fileName, ghName: saved.ghName||null, ghDate: saved.ghDate||null, from:'saved' };
+        }
+      }
+      if(entry) next[type] = entry;
+      await new Promise(function(r){ setTimeout(r, 0); });   // даём интерфейсу вздохнуть между тяжёлыми разборами
+    }
+    searchIndex = next;
+    searchLoadedAt = Date.now();
+    searchLoading = false;
+    renderSearchStatus();
+    renderSearchResults();
+  }
+  function renderSearchStatus(){
+    var box = $('search-status');
+    if(searchLoading){
+      box.innerHTML = '<span class="spinner spinner-dark" style="width:14px;height:14px;border-width:2px;"></span><span>Скачиваю расписания СПО, ВО, вечерних и магистров…</span>';
+      return;
+    }
+    var types = Object.keys(SCHEDULE_TYPES);
+    var ok = types.filter(function(k){ return searchIndex[k]; });
+    var missing = types.filter(function(k){ return !searchIndex[k]; }).map(function(k){ return SCHEDULE_TYPES[k].label; });
+    var fromSaved = ok.filter(function(k){ return searchIndex[k].from==='saved'; }).map(function(k){ return SCHEDULE_TYPES[k].label; });
+    var total = 0; ok.forEach(function(k){ total += searchIndex[k].parsed.groups.length; });
+    var msg = ok.length ? ('Готово: '+total+' групп в разделах '+ok.map(function(k){ return SCHEDULE_TYPES[k].label; }).join(', ')+'.') : 'Не удалось загрузить расписания.';
+    if(fromSaved.length) msg += ' Из сохранённой копии: '+fromSaved.join(', ')+'.';
+    if(ok.length && missing.length) msg += ' Нет данных: '+missing.join(', ')+'.';
+    box.textContent = msg;
+  }
+  function renderSearchResults(){
+    var box = $('search-results');
+    var q = normSearch($('global-search').value);
+    if(!q){
+      box.innerHTML = '<div class="empty-note" style="grid-column:1/-1;">Начните вводить название группы — результаты появятся здесь</div>';
+      return;
+    }
+    var items = [];
+    var order = Object.keys(SCHEDULE_TYPES);
+    order.forEach(function(type){
+      var e = searchIndex[type];
+      if(!e) return;
+      e.parsed.groups.forEach(function(g){
+        if(normSearch(g).indexOf(q)>=0) items.push({ type:type, group:g });
+      });
+    });
+    if(!items.length){
+      box.innerHTML = '<div class="empty-note" style="grid-column:1/-1;">'+(searchLoading ? 'Ищу…' : 'Ничего не нашлось. Проверьте написание.')+'</div>';
+      return;
+    }
+    items.sort(function(a,b){ return a.group.localeCompare(b.group,'ru') || order.indexOf(a.type)-order.indexOf(b.type); });
+    box.innerHTML = items.slice(0,60).map(function(it){
+      return '<button class="group-item" data-type="'+esc(it.type)+'" data-group="'+esc(it.group)+'">'+
+        '<span class="g-name">'+esc(it.group)+'</span>'+
+        '<span class="g-hint">'+esc(SCHEDULE_TYPES[it.type].label)+'</span>'+
+      '</button>';
+    }).join('');
+  }
+  function openFromSearch(type, group){
+    var entry = searchIndex[type];
+    if(!entry || !entry.parsed.byGroup[group]) return;
+    markInteraction();
+    currentType = type;
+    prefs.scheduleType = type;
+    savePrefs();
+    applyScheduleTypeTheme();
+    renderTypeSwitchUI();
+    state.parsed = entry.parsed;
+    state.fileName = entry.fileName;
+    state.savedAt = new Date().toISOString();
+    state.ghName = entry.ghName;
+    state.ghDate = entry.ghDate;
+    state.viewMode = 'day';
+    setSearchOpen(false);
+    selectGroup(group);
+  }
+  $('search-open-btn').addEventListener('click', function(){ markInteraction(); setSearchOpen(!searchOpen); });
+  $('global-search').addEventListener('input', renderSearchResults);
+  $('search-results').addEventListener('click', function(e){
+    var btn = e.target.closest('.group-item');
+    if(btn) openFromSearch(btn.getAttribute('data-type'), btn.getAttribute('data-group'));
+  });
+
   // ---------- boot ----------
   (async function init(){
     await loadPrefs();
     await loadWeekCalendar();
-    currentType = prefs.scheduleType==='vo' ? 'vo' : 'spo';
+    await loadSftiFromCache();
+    refreshSfti();
+    currentType = SCHEDULE_TYPES[prefs.scheduleType] ? prefs.scheduleType : 'spo';
     applyTheme();
     applyScheduleTypeTheme();
     renderTypeSwitchUI();
