@@ -1,0 +1,4122 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Расписание</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%234B4ADB'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round' transform='translate(11 11) scale(1.75)'%3E%3Crect x='3' y='4' width='18' height='18' rx='3'/%3E%3Cpath d='M3 9h18M8 4v5'/%3E%3Cpath d='M7.5 14h2M7.5 17h2M11.5 14h2M11.5 17h2M15.5 14h2M15.5 17h2'/%3E%3C/g%3E%3C/svg%3E">
+<meta name="theme-color" content="#4B4ADB">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Mono:wght@500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="teachers-data.js"></script>
+<style>
+  :root{
+    --primary:#4B4ADB;
+    --on-primary:#FFFFFF;
+    --primary-container:#E2E0FF;
+    --on-primary-container:#14116B;
+    --secondary:#00897B;
+    --secondary-container:#B7F0E6;
+    --bg:#F6F5FB;
+    --surface:#FFFFFF;
+    --surface-container:#EFEDF9;
+    --surface-container-high:#E7E4F5;
+    --outline:#DEDCEA;
+    --text:#1B1B23;
+    --text-secondary:#5E5E6C;
+    --text-tertiary:#8B8B98;
+    --done:#B7BAC9;
+    --error:#B3261E;
+    --radius-lg:24px;
+    --radius-md:16px;
+    --radius-sm:10px;
+    --shadow:0 1px 2px rgba(20,17,90,.06), 0 4px 16px rgba(20,17,90,.06);
+  }
+  :root{
+    --on-secondary-container:#00514A;
+    --accent-solid:#4B4ADB;
+    --on-accent-solid:#FFFFFF;
+    --error-bg:#FCEEEE;
+    --error-border:#F3C6C4;
+  }
+  html[data-theme="dark"]{
+    --primary:#B4B2FF;
+    --on-primary:#211F6B;
+    --primary-container:#37357F;
+    --on-primary-container:#E2E0FF;
+    --secondary:#5FDCC9;
+    --secondary-container:#00504A;
+    --on-secondary-container:#BAF4E8;
+    --bg:#131218;
+    --surface:#1C1B23;
+    --surface-container:#26242E;
+    --surface-container-high:#302E3A;
+    --outline:#39373F;
+    --text:#EAE7F0;
+    --text-secondary:#B4B0BE;
+    --text-tertiary:#8B8894;
+    --done:#4B4954;
+    --error:#FF897D;
+    --shadow:0 1px 2px rgba(0,0,0,.25), 0 4px 16px rgba(0,0,0,.3);
+    --accent-solid:#5654E8;
+    --on-accent-solid:#FFFFFF;
+    --error-bg:#3D2323;
+    --error-border:#5A2E2C;
+  }
+
+  /* ---------- Schedule type theming ----------
+     СПО (default) stays sine-green (blue/teal, already the base palette above).
+     ВО (higher education) gets a red/orange palette instead — same variables,
+     so every button, badge and the day-progress gradient repaint automatically. */
+  html[data-schedule-type="vo"]{
+    --primary:#D8432E;
+    --on-primary:#FFFFFF;
+    --primary-container:#FBDAD3;
+    --on-primary-container:#5E1B0E;
+    --secondary:#F0900B;
+    --secondary-container:#FFE4B8;
+    --on-secondary-container:#6B3D00;
+    --accent-solid:#D8432E;
+    --on-accent-solid:#FFFFFF;
+  }
+  html[data-theme="dark"][data-schedule-type="vo"]{
+    --primary:#FFB199;
+    --on-primary:#5C1400;
+    --primary-container:#7A2A11;
+    --on-primary-container:#FFDBCB;
+    --secondary:#FFC46B;
+    --secondary-container:#5C3D00;
+    --on-secondary-container:#FFE4B0;
+    --accent-solid:#E6532F;
+    --on-accent-solid:#FFFFFF;
+  }
+  /* Вечер (зелёная) и Магистратура (фиолетовая) — свои палитры, как у СПО/ВО */
+  html[data-schedule-type="evening"]{
+    --primary:#0E8A6B;--on-primary:#FFFFFF;--primary-container:#C6F1E3;--on-primary-container:#00382B;
+    --secondary:#6C5CE7;--secondary-container:#E3DEFF;--on-secondary-container:#241A6B;
+    --accent-solid:#0E8A6B;--on-accent-solid:#FFFFFF;
+  }
+  html[data-theme="dark"][data-schedule-type="evening"]{
+    --primary:#6FE0BE;--on-primary:#00382B;--primary-container:#005141;--on-primary-container:#C6F1E3;
+    --secondary:#BDB4FF;--secondary-container:#3D3485;--on-secondary-container:#E3DEFF;
+    --accent-solid:#0E8A6B;--on-accent-solid:#FFFFFF;
+  }
+  html[data-schedule-type="mag"]{
+    --primary:#9333B8;--on-primary:#FFFFFF;--primary-container:#F3D9FF;--on-primary-container:#46005F;
+    --secondary:#E0457B;--secondary-container:#FFD9E5;--on-secondary-container:#5E0A2B;
+    --accent-solid:#9333B8;--on-accent-solid:#FFFFFF;
+  }
+  html[data-theme="dark"][data-schedule-type="mag"]{
+    --primary:#E6B0FF;--on-primary:#46005F;--primary-container:#6A1B8A;--on-primary-container:#F3D9FF;
+    --secondary:#FF9DBB;--secondary-container:#6B1D3B;--on-secondary-container:#FFD9E5;
+    --accent-solid:#A63FD0;--on-accent-solid:#FFFFFF;
+  }
+  html{transition:background-color .2s ease;}
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:'Roboto',system-ui,-apple-system,'Segoe UI',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    overscroll-behavior-y:contain;
+  }
+  #app{
+    max-width:480px;
+    min-height:100vh;
+    margin:0 auto;
+    background:var(--bg);
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    transition:max-width .2s ease;
+  }
+  @media (min-width:768px){
+    #app{max-width:880px;}
+  }
+  .screen{display:none;flex-direction:column;flex:1;min-height:100vh;}
+  .screen.active{display:flex;}
+  button{font-family:inherit;cursor:pointer;}
+  ::selection{background:var(--primary-container);}
+
+  /* ---------- Onboarding ---------- */
+  .onboard{
+    flex:1;display:flex;flex-direction:column;justify-content:center;
+    padding:calc(24px + env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom));
+    gap:16px;overflow-y:auto;margin:auto 0;
+  }
+  .onboard-top-row{display:flex;align-items:center;gap:12px;margin-bottom:2px;}
+  .onboard-mark{
+    width:44px;height:44px;border-radius:14px;background:var(--primary);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    box-shadow:var(--shadow);
+  }
+  .onboard-mark svg{width:22px;height:22px;}
+  .onboard h1{font-size:22px;line-height:1.2;font-weight:700;margin:0;letter-spacing:-.2px;color:var(--text);}
+
+  .quick-continue{
+    background:var(--accent-solid);border-radius:var(--radius-lg);padding:14px 16px;
+    display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow);
+  }
+  .qc-label{font-size:11px;font-weight:600;letter-spacing:.3px;color:rgba(255,255,255,.75);text-transform:uppercase;}
+  .qc-btn{
+    border:none;background:rgba(255,255,255,.16);border-radius:var(--radius-md);
+    padding:12px 14px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;
+    color:var(--on-accent-solid);text-align:left;
+  }
+  .qc-btn:active{background:rgba(255,255,255,.26);}
+  .qc-group{font-size:17px;font-weight:700;}
+  .qc-sub{font-size:12px;color:rgba(255,255,255,.82);}
+
+  .gh-block{display:flex;flex-direction:column;gap:8px;}
+  .gh-label{font-size:12px;font-weight:600;color:var(--text-tertiary);letter-spacing:.3px;text-transform:uppercase;padding:0 2px;}
+  .gh-card{
+    background:var(--surface);border-radius:var(--radius-lg);padding:16px 18px;
+    box-shadow:var(--shadow);display:flex;flex-direction:column;gap:4px;text-align:left;
+    border:none;width:100%;
+  }
+  .gh-card:active{background:var(--surface-container);}
+  .gh-loading{flex-direction:row;align-items:center;gap:10px;color:var(--text-secondary);font-size:14px;}
+  .spinner-dark{border-color:rgba(75,74,219,.2);border-top-color:var(--primary);}
+  .gh-card .gh-name{font-size:16px;font-weight:700;color:var(--text);}
+  .gh-card .gh-meta{font-size:12px;color:var(--text-tertiary);}
+  .gh-card .gh-tag{
+    display:inline-flex;align-self:flex-start;font-size:11px;font-weight:700;letter-spacing:.3px;
+    color:var(--secondary);background:var(--secondary-container);padding:3px 8px;border-radius:100px;
+    margin-bottom:2px;text-transform:uppercase;
+  }
+  .gh-error{color:var(--text-tertiary);font-size:13px;padding:4px 2px;}
+
+  .tile-upload{
+    display:flex;align-items:center;gap:14px;
+    border:2px dashed var(--outline);border-radius:var(--radius-lg);
+    background:var(--surface);padding:16px 18px;transition:border-color .15s ease, background .15s ease;
+  }
+  .tile-upload.drag{border-color:var(--primary);background:var(--primary-container);}
+  .tile-upload-icon{
+    width:42px;height:42px;border-radius:12px;background:var(--surface-container-high);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text-secondary);
+  }
+  .tile-upload-icon svg{width:22px;height:22px;}
+  .tile-upload .drop-title{font-size:15px;font-weight:600;margin-bottom:2px;}
+  .tile-upload .drop-sub{font-size:12px;color:var(--text-tertiary);}
+
+  .gh-older-wrap{display:flex;flex-direction:column;gap:8px;}
+  .gh-expand-btn{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    border:none;background:transparent;color:var(--text-secondary);font-size:13px;font-weight:500;
+    padding:8px;border-radius:100px;
+  }
+  .gh-expand-btn svg{width:15px;height:15px;transition:transform .2s ease;}
+  .gh-expand-btn.open svg{transform:rotate(180deg);}
+  .gh-older-list{display:flex;flex-direction:column;gap:8px;}
+  .gh-older-item{
+    display:flex;flex-direction:column;gap:2px;text-align:left;
+    background:var(--surface-container);border:none;border-radius:var(--radius-md);
+    padding:11px 14px;
+  }
+  .gh-older-item:active{background:var(--surface-container-high);}
+  .gh-older-item .gh-name{font-size:14px;font-weight:600;color:var(--text);}
+  .gh-older-item .gh-meta{font-size:12px;color:var(--text-tertiary);}
+
+  .drop{
+    border:2px dashed var(--outline);
+    border-radius:var(--radius-lg);
+    background:var(--surface);
+    padding:28px 20px;
+    text-align:center;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .drop.drag{border-color:var(--primary);background:var(--primary-container);}
+  .drop svg{width:36px;height:36px;color:var(--text-tertiary);margin-bottom:10px;}
+  .drop .drop-title{font-size:15px;font-weight:500;margin-bottom:4px;}
+  .drop .drop-sub{font-size:13px;color:var(--text-tertiary);}
+  .btn{
+    border:none;border-radius:100px;padding:14px 24px;font-size:15px;font-weight:500;
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    transition:transform .08s ease, box-shadow .15s ease, background .15s ease;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-filled{background:var(--primary);color:var(--on-primary);box-shadow:var(--shadow);}
+  .btn-tonal{background:var(--surface-container-high);color:var(--text);}
+  .btn-text{background:transparent;color:var(--primary);padding:10px 16px;}
+  .btn-block{width:100%;}
+  .file-input{display:none;}
+  .err-box{
+    background:var(--error-bg);border:1px solid var(--error-border);color:var(--error);
+    border-radius:var(--radius-md);padding:14px 16px;font-size:14px;line-height:1.5;
+    display:none;
+  }
+  .err-box.show{display:block;}
+  .err-box.info{background:var(--primary-container);border-color:transparent;color:var(--on-primary-container);}
+  .spinner{
+    width:20px;height:20px;border-radius:50%;
+    border:3px solid rgba(255,255,255,.4);border-top-color:#fff;
+    animation:spin .7s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ---------- Group picker ---------- */
+  .picker{flex:1;display:flex;flex-direction:column;}
+  .picker-top{
+    padding:calc(18px + env(safe-area-inset-top)) 20px 14px;
+    background:var(--surface);
+    border-bottom:1px solid var(--outline);
+  }
+  .picker-header-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+  .picker-header-row h2{margin:0;font-size:20px;font-weight:700;color:var(--text);}
+  .picker-back-btn{
+    width:36px;height:36px;flex-shrink:0;border:none;background:var(--surface-container);
+    border-radius:50%;color:var(--text);display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+  }
+  .picker-back-btn:active{background:var(--surface-container-high);transform:scale(.96);}
+  .picker-back-btn svg{width:20px;height:20px;}
+  .picker-top h2{margin:2px 0 4px;font-size:20px;font-weight:600;color:var(--text);}
+  .picker-top p{margin:0 0 14px;font-size:14px;color:var(--text-secondary);}
+  .search{
+    display:flex;align-items:center;gap:8px;
+    background:var(--surface-container);border-radius:100px;
+    padding:10px 16px;
+  }
+  .search svg{width:18px;height:18px;color:var(--text-tertiary);flex-shrink:0;}
+  .search input{
+    border:none;background:transparent;outline:none;font-size:15px;
+    width:100%;font-family:inherit;color:var(--text);
+  }
+  .group-list{flex:1;overflow-y:auto;padding:10px 12px calc(20px + env(safe-area-inset-bottom));}
+  .block-label{
+    font-size:12px;font-weight:600;letter-spacing:.3px;color:var(--text-tertiary);
+    padding:14px 12px 6px;
+  }
+  .group-list{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:12px;
+    padding:6px 16px calc(24px + env(safe-area-inset-bottom));
+  }
+  .group-item{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;gap:4px;min-height:88px;
+    padding:18px 10px;border-radius:var(--radius-md);
+    background:var(--surface);box-shadow:var(--shadow);border:2px solid transparent;
+    transition:transform .08s ease, background .12s ease;
+  }
+  .group-item:active{transform:scale(.96);background:var(--surface-container);}
+  .group-item.selected{border-color:var(--primary);background:var(--primary-container);}
+  .group-item .g-name{font-size:16px;font-weight:700;letter-spacing:-.1px;color:var(--text);}
+  .group-item .g-hint{font-size:11px;color:var(--text-tertiary);}
+  .group-item.selected .g-hint{color:var(--on-primary-container);opacity:.7;}
+  .empty-note{grid-column:1/-1;padding:30px 20px;text-align:center;color:var(--text-tertiary);font-size:14px;}
+
+  /* ---------- Main ---------- */
+  .header-sticky{
+    position:sticky;top:0;z-index:5;background:var(--bg);
+    padding:calc(10px + env(safe-area-inset-top)) 12px 10px;
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .topbar{
+    padding:12px 14px;
+    background:var(--surface);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow);
+    display:flex;align-items:center;justify-content:space-between;
+    gap:8px;
+  }
+  .main-back-btn{
+    width:38px;height:38px;border-radius:50%;border:none;background:var(--surface-container);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;
+    color:var(--text);margin-right:2px;
+  }
+  .main-back-btn:active{background:var(--surface-container-high);transform:scale(.96);}
+  .main-back-btn svg{width:20px;height:20px;}
+  .topbar-left{min-width:0;flex:1;}
+  .term-title{font-size:12px;color:var(--text-tertiary);font-weight:500;text-transform:uppercase;letter-spacing:.4px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .topbar-group-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:2px;}
+  .tg-link{
+    display:flex;align-items:center;gap:4px;flex-shrink:0;
+    font-size:12px;font-weight:500;color:var(--primary);text-decoration:none;
+    background:var(--primary-container);padding:5px 10px 5px 7px;border-radius:100px;
+  }
+  .tg-link svg{width:13px;height:13px;flex-shrink:0;}
+  .tg-link:active{opacity:.7;}
+  .group-btn{
+    display:flex;align-items:center;gap:6px;background:none;border:none;padding:2px 0 0;
+    font-size:21px;font-weight:700;color:var(--text);letter-spacing:-.2px;
+  }
+  .group-btn svg{width:16px;height:16px;color:var(--text-tertiary);margin-top:2px;}
+  .icon-btn{
+    width:40px;height:40px;border-radius:50%;border:none;background:var(--surface-container);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .icon-btn svg{width:20px;height:20px;color:var(--text);}
+  .icon-btn:active{background:var(--surface-container-high);}
+
+  .type-toggle{
+    height:34px;box-sizing:border-box;align-self:flex-start;
+    display:inline-flex;align-items:center;background:var(--surface);border-radius:100px;
+    box-shadow:var(--shadow);padding:3px;gap:3px;
+  }
+  .type-toggle-btn{
+    height:100%;box-sizing:border-box;border:none;background:transparent;padding:0 12px;
+    border-radius:100px;font-size:12px;font-weight:700;letter-spacing:.2px;color:var(--text-secondary);
+  }
+  .type-toggle-btn.active{background:var(--primary);color:var(--on-primary);}
+  /* Вторая строка экрана входа: поиск + четыре раздела, всегда в один ряд и подстраиваются под ширину экрана */
+  .type-row{display:flex;align-items:center;gap:8px;}
+  .type-row .type-toggle{flex:1 1 auto;min-width:0;align-self:center;}
+  .type-row .type-toggle-btn{flex:1 1 0;min-width:0;padding:0 4px;white-space:nowrap;text-align:center;}
+  @media (max-width:400px){ .type-row .type-toggle-btn{font-size:11.5px;letter-spacing:0;} }
+  @media (max-width:340px){ .type-row{gap:6px;} .type-row .type-toggle-btn{font-size:10.5px;} }
+
+  /* ---------- Поиск группы по всем расписаниям (экран входа) ---------- */
+  .icon-btn.search-open-btn{width:34px;height:34px;flex-shrink:0;background:var(--surface);box-shadow:var(--shadow);}
+  .icon-btn.search-open-btn svg{width:18px;height:18px;}
+  .icon-btn.search-open-btn.active{background:var(--primary);}
+  .icon-btn.search-open-btn.active svg{color:var(--on-primary);}
+  .onboard.searching{justify-content:flex-start;margin:0;}
+  .onboard.searching .hide-on-search{display:none !important;}
+  #search-panel{display:flex;flex-direction:column;gap:12px;}
+  .search-status{font-size:12px;color:var(--text-tertiary);display:flex;align-items:center;gap:8px;min-height:18px;line-height:1.4;}
+  .search-results{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+  #search-panel .search{background:var(--surface);box-shadow:var(--shadow);}
+
+  /* Кнопки режимов сами делят ширину экрана: если все три не влезают в строку —
+     лишняя переносится вниз и растягивается на всю ширину (никакой прокрутки). */
+  .toggles-row{display:flex;flex-wrap:nowrap;align-items:stretch;gap:6px;}
+  .toggles-row > *{flex:1 1 auto;min-width:0;}
+  .mode-btn{
+    height:34px;box-sizing:border-box;
+    display:inline-flex;align-items:center;justify-content:center;gap:4px;
+    border:none;background:var(--surface);border-radius:100px;box-shadow:var(--shadow);
+    padding:0 10px;font-size:11px;font-weight:600;color:var(--text-secondary);
+    white-space:nowrap;
+  }
+  .mode-btn svg{width:13px;height:13px;flex-shrink:0;}
+  .mode-btn.active{background:var(--primary);color:var(--on-primary);}
+  .view-toggle{
+    height:34px;box-sizing:border-box;
+    display:inline-flex;align-items:center;background:var(--surface);border-radius:100px;
+    box-shadow:var(--shadow);padding:2px;gap:2px;
+  }
+  .vt-btn{
+    flex:1 1 0;min-width:0;
+    height:100%;box-sizing:border-box;
+    border:none;background:transparent;padding:0 10px;border-radius:100px;
+    font-size:11px;font-weight:600;color:var(--text-secondary);white-space:nowrap;
+    display:flex;align-items:center;justify-content:center;gap:4px;
+  }
+  .vt-btn svg{width:13px;height:13px;flex-shrink:0;}
+  .vt-btn.active{background:var(--primary);color:var(--on-primary);}
+
+  .week-badge{
+    height:34px;box-sizing:border-box;
+    display:inline-flex;align-items:center;gap:7px;justify-content:center;
+    background:var(--surface);border-radius:100px;box-shadow:var(--shadow);
+    padding:0 12px 0 11px;white-space:nowrap;
+    border:none;font-family:inherit;color:inherit;cursor:pointer;
+  }
+  .week-badge .wb-text{display:flex;flex-direction:column;line-height:1.15;text-align:left;}
+  .week-badge .wb-word{font-size:9px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.2px;}
+  .week-badge .wb-parity{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.2px;color:var(--text-tertiary);}
+  .week-badge .wb-num{font-family:'Roboto Mono',monospace;font-size:15px;font-weight:700;color:var(--text);}
+  .week-badge.is-even .wb-parity{color:var(--secondary);}
+  .week-badge.is-odd .wb-parity{color:var(--primary);}
+
+  .day-tabs{
+    display:flex;gap:6px;padding:10px;overflow-x:auto;
+    background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);
+    scrollbar-width:none;
+  }
+  .day-tabs::-webkit-scrollbar{display:none;}
+  .day-tab{
+    flex:1 1 0;min-width:0;text-align:center;border:none;border-radius:100px;padding:9px 4px;
+    font-size:14px;font-weight:500;background:var(--surface-container);color:var(--text-secondary);
+    position:relative;
+  }
+  .day-tab.active{background:var(--primary);color:var(--on-primary);}
+  .day-tab .dot{
+    position:absolute;top:6px;right:8px;width:5px;height:5px;border-radius:50%;background:var(--secondary);
+  }
+  .day-tab.active .dot{background:var(--on-primary);}
+
+  .content{flex:1;padding:6px 16px calc(32px + env(safe-area-inset-bottom));}
+  .week-day-block{margin-bottom:22px;}
+  .week-day-head{
+    display:flex;align-items:center;gap:8px;padding:4px 4px 10px;
+    font-size:15px;font-weight:700;
+  }
+  .week-today-badge{
+    font-size:11px;font-weight:600;color:var(--on-primary);background:var(--primary);
+    padding:2px 9px;border-radius:100px;
+  }
+  .week-past-badge{color:var(--text-tertiary);background:var(--surface-container-high);}
+  .week-empty{padding:6px 4px 4px;font-size:13px;color:var(--text-tertiary);}
+  .week-progress{height:5px;border-radius:100px;background:var(--surface-container-high);overflow:hidden;margin:0 4px 12px;}
+  .week-progress-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--primary),var(--secondary));}
+
+  /* ---------- Week Table View ---------- */
+  .week-table-wrap{display:flex;flex-direction:column;gap:8px;margin:0 -4px;}
+  .week-layout-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 2px;margin-bottom:2px;flex-wrap:wrap;}
+  .week-layout-left{display:flex;align-items:center;gap:8px;}
+  .week-layout-toggle{display:inline-flex;align-items:center;background:var(--surface);border-radius:100px;box-shadow:var(--shadow);padding:2px;gap:2px;}
+  .wlt-btn{
+    height:28px;border:none;background:transparent;padding:0 12px;border-radius:100px;
+    font-size:11px;font-weight:600;color:var(--text-secondary);display:flex;align-items:center;gap:4px;cursor:pointer;
+  }
+  .wlt-btn svg{width:13px;height:13px;}
+  .wlt-btn.active{background:var(--primary);color:var(--on-primary);}
+  .week-export-btn{
+    height:28px;border:none;background:var(--surface);border-radius:100px;box-shadow:var(--shadow);
+    padding:0 10px;font-size:11px;font-weight:600;color:var(--primary);display:inline-flex;align-items:center;gap:4px;cursor:pointer;
+  }
+  .week-export-btn svg{width:13px;height:13px;}
+  .week-export-btn:active{background:var(--surface-container-high);}
+  .week-hint{font-size:11px;color:var(--text-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  .week-table-scroll{
+    overflow-x:auto;-webkit-overflow-scrolling:touch;
+    background:var(--surface);border:1px solid var(--outline);
+    border-radius:6px;box-shadow:var(--shadow);position:relative;
+  }
+  .week-table{
+    width:100%;min-width:700px;border-collapse:collapse;table-layout:fixed;
+  }
+  .wt-th, .wt-td{
+    border:1px solid var(--outline);
+  }
+  .wt-th{
+    padding:6px 3px;background:var(--surface-container);
+    text-align:center;font-weight:700;color:var(--text);font-size:12px;
+  }
+  .wt-th-name{font-size:14px;font-weight:700;line-height:1.2;}
+  .wt-th-date{font-size:11.5px;font-weight:500;color:var(--text-secondary);margin-top:2px;line-height:1;}
+  .wt-th.is-today{
+    background:var(--primary-container);color:var(--on-primary-container);
+    border-bottom:2px solid var(--primary);
+  }
+  .wt-th.is-today .wt-th-date{color:var(--primary);font-weight:700;}
+  .wt-th-time{
+    width:76px;position:sticky;left:0;z-index:3;background:var(--surface-container-high);
+  }
+  .wt-td{vertical-align:top;padding:0;}
+  .wt-td-time{
+    width:76px;position:sticky;left:0;z-index:2;background:var(--surface-container);
+    text-align:center;padding:6px 2px;
+  }
+  .wt-pair-num{font-size:14.5px;font-weight:800;color:var(--primary);line-height:1;margin-bottom:3px;}
+  .wt-pair-time{font-size:11px;font-family:'Roboto Mono',monospace;color:var(--text-secondary);line-height:1.2;font-weight:500;}
+  .wt-now-badge{
+    display:inline-block;margin-top:3px;font-size:8.5px;font-weight:700;letter-spacing:.3px;
+    color:var(--on-primary);background:var(--primary);padding:1px 4px;border-radius:2px;
+  }
+  .wt-td-cell{
+    min-width:100px;
+    padding:3px;
+    transition:background .12s ease;
+  }
+  .wt-td.is-today-col{
+    background:rgba(75,74,219,.03);
+  }
+  html[data-theme="dark"] .wt-td.is-today-col{
+    background:rgba(180,178,255,.04);
+  }
+  html[data-schedule-type="vo"] .wt-td.is-today-col{
+    background:rgba(216,67,46,.03);
+  }
+  .wt-td.is-current-slot{
+    background:rgba(75,74,219,.05);
+  }
+  .wt-td.is-current-lesson-now{
+    outline:2px solid var(--primary);
+    outline-offset:-2px;
+    background:rgba(75,74,219,.09) !important;
+  }
+  .wt-col-sat-compact{
+    width:56px !important;min-width:56px !important;max-width:56px !important;
+    background:rgba(0,0,0,.015);
+  }
+  html[data-theme="dark"] .wt-col-sat-compact{background:rgba(255,255,255,.015);}
+  .wt-col-sat-compact .wt-th-name{font-size:12px;opacity:.75;}
+  .wt-col-sat-compact .wt-th-date{font-size:10px;opacity:.75;}
+  .wt-col-sat-compact .wt-empty{min-height:48px;font-size:11px;opacity:.2;}
+
+  .wt-cell-inner{
+    height:100%;min-height:48px;display:flex;flex-direction:column;justify-content:space-between;gap:2px;cursor:pointer;
+  }
+  .wt-main-card{
+    background:var(--surface-container);border:1px solid transparent;border-radius:3px;
+    padding:4px 5px;display:flex;flex-direction:column;gap:2px;flex:1;justify-content:space-between;
+    transition:background .08s ease;
+  }
+  .wt-main-card:hover, .wt-cell-inner:active .wt-main-card{background:var(--surface-container-high);}
+  .wt-main-card.is-ghost{
+    opacity:.55;border:1px dashed var(--outline);background:transparent;
+  }
+  .wt-card-top{display:flex;align-items:center;gap:3px;flex-wrap:wrap;}
+  .wt-type-badge{
+    font-size:9.5px;font-weight:700;padding:1px 3px;border-radius:2px;text-transform:uppercase;
+  }
+  .wt-type-badge.lek{background:var(--primary-container);color:var(--on-primary-container);}
+  .wt-type-badge.pr{background:var(--secondary-container);color:var(--on-secondary-container);}
+  .wt-type-badge.lab{background:var(--secondary-container);color:var(--on-secondary-container);}
+  .wt-parity{
+    font-size:9px;font-weight:700;padding:1px 3px;border-radius:2px;text-transform:uppercase;margin-left:auto;
+  }
+  .wt-parity.even{background:var(--secondary-container);color:var(--on-secondary-container);}
+  .wt-parity.odd{background:var(--primary-container);color:var(--on-primary-container);}
+  .wt-room-badge{
+    font-size:10.5px;font-weight:700;color:var(--primary);background:var(--surface);
+    padding:0 4px;border-radius:2px;white-space:nowrap;border:1px solid var(--outline);
+  }
+  .wt-card-subj{
+    font-size:12px;font-weight:700;color:var(--text);line-height:1.2;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .wt-card-bottom{
+    display:flex;align-items:center;justify-content:space-between;gap:4px;margin-top:auto;
+  }
+  .wt-card-who{
+    font-size:10.5px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;
+  }
+  .wt-alt-strip{
+    font-size:9.5px;color:var(--text-tertiary);background:var(--surface-container-high);
+    border:1px dashed var(--outline);border-radius:2px;padding:2px 4px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;
+  }
+  .wt-alt-strip strong{color:var(--text-secondary);font-weight:600;}
+  .wt-empty{
+    height:100%;min-height:48px;display:flex;align-items:center;justify-content:center;
+    color:var(--text-tertiary);font-size:13px;opacity:.25;
+  }
+
+  .sheet-select{
+    background:var(--surface-container-high);border:1px solid var(--outline);border-radius:8px;
+    padding:6px 10px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;outline:none;
+  }
+  .export-theme-chooser{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+  .export-theme-card{
+    border:2px solid var(--outline);border-radius:8px;padding:10px;background:var(--surface);
+    display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;
+    transition:border-color .15s ease,background .15s ease;
+  }
+  .export-theme-card:hover{border-color:var(--text-tertiary);}
+  .export-theme-card.active{
+    border-color:var(--primary);background:var(--primary-container);
+  }
+  .etc-preview{
+    width:100%;height:52px;border-radius:5px;padding:7px;display:flex;flex-direction:column;gap:5px;
+    border:1px solid var(--outline);box-sizing:border-box;
+  }
+  .etc-preview.light{background:#ffffff;}
+  .etc-preview.dark{background:#15161b;}
+  .etc-line{height:6px;border-radius:2px;}
+  .etc-label{font-size:12.5px;font-weight:700;color:var(--text);}
+  .export-theme-card.active .etc-label{color:var(--primary);}
+
+  /* Modal Lesson Detail */
+  .lesson-detail-header{
+    padding:4px 0 14px;border-bottom:1px solid var(--outline);margin-bottom:14px;
+    display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+  }
+  .ld-subject{font-size:17px;font-weight:700;color:var(--text);line-height:1.3;flex:1;}
+  .ld-time-badge{
+    font-family:'Roboto Mono',monospace;font-size:12px;font-weight:700;color:var(--primary);
+    background:var(--primary-container);padding:4px 9px;border-radius:100px;white-space:nowrap;
+  }
+  .lesson-detail-body{display:flex;flex-direction:column;gap:12px;}
+  .ld-row{display:flex;flex-direction:column;gap:2px;}
+  .ld-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text-tertiary);}
+  .ld-val{font-size:14px;color:var(--text);line-height:1.35;}
+  .ld-sub{color:var(--text-secondary);font-size:12px;}
+  .ld-actions{margin-top:8px;padding-top:12px;border-top:1px solid var(--outline);}
+
+  .progress-card{
+    background:var(--surface);border-radius:var(--radius-lg);padding:18px 20px;
+    margin-bottom:18px;box-shadow:var(--shadow);
+  }
+  .progress-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;}
+  .progress-top .now{font-family:'Roboto Mono',monospace;font-size:22px;font-weight:500;letter-spacing:-.5px;}
+  .progress-top .label{font-size:12px;color:var(--text-secondary);text-align:right;}
+  .progress-track{height:8px;border-radius:100px;background:var(--surface-container-high);overflow:hidden;}
+  .progress-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--primary),var(--secondary));
+    width:0%;transition:width .6s ease;}
+  .progress-foot{display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--text-tertiary);}
+
+  .empty-state{
+    text-align:center;padding:60px 24px 40px;color:var(--text-secondary);
+  }
+  .empty-state svg{width:52px;height:52px;color:var(--text-tertiary);margin-bottom:14px;}
+  .empty-state .es-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px;}
+  .empty-state .es-sub{font-size:14px;line-height:1.5;}
+
+  .timeline{list-style:none;margin:0;padding:0;}
+  .lesson{
+    display:flex;gap:12px;margin-bottom:10px;
+  }
+  #content.rise .lesson{animation:rise .35s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  /* Плавное обновление по таймеру: плитки не перерисовываются, а только мягко меняют яркость там, где изменился текст/статус */
+  @keyframes tickfade{0%{opacity:.35;}100%{opacity:1;}}
+  .tick-fade{animation:tickfade .9s ease;}
+  .lesson-card, .status-chip{transition:background-color .6s ease, box-shadow .6s ease, color .6s ease;}
+  .progress-fill, .week-progress-fill{transition:width .8s ease;}
+  .lesson-time{
+    flex-shrink:0;width:56px;padding-top:16px;text-align:right;
+    font-family:'Roboto Mono',monospace;font-size:12px;color:var(--text-tertiary);line-height:1.5;
+  }
+  .lesson-time .end{color:#C3C2CE;}
+  .lesson-rail{display:flex;flex-direction:column;align-items:center;flex-shrink:0;padding-top:20px;}
+  .lesson-dot{width:10px;height:10px;border-radius:50%;background:var(--outline);flex-shrink:0;}
+  .lesson-line{width:2px;flex:1;background:var(--outline);margin-top:2px;min-height:16px;}
+  .lesson-card{
+    flex:1;background:var(--surface);border-radius:var(--radius-md);padding:14px 16px 14px 13px;
+    box-shadow:var(--shadow);min-width:0;
+    border-left:3px solid var(--primary);
+  }
+  .lesson-head{display:flow-root;margin-bottom:4px;}
+  .lesson-subject{font-size:15px;font-weight:600;line-height:1.35;min-width:0;overflow-wrap:break-word;}
+  .lesson-meta{font-size:13px;color:var(--text-secondary);line-height:1.5;margin-top:2px;clear:both;}
+  .lesson-note{
+    display:inline-block;margin-top:6px;font-size:12px;font-weight:500;color:var(--primary);
+    background:var(--primary-container);padding:2px 8px;border-radius:100px;clear:both;
+  }
+  .status-chip{
+    float:right;margin:1px 0 6px 10px;font-size:11px;font-weight:600;padding:4px 9px;border-radius:100px;
+    white-space:nowrap;
+  }
+  .status-current{background:var(--secondary-container);color:var(--on-secondary-container);}
+  .status-upcoming{background:var(--primary-container);color:var(--on-primary-container);}
+  .status-done{background:transparent;color:var(--text-tertiary);}
+  .status-ghost{background:transparent;color:var(--text-tertiary);font-style:italic;}
+
+  .lesson.is-done .lesson-card{background:var(--surface-container);box-shadow:none;}
+  .lesson.is-done .lesson-subject{color:var(--text-secondary);}
+  .lesson.is-done .lesson-dot{background:var(--done);}
+  .lesson.is-current .lesson-card{outline:3px solid var(--secondary);outline-offset:-3px;}
+  .lesson.is-current .lesson-dot{background:var(--secondary);box-shadow:0 0 0 4px var(--secondary-container);}
+
+  .lesson.is-tappable .lesson-card{cursor:pointer;}
+  .lesson-handle{width:32px;height:4px;border-radius:100px;background:var(--outline);margin:12px auto 0;clear:both;}
+  .lesson-actions{
+    display:flex;flex-direction:column;gap:8px;max-height:0;opacity:0;overflow:hidden;margin-top:0;
+    transition:max-height .25s ease, opacity .2s ease, margin-top .25s ease;
+  }
+  .lesson.expanded .lesson-actions{max-height:220px;opacity:1;margin-top:8px;}
+  .lesson-teacher-full{
+    font-size:12px;font-weight:600;color:var(--text-secondary);line-height:1.3;
+  }
+  .lesson-actions-btns{display:flex;gap:8px;}
+  .lesson-room-info{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--text-secondary);line-height:1.35;}
+  .lesson-room-info .lr-room{font-weight:600;color:var(--text);}
+  .app-ico{display:inline-flex;align-items:center;justify-content:center;color:var(--primary);vertical-align:middle;}
+  .app-ico svg{width:22px;height:22px;}
+  .day-tab.active .app-ico{color:var(--on-primary);}
+  .lesson-action-btn{
+    flex:1;border:none;border-radius:100px;background:var(--surface-container-high);color:var(--text);
+    font-size:12px;font-weight:600;padding:9px 10px;display:flex;align-items:center;justify-content:center;gap:6px;
+  }
+  .lesson-action-btn:active{background:var(--outline);}
+  .lesson-action-btn svg{width:15px;height:15px;flex-shrink:0;}
+  .lesson.expanded{position:relative;z-index:16;}
+  .lesson.expanded .lesson-card{box-shadow:0 6px 24px rgba(20,17,50,.2);}
+  .lesson-scrim{
+    position:fixed;inset:0;background:rgba(20,17,50,.4);opacity:0;pointer-events:none;
+    transition:opacity .2s ease;z-index:15;
+  }
+  .lesson-scrim.show{opacity:1;pointer-events:auto;}
+
+  .lesson.is-ghost .lesson-card{background:transparent;box-shadow:none;border:2px dashed var(--outline);opacity:.6;}
+  .lesson.is-ghost .lesson-subject{color:var(--text-tertiary);}
+  .lesson.is-ghost .lesson-meta{color:var(--text-tertiary);}
+  .lesson.is-ghost .lesson-dot{background:var(--surface);border:3px solid var(--outline);}
+
+  .lesson.is-break .lesson-card{
+    background:transparent;box-shadow:none;border:2px dashed var(--outline);padding:10px 16px;
+  }
+  .lesson.is-break .lesson-subject{font-size:14px;font-weight:600;color:var(--text-secondary);display:flex;align-items:center;gap:6px;}
+  .lesson.is-break .lesson-subject svg{width:15px;height:15px;flex-shrink:0;}
+  .lesson.is-break .lesson-dot{background:var(--surface);border:3px solid var(--outline);}
+  .lesson.is-break.is-done .lesson-card{border-color:var(--outline);opacity:.6;}
+  .lesson.is-break.is-current .lesson-card{border:2px dashed var(--secondary);background:var(--secondary-container);opacity:1;}
+  .lesson.is-break.is-current .lesson-subject{color:var(--on-secondary-container);}
+
+  /* ---------- Bottom sheet ---------- */
+  .scrim{
+    position:fixed;inset:0;background:rgba(20,17,50,.4);opacity:0;pointer-events:none;
+    transition:opacity .2s ease;z-index:20;
+  }
+  .scrim.show{opacity:1;pointer-events:auto;}
+  .sheet{
+    position:fixed;left:50%;bottom:0;transform:translate(-50%,100%);
+    width:100%;max-width:480px;background:var(--surface);
+    border-radius:24px 24px 0 0;padding:8px 20px calc(24px + env(safe-area-inset-bottom));
+    z-index:21;transition:transform .25s cubic-bezier(.2,.8,.3,1);
+    box-shadow:0 -8px 30px rgba(20,17,50,.15);
+  }
+  .sheet.show{transform:translate(-50%,0);}
+  .sheet-handle{width:36px;height:4px;border-radius:100px;background:var(--outline);margin:8px auto 16px;}
+  .sheet-row{
+    display:flex;align-items:center;gap:14px;padding:14px 4px;border:none;background:none;
+    width:100%;text-align:left;font-size:15px;color:var(--text);border-radius:var(--radius-sm);
+    text-decoration:none;cursor:pointer;
+  }
+  .sheet-row:active{background:var(--surface-container);}
+  .sheet-row svg{width:20px;height:20px;color:var(--text-secondary);flex-shrink:0;}
+  .sheet-row.danger{color:var(--error);}
+  .sheet-row.danger svg{color:var(--error);}
+  .sheet-info{padding:2px 4px 14px;font-size:12px;color:var(--text-tertiary);border-bottom:1px solid var(--outline);margin-bottom:6px;}
+
+  .sheet-toggle-row{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:12px 4px;
+  }
+  .sheet-toggle-row.is-disabled{opacity:.45;}
+  .sheet-toggle-row.is-disabled .switch{pointer-events:none;cursor:default;}
+  .sheet-toggle-label{display:flex;align-items:center;gap:14px;font-size:15px;color:var(--text);}
+  .sheet-toggle-label svg{width:20px;height:20px;color:var(--text-secondary);flex-shrink:0;}
+  .sheet-toggle-soon{
+    font-size:10px;font-weight:700;color:var(--text-tertiary);background:var(--surface-container-high);
+    padding:2px 7px;border-radius:100px;text-transform:uppercase;letter-spacing:.3px;margin-left:-4px;
+  }
+  .switch{
+    width:46px;height:27px;border-radius:100px;border:none;background:var(--outline);
+    position:relative;flex-shrink:0;transition:background .18s ease;padding:0;
+  }
+  .switch .switch-knob{
+    position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .18s ease;
+  }
+  .switch[aria-checked="true"]{background:var(--primary);}
+  .switch[aria-checked="true"] .switch-knob{transform:translateX(19px);}
+
+  /* ---------- Share sheet ---------- */
+  .share-title{font-size:17px;font-weight:700;text-align:center;padding:4px 4px 14px;}
+  .share-qr-wrap{display:flex;justify-content:center;padding:4px 4px 16px;}
+  .share-qr-wrap img{
+    border-radius:var(--radius-md);background:#fff;padding:10px;box-shadow:var(--shadow);
+    -webkit-touch-callout:none;-webkit-user-select:none;user-select:none;pointer-events:none;
+  }
+  .share-link-row{
+    display:flex;align-items:center;gap:8px;background:var(--surface-container);
+    border-radius:var(--radius-md);padding:11px 8px 11px 14px;margin-top:14px;
+  }
+  .share-link-text{flex:1;font-size:12px;color:var(--text-secondary);font-family:'Roboto Mono',monospace;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .share-copy-btn{
+    border:none;background:var(--surface-container-high);color:var(--text);font-size:12px;font-weight:500;
+    padding:8px 12px;border-radius:100px;flex-shrink:0;
+  }
+  .share-copy-btn.copied{background:var(--secondary-container);color:var(--on-secondary-container);}
+
+  .week-badge .wb-chev{width:12px;height:12px;color:var(--text-tertiary);flex-shrink:0;}
+  .week-badge:active{background:var(--surface-container);}
+
+  /* ---------- Week parity sheet ---------- */
+  .week-info-row{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:12px 14px;background:var(--surface-container);border-radius:var(--radius-md);margin-bottom:8px;
+  }
+  .wi-label{font-size:11px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.3px;}
+  .wi-main{font-size:16px;font-weight:700;margin-top:2px;}
+  .wi-main .wi-odd{color:var(--primary);}
+  .wi-main .wi-even{color:var(--secondary);}
+  .wi-dates{font-size:12px;color:var(--text-secondary);text-align:right;font-family:'Roboto Mono',monospace;}
+  .week-source{font-size:12px;color:var(--text-secondary);line-height:1.55;padding:6px 4px 0;}
+
+  /* Три плитки всегда в одну строку: на узких экранах убираем иконки
+     и ужимаем отступы/шрифт, чтобы всё влезало без второго ряда. */
+  @media (max-width:410px){
+    .toggles-row{gap:5px;}
+    .mode-btn svg, .vt-btn svg, .week-badge .wb-chev{display:none;}
+    .mode-btn{padding:0 8px;font-size:10.5px;}
+    .vt-btn{padding:0 8px;font-size:10.5px;}
+    .week-badge{padding:0 9px;gap:6px;}
+  }
+  @media (max-width:340px){
+    .toggles-row{gap:4px;}
+    .mode-btn{padding:0 5px;font-size:10px;}
+    .vt-btn{padding:0 6px;font-size:10px;}
+    .week-badge{padding:0 6px;gap:4px;}
+    .week-badge .wb-num{font-size:14px;}
+  }
+
+  /* Плитка "Информация" на воскресенье — зелёно-фиолетовый градиент (как полоска прогресса) */
+  .sunday-info-card{
+    --info-from:#4B4ADB; --info-to:#00897B;
+    background:linear-gradient(135deg,var(--info-from),var(--info-to));
+    color:#fff;border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:6px;
+    box-shadow:var(--shadow);
+  }
+  html[data-theme="dark"] .sunday-info-card{ --info-from:#5654E8; --info-to:#00796B; }
+  .sunday-info-tag{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;opacity:.8;margin-bottom:6px;}
+  .sunday-info-main{font-size:19px;font-weight:700;line-height:1.3;margin-bottom:6px;}
+  .sunday-info-sub{font-size:13.5px;line-height:1.5;opacity:.92;}
+  .sunday-info-card + .empty-state, .ann-wrap + .empty-state{padding-top:34px;}
+  .ann-title{font-size:12px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--text-tertiary);padding:16px 4px 8px;}
+  .ann-card{
+    position:relative;isolation:isolate;overflow:hidden;border-radius:var(--radius-lg);padding:16px 18px;margin-bottom:10px;
+    color:#fff;box-shadow:var(--shadow);min-height:120px;
+    background:linear-gradient(115deg,#4B4ADB 0%,#2F6FB0 55%,#00897B 100%);background-size:cover;background-position:center;
+  }
+  .ann-card:after{content:"";position:absolute;z-index:-1;inset:0;background:linear-gradient(100deg,rgba(25,22,80,.80) 0%,rgba(25,22,80,.45) 100%);}
+  .ann-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;}
+  .ann-tag{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.85);}
+  .ann-date{font-size:11px;color:rgba(255,255,255,.75);}
+  .ann-card h3{margin:0 0 6px;font-size:17px;line-height:1.25;}
+  .ann-card p{margin:0;font-size:13.5px;line-height:1.5;white-space:pre-line;color:rgba(255,255,255,.95);}
+
+  a{color:inherit;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== Onboarding: upload ===== -->
+  <section class="screen active" id="screen-upload">
+    <div class="onboard">
+      <div class="onboard-top-row">
+        <div class="onboard-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 4v5"/><path d="M7.5 14h2M7.5 17h2M11.5 14h2M11.5 17h2M15.5 14h2M15.5 17h2"/></svg>
+        </div>
+        <h1>Расписание</h1>
+      </div>
+
+      <div class="type-row">
+        <button class="icon-btn search-open-btn" id="search-open-btn" aria-label="Поиск группы или преподавателя">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        </button>
+        <div class="type-toggle">
+          <button class="type-toggle-btn active" data-type="spo">СПО</button>
+          <button class="type-toggle-btn" data-type="vo">ВО</button>
+          <button class="type-toggle-btn" data-type="evening">Вечер</button>
+          <button class="type-toggle-btn" data-type="mag">Маг</button>
+        </div>
+      </div>
+
+      <div id="search-panel" style="display:none;">
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="global-search" type="text" placeholder="Группа или преподаватель, например ТМ34д" autocomplete="off" autocapitalize="characters">
+        </div>
+        <div class="search-status" id="search-status"></div>
+        <div class="search-results" id="search-results"></div>
+      </div>
+
+      <div class="quick-continue hide-on-search" id="quick-continue" style="display:none;">
+        <div class="qc-label">Продолжить</div>
+        <button class="qc-btn" id="qc-btn">
+          <span class="qc-group" id="qc-group">—</span>
+          <span class="qc-sub" id="qc-sub">открыть расписание</span>
+        </button>
+      </div>
+
+      <div class="gh-block hide-on-search">
+        <div class="gh-label">Актуальное расписание</div>
+        <div id="gh-latest-wrap">
+          <div class="gh-card gh-loading" id="gh-loading-card">
+            <span class="spinner spinner-dark"></span>
+            <span>Ищу файлы на GitHub…</span>
+          </div>
+        </div>
+      </div>
+
+      <label class="tile-upload hide-on-search" id="drop-zone" for="file-input">
+        <div class="tile-upload-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+        </div>
+        <div class="tile-upload-text">
+          <div class="drop-title">Загрузить своё</div>
+          <div class="drop-sub">выбрать файл .xls / .xlsx или перетащить сюда</div>
+        </div>
+      </label>
+      <input class="file-input" id="file-input" type="file" accept=".xls,.xlsx">
+      <div class="err-box hide-on-search" id="upload-error"></div>
+      <button class="btn btn-filled btn-block hide-on-search" id="btn-parse" style="display:none;">
+        <span id="btn-parse-spinner" style="display:none;" class="spinner"></span>
+        <span id="btn-parse-label">Разобрать файл</span>
+      </button>
+
+      <div class="gh-older-wrap hide-on-search" id="gh-older-wrap" style="display:none;">
+        <button class="gh-expand-btn" id="gh-expand-btn">
+          <span id="gh-expand-label">Показать старые версии</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="gh-older-list" id="gh-older-list" style="display:none;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Group picker ===== -->
+  <section class="screen" id="screen-pick">
+    <div class="picker">
+      <div class="picker-top">
+        <div class="picker-header-row">
+          <button class="icon-btn picker-back-btn" id="group-pick-back" aria-label="Назад" title="Назад">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <h2>Выберите группу</h2>
+        </div>
+        <p id="pick-sub">Найдены группы в расписании</p>
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="group-search" type="text" placeholder="Например, ТМ23д" autocomplete="off">
+        </div>
+      </div>
+      <div class="group-list" id="group-list"></div>
+    </div>
+  </section>
+
+  <!-- ===== Teacher picker ===== -->
+  <section class="screen" id="screen-pick-teacher">
+    <div class="picker">
+      <div class="picker-top">
+        <div class="picker-header-row">
+          <button class="icon-btn picker-back-btn" id="teacher-pick-back" aria-label="Назад" title="Назад">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <h2>Выберите преподавателя</h2>
+        </div>
+        <p id="pick-sub-teacher">Найдены преподаватели в расписании</p>
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="teacher-search" type="text" placeholder="Например, Иванов И.И." autocomplete="off">
+        </div>
+      </div>
+      <div class="group-list" id="teacher-list"></div>
+    </div>
+  </section>
+
+  <!-- ===== Main schedule ===== -->
+  <section class="screen" id="screen-main">
+    <div class="header-sticky">
+      <div class="topbar">
+        <button class="icon-btn main-back-btn" id="main-back-btn" title="К разделам (СПО / ВО)" aria-label="Назад к разделам">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <div class="topbar-left">
+          <div class="term-title" id="term-title">—</div>
+          <button class="group-btn" id="group-switch-btn">
+            <span id="current-group">—</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+        </div>
+        <button class="icon-btn" id="settings-btn" aria-label="Настройки">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+
+      <div class="toggles-row">
+        <button class="mode-btn" id="mode-teacher-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Преподаватели
+        </button>
+        <div class="view-toggle" id="view-toggle">
+          <button class="vt-btn active" data-mode="day">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 10h18"/></svg>
+            День
+          </button>
+          <button class="vt-btn" data-mode="week">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 10h18M9 4v18M15 4v18"/></svg>
+            Неделя
+          </button>
+        </div>
+        <button type="button" class="week-badge" id="week-badge" title="Пары другой недели показаны серым">
+          <span class="wb-num" id="wb-num">—</span>
+          <span class="wb-text">
+            <span class="wb-word">неделя</span>
+            <span class="wb-parity" id="wb-parity">—</span>
+          </span>
+          <svg class="wb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+      </div>
+
+      <div class="day-tabs" id="day-tabs"></div>
+    </div>
+
+    <div class="content" id="content"></div>
+  </section>
+
+</div>
+
+<!-- Lesson-tile expand scrim -->
+<div class="lesson-scrim" id="lesson-scrim"></div>
+
+<!-- Settings sheet -->
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="settings-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-info" id="sheet-info">—</div>
+  <button class="sheet-row" id="sheet-change-group">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+    Сменить группу
+  </button>
+  <button class="sheet-row" id="sheet-reupload">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+    Загрузить другой файл
+  </button>
+
+  <div class="sheet-toggle-row">
+    <div class="sheet-toggle-label">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      Тема
+    </div>
+    <select class="sheet-select" id="theme-mode-select" aria-label="Тема оформления">
+      <option value="system">Системная</option>
+      <option value="light">Светлая</option>
+      <option value="dark">Тёмная</option>
+    </select>
+  </div>
+
+  <div class="sheet-toggle-row is-disabled">
+    <div class="sheet-toggle-label">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      Демо-режим на экране входа
+      <span class="sheet-toggle-soon">скоро</span>
+    </div>
+    <button class="switch" id="demo-switch" role="switch" aria-checked="false" aria-disabled="true"><span class="switch-knob"></span></button>
+  </div>
+
+  <button class="sheet-row" id="sheet-share">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+    Поделиться
+  </button>
+
+  <button class="sheet-row" id="sheet-contact">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.94 4.6 18.6 20.36c-.25 1.1-.9 1.37-1.83.85l-5.06-3.73-2.44 2.35c-.27.27-.5.5-1.02.5l.36-5.16 9.4-8.5c.41-.36-.09-.56-.63-.2L6.3 13.1l-5.02-1.57c-1.09-.34-1.11-1.09.23-1.61L20.57 3.6c.91-.34 1.7.2 1.37 1z"/></svg>
+    Вопросы и ошибки
+  </button>
+</div>
+
+<!-- Week parity sheet -->
+<div class="scrim" id="week-scrim"></div>
+<div class="sheet" id="week-sheet">
+  <div class="sheet-handle"></div>
+  <div class="share-title">Чётность недель</div>
+  <div id="week-sheet-body"></div>
+</div>
+
+<!-- Share sheet -->
+<div class="scrim" id="share-scrim"></div>
+<div class="sheet" id="share-sheet">
+  <div class="sheet-handle"></div>
+  <div class="share-title">Поделиться приложением</div>
+  <div class="share-qr-wrap">
+    <img id="share-qr-img" alt="QR-код ссылки" width="180" height="180">
+  </div>
+  <button class="btn btn-filled btn-block" id="share-native-btn">Поделиться ссылкой…</button>
+  <div class="share-link-row">
+    <span class="share-link-text" id="share-link-text">patrlza.github.io/schedule-akrilk</span>
+    <button class="share-copy-btn" id="share-copy-btn">Копировать</button>
+  </div>
+</div>
+
+<!-- Lesson detail sheet -->
+<div class="scrim" id="lesson-detail-scrim"></div>
+<div class="sheet" id="lesson-detail-sheet">
+  <div class="sheet-handle"></div>
+  <div class="lesson-detail-header">
+    <div class="ld-subject" id="ld-subject">—</div>
+    <div class="ld-time-badge" id="ld-time">—</div>
+  </div>
+  <div class="lesson-detail-body" id="ld-body"></div>
+</div>
+
+<!-- Export PNG sheet -->
+<div class="scrim" id="export-png-scrim"></div>
+<div class="sheet" id="export-png-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" style="font-size:16px;font-weight:700;margin-bottom:12px;color:var(--text);display:flex;align-items:center;gap:8px;">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Скачать расписание в PNG
+  </div>
+  <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;line-height:1.4;">
+    Выберите цветовую тему для картинки:
+  </div>
+  <div class="export-theme-chooser">
+    <button type="button" class="export-theme-card active" data-export-theme="light" id="etc-light">
+      <div class="etc-preview light">
+        <div class="etc-line" style="background:#4b4adb;width:40%;"></div>
+        <div class="etc-line" style="background:#e0e0e0;width:80%;"></div>
+        <div class="etc-line" style="background:#e0e0e0;width:60%;"></div>
+      </div>
+      <div class="etc-label">Светлая</div>
+    </button>
+    <button type="button" class="export-theme-card" data-export-theme="dark" id="etc-dark">
+      <div class="etc-preview dark">
+        <div class="etc-line" style="background:#b4b2ff;width:40%;"></div>
+        <div class="etc-line" style="background:#3a3d4a;width:80%;"></div>
+        <div class="etc-line" style="background:#3a3d4a;width:60%;"></div>
+      </div>
+      <div class="etc-label">Тёмная</div>
+    </button>
+  </div>
+  <button type="button" class="btn btn-filled btn-block" id="btn-do-export-png" style="height:44px;font-size:14px;font-weight:700;">
+    Скачать PNG
+  </button>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var DAY_TITLE = {
+    'ПОНЕДЕЛЬНИК':'Понедельник','ВТОРНИК':'Вторник','СРЕДА':'Среда',
+    'ЧЕТВЕРГ':'Четверг','ПЯТНИЦА':'Пятница','СУББОТА':'Суббота','ВОСКРЕСЕНЬЕ':'Воскресенье'
+  };
+  var DAY_SHORT = {
+    'ПОНЕДЕЛЬНИК':'Пн','ВТОРНИК':'Вт','СРЕДА':'Ср',
+    'ЧЕТВЕРГ':'Чт','ПЯТНИЦА':'Пт','СУББОТА':'Сб','ВОСКРЕСЕНЬЕ':'Вс'
+  };
+  // JS Date.getDay() -> canonical day name (used to find "today")
+  // Мини-иконка приложения (вместо «Вс» на вкладке информации)
+  var APP_ICON_HTML = '<span class="app-ico" aria-label="Информация"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 4v5"/><path d="M7.5 14h2M7.5 17h2M11.5 14h2M11.5 17h2M15.5 14h2M15.5 17h2"/></svg></span>';
+  // Кнопки «Будильник» и «Календарь» пока скрыты (код оставлен — вернутся в Android-приложении).
+  var SHOW_LESSON_ACTION_BUTTONS = false;
+  var WEEKDAY_INDEX = {1:'ПОНЕДЕЛЬНИК',2:'ВТОРНИК',3:'СРЕДА',4:'ЧЕТВЕРГ',5:'ПЯТНИЦА',6:'СУББОТА',0:'ВОСКРЕСЕНЬЕ'};
+
+  // ---------- week parity (some slots alternate subjects week to week) ----------
+  function getISOWeekNumber(date){
+    var d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    var dayNum = (d.getUTCDay()+6)%7; // Monday=0..Sunday=6
+    d.setUTCDate(d.getUTCDate()-dayNum+3); // nearest Thursday
+    var firstThursday = new Date(Date.UTC(d.getUTCFullYear(),0,4));
+    var firstDayNum = (firstThursday.getUTCDay()+6)%7;
+    firstThursday.setUTCDate(firstThursday.getUTCDate()-firstDayNum+3);
+    return 1 + Math.round((d-firstThursday)/(7*24*3600*1000));
+  }
+  // ---- График недель колледжа (weeks.json в корне репозитория) ----
+  // Колледж считает чётность по своему графику (на объявлении), а не по ISO.
+  // Если сегодняшняя дата попадает в график — берём неделю оттуда, иначе
+  // (файла нет / он закончился) считаем по ISO с начала года.
+  var weekCalendar = null;   // { weeks:[{n,parity,from,to}], lastTo:'YYYY-MM-DD' } | null
+  var weekCalendarMissing = true;
+  var WEEKS_KEY = 'schedule-weeks-cache-v1';
+
+  function pad2(n){ return (n<10?'0':'')+n; }
+  function dateKey(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+  function isoToRu(iso, withYear){
+    var p = iso.split('-');
+    return p[2]+'.'+p[1]+(withYear? '.'+p[0] : '');
+  }
+  function normParity(v){
+    v = (v||'').toString().trim().toLowerCase();
+    if(v.indexOf('неч')===0 || v==='odd') return 'odd';
+    if(v.indexOf('чет')===0 || v==='even') return 'even';
+    return null;
+  }
+  // Принимает формат прямо с объявления: { "n":5, "parity":"Нечетная", "dates":"28.09.2026-04.10.2026" }
+  function normalizeWeekCalendar(json){
+    var list = json && json.weeks;
+    if(!Array.isArray(list)) return null;
+    var weeks = [];
+    list.forEach(function(w){
+      var par = normParity(w.parity);
+      var m = (w.dates||'').toString().match(/(\d{2})\.(\d{2})\.(\d{4})\s*[-–—]\s*(\d{2})\.(\d{2})\.(\d{4})/);
+      var n = parseInt(w.n, 10);
+      if(!par || !m || isNaN(n)) return;
+      weeks.push({ n:n, parity:par, from:m[3]+'-'+m[2]+'-'+m[1], to:m[6]+'-'+m[5]+'-'+m[4] });
+    });
+    if(!weeks.length) return null;
+    var lastTo = weeks.reduce(function(a,w){ return w.to>a? w.to : a; }, '0000-00-00');
+    return { weeks: weeks, lastTo: lastTo };
+  }
+  async function loadWeekCalendar(){
+    var text = null, notFound = false;
+    try{
+      var ctrl = (typeof AbortController!=='undefined') ? new AbortController() : null;
+      var t = ctrl ? setTimeout(function(){ ctrl.abort(); }, 4000) : null;
+      var res = await fetch('weeks.json?_='+Date.now(), { cache:'no-store', signal: ctrl? ctrl.signal : undefined });
+      if(t) clearTimeout(t);
+      if(res.status===404){ notFound = true; }
+      else if(res.ok){ text = await res.text(); JSON.parse(text); kvSet(WEEKS_KEY, text); }
+    }catch(e){ text = null; }
+    if(notFound){ await kvDelete(WEEKS_KEY); }          // файл убрали — не держим старую копию
+    else if(!text){ text = await kvGet(WEEKS_KEY); }    // нет сети — берём последнюю удачную копию
+    try{ weekCalendar = text ? normalizeWeekCalendar(JSON.parse(text)) : null; }catch(e){ weekCalendar = null; }
+    weekCalendarMissing = !weekCalendar;
+  }
+
+  function addDaysIso(iso, n){
+    var p = iso.split('-');
+    var d = new Date(+p[0], +p[1]-1, +p[2]+n, 12, 0, 0);
+    return dateKey(d);
+  }
+  function getWeekInfoForDate(date){
+    // 1) официальный сайт колледжа (data/sfti.json) — обновляется автоматически
+    if(sfti && sfti.weeks){
+      var skey = dateKey(date);
+      var names = ['current','next'];
+      for(var si=0; si<names.length; si++){
+        var sw = sfti.weeks[names[si]];
+        if(!sw || !sw.rangeStart || !sw.weekNumber) continue;
+        var spar = normParity(sw.weekType);
+        if(spar && sw.rangeStart<=skey && skey<=addDaysIso(sw.rangeStart, 6)){
+          return { num:sw.weekNumber, parity:spar, from:sw.rangeStart, to:addDaysIso(sw.rangeStart, 6), source:'sfti' };
+        }
+      }
+    }
+    if(weekCalendar){
+      var key = dateKey(date);
+      for(var i=0;i<weekCalendar.weeks.length;i++){
+        var w = weekCalendar.weeks[i];
+        if(w.from<=key && key<=w.to) return { num:w.n, parity:w.parity, from:w.from, to:w.to, source:'file' };
+      }
+    }
+    var num = getISOWeekNumber(date);
+    var mon = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    mon.setDate(mon.getDate() - ((mon.getDay()+6)%7));
+    var sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate()+6);
+    return { num:num, parity:(num%2===0)?'even':'odd', from:dateKey(mon), to:dateKey(sun), source:'iso' };
+  }
+  function getCurrentWeekInfo(){ return getWeekInfoForDate(new Date()); }
+  // Every lesson keeps its place on the timeline regardless of week parity — one
+  // that belongs to the other parity just gets flagged as a "ghost" so it can be
+  // rendered greyed out instead of disappearing. Progress/gap math below only
+  // ever looks at the non-ghost ones.
+  function annotateParity(lessons){
+    var parity = getCurrentWeekInfo().parity;
+    return lessons.map(function(l){
+      var isGhost = !!(l.parity && l.parity!==parity);
+      return Object.assign({}, l, {isGhost: isGhost});
+    });
+  }
+
+  // ---------- данные с официального сайта колледжа (data/sfti.json) ----------
+  // Файл раз в несколько часов обновляет GitHub Actions (через российский прокси).
+  // Используется для: чётности/номера недели и для вкладки «Преподаватели»
+  // (там сразу все группы СПО, ВО и магистратуры).
+  var sfti = null;
+  var sftiTeacherIdx = null;
+  var SFTI_KEY = 'schedule-sfti-cache-v1';
+  var DAY_BY_NUM = {1:'ПОНЕДЕЛЬНИК',2:'ВТОРНИК',3:'СРЕДА',4:'ЧЕТВЕРГ',5:'ПЯТНИЦА',6:'СУББОТА'};
+
+  async function loadSftiFromCache(){
+    var t = await kvGet(SFTI_KEY);
+    if(!t) return;
+    try{ var j = JSON.parse(t); if(j && Array.isArray(j.rows)) sfti = j; }catch(e){}
+  }
+  async function refreshSfti(){
+    try{
+      var ctrl = (typeof AbortController!=='undefined') ? new AbortController() : null;
+      var tm = ctrl ? setTimeout(function(){ ctrl.abort(); }, 15000) : null;
+      var res = await fetch('data/sfti.json', { cache:'no-cache', signal: ctrl? ctrl.signal : undefined });
+      if(tm) clearTimeout(tm);
+      if(!res.ok) return;
+      var text = await res.text();
+      var j = JSON.parse(text);
+      if(!j || !Array.isArray(j.rows) || j.rows.length<100) return;
+      var changed = !sfti || sfti.hash!==j.hash;
+      sfti = j;
+      sftiTeacherIdx = null;
+      kvSet(SFTI_KEY, text);
+      if(changed) onSftiUpdated();
+    }catch(e){ /* нет сети — остаётся копия из кеша */ }
+  }
+  function onSftiUpdated(){
+    try{
+      if(state.parsed && $('screen-main').classList.contains('active')){
+        renderWeekBadge();
+        if(state.browseMode==='teacher') renderContentDispatch(true);
+      }
+      if($('screen-pick-teacher').classList.contains('active')) renderTeacherPicker();
+    }catch(e){}
+  }
+
+  // ---------- объявления на вкладке воскресенья (announcements.json в корне репозитория) ----------
+  // Формат: массив объектов [{ "tag", "date", "title", "text", "image" }, ...];
+  // image — путь к фото внутри репозитория (например announcements/seal.jpg) или https-ссылка.
+  var announcements = [];
+  var annFetchedAt = 0;
+  var ANN_KEY = 'schedule-announcements-cache-v1';
+  function normalizeAnnouncements(data){
+    if(Array.isArray(data)) return data;
+    if(data && typeof data==='object'){
+      var arr = data.announcements || data.items || data.posts;
+      if(Array.isArray(arr)) return arr;
+      if(data.title || data.text) return [data];     // один объект без массива
+    }
+    return [];
+  }
+  async function loadAnnouncementsFromCache(){
+    var t = await kvGet(ANN_KEY);
+    if(!t) return;
+    try{ announcements = normalizeAnnouncements(JSON.parse(t)); }catch(e){}
+  }
+  async function refreshAnnouncements(){
+    annFetchedAt = Date.now();
+    try{
+      var ctrl = (typeof AbortController!=='undefined') ? new AbortController() : null;
+      var tm = ctrl ? setTimeout(function(){ ctrl.abort(); }, 10000) : null;
+      var res = await fetch('announcements.json?v='+Date.now(), { cache:'no-store', signal: ctrl? ctrl.signal : undefined });
+      if(tm) clearTimeout(tm);
+      if(!res.ok) return;
+      var text = await res.text();
+      var list = normalizeAnnouncements(JSON.parse(text));
+      var changed = JSON.stringify(list)!==JSON.stringify(announcements);
+      announcements = list;
+      kvSet(ANN_KEY, text);
+      if(changed && state.parsed && $('screen-main').classList.contains('active') && state.viewedDay==='ВОСКРЕСЕНЬЕ') renderContentDispatch(true);
+    }catch(e){ /* нет сети — остаётся копия из кеша */ }
+  }
+  function annImageUrl(v){
+    if(!v || typeof v!=='string') return '';
+    v = v.trim();
+    if(/^https:\/\//i.test(v)) return encodeURI(v).replace(/['"()\\]/g,'');
+    if(/^[a-z][a-z0-9+.-]*:/i.test(v) || v.indexOf('//')===0) return '';   // только https или файл из репозитория
+    return encodeURI(v.replace(/^\.?\//,'')).replace(/['"()\\]/g,'');
+  }
+  function announcementsHtml(){
+    if(!announcements.length) return '';
+    return '<div class="ann-wrap"><div class="ann-title">Объявления</div>'+announcements.map(function(a){
+      var img = annImageUrl(a.image || a.background || a.imageUrl || a.backgroundImage || '');
+      return '<article class="ann-card"'+(img? ' style="background-image:url(\''+img+'\')"' : '')+'>'+
+        '<div class="ann-top"><span class="ann-tag">'+esc(a.tag||'Объявление')+'</span>'+(a.date? '<span class="ann-date">'+esc(a.date)+'</span>' : '')+'</div>'+
+        (a.title? '<h3>'+esc(a.title)+'</h3>' : '')+
+        (a.text? '<p>'+esc(a.text)+'</p>' : '')+
+      '</article>';
+    }).join('')+'</div>';
+  }
+
+  var STORAGE_KEY = 'schedule-app-state-v1';
+  var PREFS_KEY = 'schedule-app-prefs-v1';
+  // Bump this whenever the parsing logic changes — it guards against silently
+  // showing a schedule that was parsed by an older, buggier version of this app.
+  var PARSER_VERSION = 5;
+  var GITHUB_OWNER = 'SnzMaxim';
+  var GITHUB_REPO = 'schedule-akrilk';
+  var PAGE_URL = 'https://snzmaxim.github.io/schedule-akrilk/';
+  try {
+    var hostParts = (window.location.hostname || '').split('.');
+    if(hostParts.length >= 3 && hostParts[1] === 'github' && hostParts[2] === 'io'){
+      GITHUB_OWNER = hostParts[0];
+      var pathParts = (window.location.pathname || '').split('/').filter(Boolean);
+      if(pathParts.length > 0) GITHUB_REPO = pathParts[0];
+      PAGE_URL = window.location.origin + '/' + GITHUB_REPO + '/';
+    }
+  } catch(e){}
+  var IDLE_DEMO_MS = 10*60*1000;
+  var IDLE_DEMO_TOUCHED_MS = 5*60*1000;
+  var kioskLive = false;             // true once the app auto-entered a public rotating display
+  var kioskTouchedSinceEntry = false;
+  var kioskGroupIdx = 0;
+
+  // ---------- schedule type (СПО / ВО) ----------
+  // Two independent schedules, same file format/parser, published in separate
+  // GitHub subfolders (kept in sync by sync_yandex.py from two Yandex.Disk
+  // public folders). Each type has its own saved position (group/day) and its
+  // own colour palette (see the html[data-schedule-type] CSS rules).
+  var SCHEDULE_TYPES = {
+    spo:     { label:'СПО',   ghDir:'spo' },
+    vo:      { label:'ВО',    ghDir:'vo',  excludeSheet:/веч|магист/i },
+    // «Вечер» и «Магистры» — отдельные листы в том же файле ВО
+    evening: { label:'Вечер', ghDir:'vo',  onlySheet:/веч/i },
+    mag:     { label:'Маг',   ghDir:'vo',  onlySheet:/магист/i }
+  };
+  function parseOptsForType(type){
+    var t = SCHEDULE_TYPES[type] || {};
+    return { onlySheet: t.onlySheet || null, excludeSheet: t.excludeSheet || null };
+  }
+  var currentType = 'spo';
+  function typeStorageKey(){ return STORAGE_KEY + '-' + currentType; }
+
+  // ---------- teacher full-name lookup ----------
+  // teachers-data.js sets window.TEACHERS_B64 (base64 of a UTF-8 JSON dict,
+  // "Фамилия И.О." -> "Фамилия Имя Отчество"), built from the college's public
+  // staff page. Kept out of plain sight in its own file rather than as a
+  // readable list here — decoded once at boot.
+  var TEACHERS_FULLNAMES = {};
+  (function decodeTeachers(){
+    try{
+      if(typeof window.TEACHERS_B64 === 'string' && window.TEACHERS_B64){
+        var json = decodeURIComponent(escape(atob(window.TEACHERS_B64)));
+        TEACHERS_FULLNAMES = JSON.parse(json);
+      }
+    }catch(e){ TEACHERS_FULLNAMES = {}; }
+  })();
+  function getTeacherFullName(shortName){
+    if(!shortName) return null;
+    var key = shortName.trim().replace(/\s+/g,' ').replace(/\.\s+/g,'.');
+    return TEACHERS_FULLNAMES[key] || null;
+  }
+
+  var state = { parsed:null, selectedGroup:null, viewedDay:null, savedAt:null, fileName:null, viewMode:'day', browseMode:'group', selectedTeacher:null, ghName:null, ghDate:null };
+  var prefs = { theme:'system', demoEnabled:false, scheduleType:'spo', weekLayout:'table' };
+  var tickTimer=null;
+  var BREAK_MIN_GAP = 15;   // minutes — shorter gaps are just passing time between pairs
+  var BREAK_MAX_GAP = 100000; // effectively no cap — any free stretch gets its own tile now
+  var LUNCH_WINDOW = [630, 930]; // 10:30–15:30, gaps overlapping this get labeled "Обед"
+
+  // ---------- persistence ----------
+  // Runs standalone on GitHub Pages, so plain localStorage is the real store.
+  // window.storage (Claude Artifacts) is used instead when the app happens to
+  // run inside that environment, so nothing breaks there either.
+  function hasClaudeStorage(){ return typeof window.storage !== 'undefined' && window.storage; }
+
+  async function kvGet(key){
+    if(hasClaudeStorage()){
+      try{ var res = await window.storage.get(key, false); return (res && res.value!=null) ? res.value : null; }catch(e){ return null; }
+    }
+    try{ return window.localStorage.getItem(key); }catch(e){ return null; }
+  }
+  async function kvSet(key, value){
+    if(hasClaudeStorage()){
+      try{ await window.storage.set(key, value, false); return; }catch(e){ return; }
+    }
+    try{ window.localStorage.setItem(key, value); }catch(e){ /* private mode etc. */ }
+  }
+  async function kvDelete(key){
+    if(hasClaudeStorage()){
+      try{ await window.storage.delete(key, false); return; }catch(e){ return; }
+    }
+    try{ window.localStorage.removeItem(key); }catch(e){}
+  }
+
+  async function loadStateRawForType(type){
+    var raw = await kvGet(STORAGE_KEY + '-' + type);
+    if(!raw) return null;
+    try{ return JSON.parse(raw); }catch(e){ return null; }
+  }
+  async function loadStateRaw(){
+    var raw = await kvGet(typeStorageKey());
+    if(!raw) return null;
+    try{ return JSON.parse(raw); }catch(e){ return null; }
+  }
+  async function saveState(){
+    try{
+      await kvSet(typeStorageKey(), JSON.stringify({
+        parsed: state.parsed, selectedGroup: state.selectedGroup,
+        savedAt: state.savedAt, fileName: state.fileName, parserVersion: PARSER_VERSION,
+        ghName: state.ghName, ghDate: state.ghDate
+      }));
+    }catch(e){ /* best effort */ }
+  }
+  async function clearState(){
+    await kvDelete(typeStorageKey());
+    state = { parsed:null, selectedGroup:null, viewedDay:null, savedAt:null, fileName:null, ghName:null, ghDate:null };
+  }
+
+  async function loadPrefs(){
+    var raw = await kvGet(PREFS_KEY);
+    if(!raw){
+      try {
+        var m = document.cookie.match(/(?:^|;\s*)theme=([^;]+)/);
+        if(m && (m[1]==='dark' || m[1]==='light' || m[1]==='system')) prefs.theme = m[1];
+      }catch(e){}
+      return;
+    }
+    try{
+      var p = JSON.parse(raw);
+      if(p.theme==='dark' || p.theme==='light' || p.theme==='system') prefs.theme = p.theme;
+      prefs.demoEnabled = !!p.demoEnabled;
+      if(SCHEDULE_TYPES[p.scheduleType]) prefs.scheduleType = p.scheduleType;
+      if(p.weekLayout==='table' || p.weekLayout==='list') prefs.weekLayout = p.weekLayout;
+    }catch(e){}
+    prefs.demoEnabled = false; // demo mode is temporarily disabled in the UI — never honor a stored "on"
+  }
+  async function savePrefs(){
+    try{ await kvSet(PREFS_KEY, JSON.stringify(prefs)); }catch(e){}
+    try{ document.cookie = 'theme=' + encodeURIComponent(prefs.theme) + ';path=/;max-age=31536000;SameSite=Lax'; }catch(e){}
+  }
+
+  // ---------- parsing ----------
+  function normDay(v){
+    v = (v||'').toString().trim().toUpperCase().replace(/\s+/g,' ');
+    return v;
+  }
+
+  function parseTime(v){
+    v = (v||'').toString().trim();
+    var m = v.match(/(\d{1,2})[.:](\d{2})\s*-\s*(\d{1,2})[.:](\d{2})/);
+    if(!m) return {startMin:null,endMin:null,startLabel:v,endLabel:''};
+    var h1=+m[1], mi1=+m[2], h2=+m[3], mi2=+m[4];
+    var pad=function(n){ return (n<10?'0':'')+n; };
+    return {
+      startMin: h1*60+mi1, endMin: h2*60+mi2,
+      startLabel: pad(h1)+':'+pad(mi1), endLabel: pad(h2)+':'+pad(mi2)
+    };
+  }
+
+  var TEACHER_RE = /^[А-ЯЁ][а-яё-]+\s+[А-ЯЁ]\.\s?[А-ЯЁ]\.$/;
+
+  function parseEntry(raw){
+    var lines = raw.split(/\n/).map(function(s){return s.trim();}).filter(Boolean);
+    var note = '';
+    if(lines.length>1 && /^с\s?\d/i.test(lines[0])){ note = lines.shift(); }
+    if(lines.length>1 && /^\(.*\)$/.test(lines[lines.length-1])){
+      note = note ? note+', '+lines[lines.length-1] : lines[lines.length-1];
+      lines.pop();
+    }
+    var tIdx=-1;
+    for(var i=0;i<lines.length;i++){ if(TEACHER_RE.test(lines[i])){ tIdx=i; break; } }
+    var subject, teacher='', room='';
+    if(tIdx>=0){
+      subject = lines.slice(0,tIdx).join(' ');
+      teacher = lines[tIdx];
+      room = lines.slice(tIdx+1).join(', ');
+    }else{
+      subject = lines.join(' — ');
+    }
+    subject = subject.replace(/^Лек\.\s*/,'Лекция: ').replace(/^Пр\.\s*/,'Практика: ');
+    return { subject: subject, teacher: teacher, room: room, note: note };
+  }
+
+  function pickCandidateSheets(workbook){
+    // Prefer sheets that are actually visible in Excel — a schedule this old often
+    // accumulates hidden leftover sheets from past semesters that nobody deleted.
+    // A sheet literally named "Печать" ("Print") is not necessarily a throwaway copy —
+    // it can just as easily be the one the school actually keeps up to date.
+    var names = workbook.SheetNames;
+    var hiddenMap = {};
+    if(workbook.Workbook && workbook.Workbook.Sheets){
+      workbook.Workbook.Sheets.forEach(function(s){ hiddenMap[s.name] = !!s.Hidden; });
+    }
+    var visible = names.filter(function(n){ return !hiddenMap[n]; });
+    var hidden = names.filter(function(n){ return hiddenMap[n]; });
+    return { visible: visible, hidden: hidden };
+  }
+
+  function labelFromMin(m){
+    var h=Math.floor(m/60), mm=((m%60)+60)%60;
+    var p=function(n){ return (n<10?'0':'')+n; };
+    return p(h)+':'+p(mm);
+  }
+  function pushLesson(list, raw, startMin, endMin, parity){
+    var entry = parseEntry(raw);
+    list.push({
+      startMin: startMin, endMin: endMin,
+      startLabel: startMin!=null? labelFromMin(startMin) : '',
+      endLabel: endMin!=null? labelFromMin(endMin) : '',
+      time: (startMin!=null&&endMin!=null)? (labelFromMin(startMin)+'-'+labelFromMin(endMin)) : '',
+      subject: entry.subject, teacher: entry.teacher, room: entry.room, note: entry.note, parity: parity || null
+    });
+  }
+
+  function parseSheetTable(ws){
+    var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', raw:false, blankrows:true});
+
+    var headerRowIdx = -1;
+    for(var r=0;r<rows.length;r++){
+      var hasDays = (rows[r]||[]).some(function(c){ return (c||'').toString().trim()==='Дни'; });
+      if(hasDays){ headerRowIdx=r; break; }
+    }
+    if(headerRowIdx===-1) throw new Error('NO_HEADER');
+
+    var headerRow = rows[headerRowIdx].map(function(c){ return (c||'').toString(); });
+    var blockStarts = [];
+    headerRow.forEach(function(v,i){ if(v.trim()==='Дни') blockStarts.push(i); });
+    if(blockStarts.length<2) throw new Error('NO_BLOCKS');
+
+    var titleRow = rows[headerRowIdx-1]||[];
+    var titleCell = '';
+    for(var tc=0; tc<titleRow.length; tc++){ if((titleRow[tc]||'').toString().trim()){ titleCell = titleRow[tc]; break; } }
+    var termTitle = titleCell.toString().replace(/\n/g,' ').replace(/\s+/g,' ').trim();
+
+    // Merge info. In this sheet an ordinary every-week lesson is ONE cell merged
+    // over both rows of its slot, while a lesson that runs on only one parity of
+    // week is left as a single UNmerged cell (top row = чётная, bottom = нечётная).
+    // Without looking at merges, "top cell filled, bottom empty" is ambiguous.
+    // If a sheet has no such merges at all (hand-made file), we fall back to
+    // treating a lone top cell as "every week", exactly as before.
+    var rng = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+    var mergedDown = {};
+    var mergedDownCount = 0;
+    (ws['!merges'] || []).forEach(function(m){
+      if(m.e.r > m.s.r){ mergedDown[m.s.r+','+m.s.c] = true; mergedDownCount++; }
+    });
+    var useMerges = mergedDownCount >= 10;
+
+    // discover day order from first block's day column, top to bottom
+    var dayOrder = [];
+    var seenDays = {};
+    var S0 = blockStarts[0];
+    for(var r2=headerRowIdx+1;r2<rows.length;r2++){
+      var dv = normDay((rows[r2]||[])[S0]);
+      if(dv && !seenDays[dv]){ seenDays[dv]=true; dayOrder.push(dv); }
+    }
+    if(dayOrder.length===0) throw new Error('NO_DAYS');
+
+    var groups = [];
+    var byGroup = {};
+
+    for(var bi=0; bi<blockStarts.length-1; bi++){
+      var S = blockStarts[bi], Snext = blockStarts[bi+1];
+      var hoursCol = S+1;
+      var groupColStart = S+2, groupColEnd = Snext-1; // exclusive
+      var groupNames = [];
+      for(var c=groupColStart;c<groupColEnd;c++){
+        var gn = (headerRow[c]||'').toString().trim();
+        if(/^(часы|дни)$/i.test(gn)) gn = '';   // служебные колонки времени/дней — не группы
+        groupNames.push(gn);
+      }
+      var hasAny = groupNames.some(function(n){return n;});
+      if(!hasAny) continue;
+      groupNames.forEach(function(n){ if(n) groups.push(n); });
+
+      var currentDay = null;
+      for(var r3=headerRowIdx+1; r3<rows.length; r3++){
+        var row = rows[r3]||[];
+        var dayVal = normDay(row[S]);
+        if(dayVal) currentDay = dayVal;
+        var timeVal = (row[hoursCol]||'').toString().trim();
+        if(!timeVal || !currentDay) continue;
+        var tp = parseTime(timeVal);
+
+        // The row right below a time-row is normally just visual spacing (its content
+        // is empty). But this sheet sometimes uses that spare row to fit a SECOND
+        // subject into the same slot, for weeks that alternate: the text on the
+        // time-row itself is what happens on even ("чётная") weeks, and text placed
+        // only on the row below is what happens on odd ("нечётная") weeks. Both run
+        // for the slot's full duration — nothing here is a half-length lesson.
+        var nextRow = rows[r3+1] || [];
+        var nextIsOwnTimeRow = ((nextRow[hoursCol]||'').toString().trim() !== '');
+
+        for(var ci=0; ci<groupNames.length; ci++){
+          var gname = groupNames[ci];
+          if(!gname) continue;
+          var col = groupColStart+ci;
+          var rawHere = (row[col]||'').toString();
+          var rawNext = (!nextIsOwnTimeRow && nextRow[col]!=null) ? (nextRow[col]||'').toString() : '';
+          var hasHere = rawHere.trim()!=='';
+          var hasNext = rawNext.trim()!=='';
+          if(!hasHere && !hasNext) continue;
+
+          if(!byGroup[gname]) byGroup[gname]={};
+          if(!byGroup[gname][currentDay]) byGroup[gname][currentDay]=[];
+
+          if(hasHere && hasNext){
+            // Two rows filled for this slot: the time-row text runs on even
+            // ("чётная") weeks, the row below it on odd ("нечётная") weeks —
+            // even when both happen to be the exact same subject/teacher/room,
+            // that still means "every other week", not "every week".
+            pushLesson(byGroup[gname][currentDay], rawHere, tp.startMin, tp.endMin, 'even');
+            pushLesson(byGroup[gname][currentDay], rawNext, tp.startMin, tp.endMin, 'odd');
+          } else if(hasHere){
+            // Lone top cell. Merged over the slot -> every week. Left unmerged with
+            // the row below empty -> only on even weeks (its odd-week counterpart,
+            // if any, sits in the lower cell of the neighbouring subgroup).
+            var spareRowExists = !nextIsOwnTimeRow && (r3+1 < rows.length);
+            var evenOnly = useMerges && spareRowExists && !mergedDown[(r3+rng.s.r)+','+(col+rng.s.c)];
+            pushLesson(byGroup[gname][currentDay], rawHere, tp.startMin, tp.endMin, evenOnly ? 'even' : null);
+          } else if(hasNext){
+            // Only present in the lower cell — this specific subject only happens
+            // on odd weeks; the slot is free on even weeks.
+            pushLesson(byGroup[gname][currentDay], rawNext, tp.startMin, tp.endMin, 'odd');
+          }
+        }
+      }
+    }
+
+    groups = groups.filter(function(v,i,a){ return a.indexOf(v)===i; });
+    groups.forEach(function(g){
+      dayOrder.forEach(function(d){
+        if(byGroup[g] && byGroup[g][d]){
+          byGroup[g][d].sort(function(a,b){
+            return (a.startMin==null?9999:a.startMin) - (b.startMin==null?9999:b.startMin);
+          });
+        }
+      });
+    });
+
+    if(groups.length===0) throw new Error('NO_GROUPS');
+
+    var totalLessons = 0;
+    groups.forEach(function(g){ dayOrder.forEach(function(d){ if(byGroup[g] && byGroup[g][d]) totalLessons += byGroup[g][d].length; }); });
+
+    return { term: termTitle, dayOrder: dayOrder, groups: groups, byGroup: byGroup, totalLessons: totalLessons };
+  }
+
+  function parseWorkbook(workbook, opts){
+    opts = opts || {};
+    var cand = pickCandidateSheets(workbook);
+    function allowed(name){
+      if(opts.onlySheet && !opts.onlySheet.test(name)) return false;
+      if(opts.excludeSheet && opts.excludeSheet.test(name)) return false;
+      return true;
+    }
+    cand = { visible: cand.visible.filter(allowed), hidden: cand.hidden.filter(allowed) };
+    if(!cand.visible.length && !cand.hidden.length) throw new Error('NO_SHEET');
+
+    function tryList(names){
+      var best = null, lastError = null;
+      names.forEach(function(name){
+        try{
+          var result = parseSheetTable(workbook.Sheets[name]);
+          if(!best || result.totalLessons > best.totalLessons) best = result;
+        }catch(e){ lastError = e; }
+      });
+      return { best: best, lastError: lastError };
+    }
+
+    var visibleTry = tryList(cand.visible);
+    if(visibleTry.best) return visibleTry.best;
+
+    var hiddenTry = tryList(cand.hidden);
+    if(hiddenTry.best) return hiddenTry.best;
+
+    throw hiddenTry.lastError || visibleTry.lastError || new Error('NO_HEADER');
+  }
+
+  // ---------- DOM helpers ----------
+  function $(id){ return document.getElementById(id); }
+  function show(id, pushHistory){
+    document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+    var target = $(id);
+    if(target) target.classList.add('active');
+    if(pushHistory !== false && window.history && history.pushState){
+      try{
+        if(!history.state || history.state.screen !== id){
+          history.pushState({ screen: id }, '', '#' + id.replace('screen-', ''));
+        }
+      }catch(e){}
+    }
+    window.scrollTo(0, 0);
+  }
+
+  window.addEventListener('popstate', function(e){
+    if(e.state && e.state.screen && $(e.state.screen)){
+      show(e.state.screen, false);
+    } else {
+      if(state.parsed && state.selectedGroup) show('screen-main', false);
+      else show('screen-upload', false);
+    }
+  });
+
+  function esc(s){
+    return (s||'').toString().replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  // ---------- upload screen ----------
+  var pendingFile = null;
+  var lastInteractionAt = Date.now();
+  function markInteraction(){ lastInteractionAt = Date.now(); if(kioskLive) kioskTouchedSinceEntry = true; }
+
+  function setUploadError(msg, isInfo){
+    var box = $('upload-error');
+    if(!msg){ box.classList.remove('show','info'); box.textContent=''; return; }
+    box.textContent = msg;
+    box.classList.add('show');
+    box.classList.toggle('info', !!isInfo);
+  }
+
+  // Shared by "загрузить своё" and by picking a schedule fetched from GitHub —
+  // both end up with an ArrayBuffer that needs the same parse-and-proceed steps.
+  // ghMeta (name + date) is only set for the GitHub path — it's what lets the
+  // app later notice "the file this came from has since been replaced".
+  function loadWorkbookAndProceed(arrayBuffer, sourceLabel, ghMeta){
+    try{
+      var data = new Uint8Array(arrayBuffer);
+      var wb = XLSX.read(data, {type:'array'});
+      var parsed = parseWorkbook(wb, parseOptsForType(currentType));
+      state.parsed = parsed;
+      state.fileName = sourceLabel;
+      state.savedAt = new Date().toISOString();
+      state.ghName = ghMeta ? ghMeta.name : null;
+      state.ghDate = ghMeta ? (ghMeta.date || null) : null;
+      renderGroupPicker();
+      show('screen-pick');
+      return true;
+    }catch(err){
+      if(err && err.message==='NO_SHEET'){
+        setUploadError('В этом файле нет листа для раздела «'+SCHEDULE_TYPES[currentType].label+'». Выберите файл ВО, в котором есть листы «Вечер» и «Магистры».');
+        return false;
+      }
+      setUploadError('Не получилось разобрать файл. Убедитесь, что это тот же файл расписания (.xls/.xlsx), что выдаёт учебная часть, и структура листа не менялась.');
+      return false;
+    }
+  }
+
+  function onFileChosen(file){
+    pendingFile = file;
+    setUploadError('');
+    markInteraction();
+    $('drop-zone').querySelector('.drop-title').textContent = file.name;
+    $('drop-zone').querySelector('.drop-sub').textContent = 'Файл выбран — нажмите «Разобрать файл»';
+    $('btn-parse').style.display = 'inline-flex';
+  }
+
+  $('file-input').addEventListener('change', function(e){
+    if(e.target.files && e.target.files[0]) onFileChosen(e.target.files[0]);
+  });
+  var dz = $('drop-zone');
+  ['dragover','dragenter'].forEach(function(ev){
+    dz.addEventListener(ev, function(e){ e.preventDefault(); dz.classList.add('drag'); });
+  });
+  ['dragleave','drop'].forEach(function(ev){
+    dz.addEventListener(ev, function(e){ e.preventDefault(); dz.classList.remove('drag'); });
+  });
+  dz.addEventListener('drop', function(e){
+    var f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if(f) onFileChosen(f);
+  });
+
+  $('btn-parse').addEventListener('click', function(){
+    if(!pendingFile) return;
+    markInteraction();
+    $('btn-parse-spinner').style.display='inline-block';
+    $('btn-parse-label').textContent='Разбираем…';
+    $('btn-parse').disabled = true;
+    setUploadError('');
+
+    var reader = new FileReader();
+    reader.onerror = function(){
+      resetParseButton();
+      setUploadError('Не удалось прочитать файл. Попробуйте выбрать его ещё раз.');
+    };
+    reader.onload = function(ev){
+      loadWorkbookAndProceed(ev.target.result, pendingFile.name);
+      resetParseButton();
+    };
+    reader.readAsArrayBuffer(pendingFile);
+  });
+
+  function resetParseButton(){
+    $('btn-parse-spinner').style.display='none';
+    $('btn-parse-label').textContent='Разобрать файл';
+    $('btn-parse').disabled = false;
+  }
+
+  // ---------- schedules published on GitHub next to the app ----------
+  var ghSchedules = [];
+
+  function formatGhDate(iso){
+    try{ return new Date(iso).toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'}); }
+    catch(e){ return ''; }
+  }
+
+  function setGhBusy(busy){
+    document.querySelectorAll('.gh-card, .gh-older-item').forEach(function(el){
+      el.style.opacity = busy ? '.5' : '';
+      el.style.pointerEvents = busy ? 'none' : '';
+    });
+  }
+
+  async function useGithubSchedule(f){
+    markInteraction();
+    setUploadError('');
+    setGhBusy(true);
+    try{
+      var res = await fetch(f.url);
+      if(!res.ok) throw new Error('fetch_failed');
+      var buf = await res.arrayBuffer();
+      loadWorkbookAndProceed(buf, f.name, f);
+    }catch(e){
+      setUploadError('Не удалось загрузить файл с GitHub. Проверьте связь или загрузите файл вручную.');
+    }
+    setGhBusy(false);
+  }
+
+  var ghListCache = {};   // папка -> {t, data}: СПО/ВО/Вечер/Маг делят одни и те же запросы
+  async function fetchGithubSchedules(dirOverride){
+    var dir = dirOverride || SCHEDULE_TYPES[currentType].ghDir;
+    var cached = ghListCache[dir];
+    if(cached && Date.now()-cached.t < 120000) return cached.data;
+    var result = await fetchGithubSchedulesUncached(dir);
+    ghListCache[dir] = { t: Date.now(), data: result };
+    return result;
+  }
+  async function fetchGithubSchedulesUncached(dir){
+    var apiUrl = 'https://api.github.com/repos/'+GITHUB_OWNER+'/'+GITHUB_REPO+'/contents/'+dir+'/';
+    var res = await fetch(apiUrl);
+    if(!res.ok) throw new Error('list_failed');
+    var items = await res.json();
+    var files = items.filter(function(it){ return it.type==='file' && /\.(xlsx|xls)$/i.test(it.name); });
+    var withDates = await Promise.all(files.map(async function(f){
+      var date = null;
+      try{
+        var cRes = await fetch('https://api.github.com/repos/'+GITHUB_OWNER+'/'+GITHUB_REPO+'/commits?path='+encodeURIComponent(f.path)+'&per_page=1');
+        if(cRes.ok){
+          var commits = await cRes.json();
+          if(commits && commits[0] && commits[0].commit && commits[0].commit.committer) date = commits[0].commit.committer.date;
+        }
+      }catch(e){}
+      return { name: f.name, url: f.download_url, date: date };
+    }));
+    withDates.sort(function(a,b){
+      var da = a.date? new Date(a.date).getTime():0, db = b.date? new Date(b.date).getTime():0;
+      return db-da;
+    });
+    return withDates;
+  }
+
+  var ghInitToken = 0;
+  async function initGithubSchedules(){
+    var token = ++ghInitToken;
+    var wrap = $('gh-latest-wrap');
+    // сбрасываем то, что осталось от другого типа (СПО/ВО), пока грузится новое
+    ghSchedules = [];
+    wrap.innerHTML = '<div class="gh-card gh-loading" id="gh-loading-card"><span class="spinner spinner-dark"></span><span>Ищу файлы на GitHub…</span></div>';
+    $('gh-older-wrap').style.display = 'none';
+    $('gh-older-list').style.display = 'none';
+    $('gh-expand-btn').classList.remove('open');
+    $('gh-expand-label').textContent = 'Показать старые версии';
+    var fetched;
+    try{
+      fetched = await fetchGithubSchedules();
+    }catch(e){
+      if(token!==ghInitToken) return;
+      wrap.innerHTML = '<div class="gh-error">Не удалось получить список файлов с GitHub. Можно загрузить файл вручную ниже.</div>';
+      return;
+    }
+    if(token!==ghInitToken) return;   // за это время переключили СПО/ВО — этот ответ уже не нужен
+    ghSchedules = fetched;
+    if(!ghSchedules.length){
+      wrap.innerHTML = '<div class="gh-error">На GitHub рядом с приложением пока нет файлов расписания.</div>';
+      return;
+    }
+    var latest = ghSchedules[0];
+    wrap.innerHTML = '<button class="gh-card" id="gh-latest-card">'+
+      '<span class="gh-tag">Свежее</span>'+
+      '<span class="gh-name">'+esc(latest.name)+'</span>'+
+      '<span class="gh-meta">'+(latest.date? formatGhDate(latest.date) : 'дата неизвестна')+'</span>'+
+    '</button>';
+    $('gh-latest-card').addEventListener('click', function(){ useGithubSchedule(latest); });
+
+    var older = ghSchedules.slice(1);
+    if(older.length){
+      $('gh-older-wrap').style.display='';
+      $('gh-older-list').innerHTML = older.map(function(f,i){
+        return '<button class="gh-older-item" data-idx="'+i+'">'+
+          '<span class="gh-name">'+esc(f.name)+'</span>'+
+          '<span class="gh-meta">'+(f.date? formatGhDate(f.date):'дата неизвестна')+'</span>'+
+        '</button>';
+      }).join('');
+      $('gh-older-list').querySelectorAll('.gh-older-item').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          useGithubSchedule(older[+btn.getAttribute('data-idx')]);
+        });
+      });
+    }
+
+    await checkQuickContinueFreshness();
+  }
+
+  $('gh-expand-btn').addEventListener('click', function(){
+    markInteraction();
+    var list = $('gh-older-list');
+    var willOpen = list.style.display === 'none';
+    list.style.display = willOpen ? 'flex' : 'none';
+    $('gh-expand-btn').classList.toggle('open', willOpen);
+    $('gh-expand-label').textContent = willOpen ? 'Скрыть старые версии' : 'Показать старые версии';
+  });
+
+  // ---------- quick continue (remembered group) ----------
+  var lastQuickContinueSaved = null; // whatever renderQuickContinue is currently showing, for the freshness check below
+
+  function renderQuickContinue(saved){
+    lastQuickContinueSaved = saved;
+    if(saved && saved.parsed && saved.selectedGroup && saved.parsed.byGroup[saved.selectedGroup]){
+      $('qc-group').textContent = saved.selectedGroup;
+      $('qc-sub').textContent = 'открыть расписание';
+      $('quick-continue').style.display='';
+      $('qc-btn').onclick = function(){
+        markInteraction();
+        state.parsed = saved.parsed;
+        state.selectedGroup = saved.selectedGroup;
+        state.savedAt = saved.savedAt;
+        state.fileName = saved.fileName;
+        state.ghName = saved.ghName || null;
+        state.ghDate = saved.ghDate || null;
+        var today = WEEKDAY_INDEX[new Date().getDay()];
+        state.viewedDay = resolveTodayViewedDay();
+        renderMain();
+        show('screen-main');
+        startTicking();
+      };
+    } else {
+      $('quick-continue').style.display='none';
+    }
+  }
+
+  // If the saved schedule behind "Продолжить" came from GitHub and a newer
+  // file has since shown up there (a different file, or the same one
+  // re-uploaded with new content), that button would otherwise keep quietly
+  // reopening the stale version forever — so drop it and point at the fresh one.
+  function isNewerGithubFile(latest, savedName, savedDate){
+    if(!latest || !savedName) return false;
+    if(latest.name !== savedName) return true;
+    if(!savedDate || !latest.date) return false; // nothing to compare — assume unchanged
+    return new Date(latest.date).getTime() > new Date(savedDate).getTime();
+  }
+  async function checkQuickContinueFreshness(){
+    if(!lastQuickContinueSaved || !lastQuickContinueSaved.ghName) return; // only applies to GitHub-sourced saves
+    if(!ghSchedules.length) return;
+    if(isNewerGithubFile(ghSchedules[0], lastQuickContinueSaved.ghName, lastQuickContinueSaved.ghDate)){
+      await clearState();
+      renderQuickContinue(null);
+      setUploadError('Появилось новое расписание — сохранённое больше не актуально, выберите свежий файл ниже.', true);
+    }
+  }
+
+  // ---------- group picker ----------
+  function renderGroupPicker(){
+    var groups = state.parsed.groups;
+    $('pick-sub').textContent = 'Найдено групп: ' + groups.length;
+    renderGroupList(groups);
+    $('group-search').value = '';
+  }
+
+  function renderGroupList(list){
+    var box = $('group-list');
+    if(list.length===0){
+      box.innerHTML = '<div class="empty-note">Ничего не нашлось. Проверьте написание.</div>';
+      return;
+    }
+    box.innerHTML = list.map(function(g){
+      var count = countLessonsForGroup(g);
+      var selected = g===state.selectedGroup;
+      return '<button class="group-item'+(selected?' selected':'')+'" data-group="'+esc(g)+'">'+
+        '<span class="g-name">'+esc(g)+'</span>'+
+        '<span class="g-hint">'+count+' '+pluralPairs(count)+'/нед.</span>'+
+      '</button>';
+    }).join('');
+    box.querySelectorAll('.group-item').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        selectGroup(btn.getAttribute('data-group'));
+      });
+    });
+  }
+
+  function countLessonsForGroup(g){
+    var byDay = state.parsed.byGroup[g];
+    if(!byDay) return 0;
+    var n = 0;
+    Object.keys(byDay).forEach(function(d){ n += annotateParity(byDay[d]).filter(function(l){return !l.isGhost;}).length; });
+    return n;
+  }
+  function pluralPairs(n){
+    var n10 = n%10, n100 = n%100;
+    if(n10===1 && n100!==11) return 'пара';
+    if(n10>=2 && n10<=4 && (n100<10 || n100>=20)) return 'пары';
+    return 'пар';
+  }
+
+  // ---------- Воскресенье: сводка про ближайший понедельник / следующую неделю ----------
+  // В файле расписания воскресенья нет, поэтому это "лишний" 7-й день: пар в нём
+  // никогда не бывает, зато на нём показывается плитка "Информация".
+  function displayDayOrder(){
+    var order = state.parsed.dayOrder;
+    return order.indexOf('ВОСКРЕСЕНЬЕ')>=0 ? order : order.concat(['ВОСКРЕСЕНЬЕ']);
+  }
+  function resolveTodayViewedDay(){
+    var today = WEEKDAY_INDEX[new Date().getDay()];
+    if(today==='ВОСКРЕСЕНЬЕ') return 'ВОСКРЕСЕНЬЕ';
+    return state.parsed.dayOrder.indexOf(today)>=0 ? today : state.parsed.dayOrder[0];
+  }
+  function annotateParityFor(lessons, parity){
+    return lessons.map(function(l){
+      return Object.assign({}, l, {isGhost: !!(l.parity && l.parity!==parity)});
+    });
+  }
+  // Номер пары = порядковый номер времени начала среди всех групп в этот день недели
+  function getPeriodNumberMap(day){
+    var starts = {};
+    state.parsed.groups.forEach(function(g){
+      ((state.parsed.byGroup[g] && state.parsed.byGroup[g][day]) || []).forEach(function(l){
+        if(l.startMin!=null) starts[l.startMin] = true;
+      });
+    });
+    var map = {};
+    Object.keys(starts).map(Number).sort(function(a,b){ return a-b; }).forEach(function(m,i){ map[m]=i+1; });
+    return map;
+  }
+  var PERIOD_ORDINALS = ['первой','второй','третьей','четвёртой','пятой','шестой','седьмой','восьмой','девятой','десятой'];
+
+  function sundayInfoHtml(){
+    var now = new Date();
+    var isSunday = now.getDay()===0;
+    var monday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
+    var add = (8 - now.getDay()) % 7; if(add===0) add = 7;      // вс -> завтра, иначе ближайший понедельник
+    monday.setDate(monday.getDate() + add);
+    var wk = getWeekInfoForDate(monday);                          // чётность БУДУЩЕЙ недели (по weeks.json)
+    var when = isSunday ? 'Завтра' : 'В понедельник';
+
+    var monLessons = annotateParityFor(getRawLessons('ПОНЕДЕЛЬНИК'), wk.parity)
+      .filter(function(l){ return !l.isGhost && l.startMin!=null; })
+      .sort(function(a,b){ return a.startMin-b.startMin; });
+
+    var weekTotal = 0;
+    state.parsed.dayOrder.forEach(function(d){
+      weekTotal += annotateParityFor(getRawLessons(d), wk.parity).filter(function(l){ return !l.isGhost; }).length;
+    });
+    var weekLine = 'На следующей неделе ('+wk.num+'-я, '+(wk.parity==='even'?'чётная':'нечётная')+') — '+weekTotal+' '+pluralPairs(weekTotal)+'.';
+
+    var main, sub;
+    if(!monLessons.length){
+      main = when+' пар нет';
+      sub = '';
+    }else{
+      var first = monLessons[0];
+      var num = getPeriodNumberMap('ПОНЕДЕЛЬНИК')[first.startMin] || 1;
+      var word = PERIOD_ORDINALS[num-1];
+      main = when+' вам к '+num+'-й'+(word? ' ('+word+')' : '')+' паре';
+      sub = when+' — '+monLessons.length+' '+pluralPairs(monLessons.length)+', начало в '+first.startLabel+'.';
+    }
+    return '<div class="sunday-info-card">'+
+      '<div class="sunday-info-tag">Информация</div>'+
+      '<div class="sunday-info-main">'+esc(main)+'</div>'+
+      (sub? '<div class="sunday-info-sub">'+esc(sub)+'</div>' : '')+
+      '<div class="sunday-info-sub">'+esc(weekLine)+'</div>'+
+    '</div>';
+  }
+
+  $('group-search').addEventListener('input', function(e){
+    var q = e.target.value.trim().toLowerCase();
+    var groups = state.parsed.groups;
+    var filtered = q ? groups.filter(function(g){ return g.toLowerCase().indexOf(q)>=0; }) : groups;
+    renderGroupList(filtered);
+  });
+
+  async function selectGroup(g){
+    markInteraction();
+    state.browseMode = 'group';
+    state.selectedGroup = g;
+    var today = WEEKDAY_INDEX[new Date().getDay()];
+    state.viewedDay = resolveTodayViewedDay();
+    if(kioskLive){
+      var gi = state.parsed.groups.indexOf(g);
+      if(gi>=0) kioskGroupIdx = gi;
+    } else {
+      await saveState();
+    }
+    renderMain();
+    show('screen-main');
+    startTicking();
+  }
+
+  // ---------- teacher picker (browse the same schedule by teacher) ----------
+  // Built once per parsed workbook and cached on it — every group/day's
+  // lessons collapsed into a per-teacher view, each entry keeping which
+  // group it belongs to (shown in place of the teacher's own name, since
+  // that's now implied by which teacher you picked).
+  function getTeacherIndexFromFile(){
+    if(state.parsed._teacherIndex) return state.parsed._teacherIndex;
+    var byTeacher = {};
+    state.parsed.groups.forEach(function(g){
+      var byDay = state.parsed.byGroup[g];
+      if(!byDay) return;
+      Object.keys(byDay).forEach(function(day){
+        byDay[day].forEach(function(l){
+          if(!l.teacher) return;
+          if(!byTeacher[l.teacher]) byTeacher[l.teacher] = {};
+          if(!byTeacher[l.teacher][day]) byTeacher[l.teacher][day] = [];
+          byTeacher[l.teacher][day].push(Object.assign({}, l, {group: g}));
+        });
+      });
+    });
+    var teachers = Object.keys(byTeacher).sort(function(a,b){ return a.localeCompare(b,'ru'); });
+    var idx = { byTeacher: byTeacher, teachers: teachers };
+    state.parsed._teacherIndex = idx;
+    return idx;
+  }
+
+  // Нормализуем фамилии с сайта: «Махмутова С.В» -> «Махмутова С.В.», «Григорьев А.Н./» -> «Григорьев А.Н.»
+  function normSftiTeacher(n){
+    n = (n||'').toString().replace(/[\/]+\s*$/,'').replace(/\s+/g,' ').replace(/\.\s+/g,'.').trim();
+    if(/\.[А-ЯЁ]$/.test(n)) n += '.';
+    return n;
+  }
+  function teacherKey(n){ return (n||'').replace(/\s+/g,'').toLowerCase(); }
+
+  // Преподаватели из data/sfti.json: все группы СПО, ВО и магистратуры сразу.
+  // Если в загруженном xls есть та же пара (группа+день+время+преподаватель) с чётностью —
+  // берём чётность оттуда: на сайте чётные/нечётные пары пока заполнены не везде.
+  function buildSftiTeacherIndex(){
+    var curPar = normParity(sfti.weeks && sfti.weeks.current && sfti.weeks.current.weekType);
+    var nxtPar = normParity(sfti.weeks && sfti.weeks.next && sfti.weeks.next.weekType);
+    var xlsParity = {};
+    if(state.parsed){
+      Object.keys(state.parsed.byGroup||{}).forEach(function(g){
+        Object.keys(state.parsed.byGroup[g]).forEach(function(day){
+          state.parsed.byGroup[g][day].forEach(function(l){
+            if(l.parity && l.startMin!=null) xlsParity[g+'|'+day+'|'+l.startMin+'|'+teacherKey(l.teacher)] = l.parity;
+          });
+        });
+      });
+    }
+    var merged = {};   // одна и та же пара у нескольких групп (поток) сливается в одну плитку
+    sfti.rows.forEach(function(r){
+      var teacher = normSftiTeacher(r.teacher_name);
+      var day = DAY_BY_NUM[r.day_of_week];
+      if(!teacher || !day || !r.time_start || !r.time_end) return;
+      var ts = r.time_start.split(':'), te = r.time_end.split(':');
+      var startMin = (+ts[0])*60 + (+ts[1]), endMin = (+te[0])*60 + (+te[1]);
+      var parity = r.w==='c' ? curPar : (r.w==='n' ? nxtPar : null);
+      if(!parity){
+        var xp = xlsParity[r.group_name+'|'+day+'|'+startMin+'|'+teacherKey(teacher)];
+        if(xp) parity = xp;
+      }
+      var noteParts = [];
+      if(r.half_pair==='Первый час') noteParts.push('1-й час');
+      else if(r.half_pair==='Второй час') noteParts.push('2-й час');
+      if(r.stream_label) noteParts.push(r.stream_label);
+      var note = noteParts.join(', ');
+      var subject = (r.lesson_type ? r.lesson_type+': ' : '') + (r.subject_name||'');
+      var key = [teacher, day, startMin, endMin, subject, r.room_number||'', parity||'', note].join('|');
+      if(!merged[key]){
+        merged[key] = { teacher:teacher, day:day, lesson:{
+          startMin:startMin, endMin:endMin, startLabel:labelFromMin(startMin), endLabel:labelFromMin(endMin),
+          time:labelFromMin(startMin)+'-'+labelFromMin(endMin), subject:subject, teacher:teacher,
+          room:r.room_number||'', note:note, parity:parity, groups:[]
+        }};
+      }
+      if(merged[key].lesson.groups.indexOf(r.group_name)<0) merged[key].lesson.groups.push(r.group_name);
+    });
+    var byTeacher = {};
+    Object.keys(merged).forEach(function(k){
+      var m = merged[k];
+      m.lesson.groups.sort(function(a,b){ return a.localeCompare(b,'ru'); });
+      m.lesson.group = m.lesson.groups.join(', ');
+      if(!byTeacher[m.teacher]) byTeacher[m.teacher] = {};
+      if(!byTeacher[m.teacher][m.day]) byTeacher[m.teacher][m.day] = [];
+      byTeacher[m.teacher][m.day].push(m.lesson);
+    });
+    Object.keys(byTeacher).forEach(function(t){
+      Object.keys(byTeacher[t]).forEach(function(d){
+        byTeacher[t][d].sort(function(a,b){ return a.startMin-b.startMin; });
+      });
+    });
+    var teachers = Object.keys(byTeacher).sort(function(a,b){ return a.localeCompare(b,'ru'); });
+    return { byTeacher:byTeacher, teachers:teachers, _forParsed:state.parsed };
+  }
+
+  function getTeacherIndex(){
+    if(sfti && Array.isArray(sfti.rows) && sfti.rows.length){
+      if(!sftiTeacherIdx || sftiTeacherIdx._forParsed!==state.parsed) sftiTeacherIdx = buildSftiTeacherIndex();
+      return sftiTeacherIdx;
+    }
+    return getTeacherIndexFromFile();   // запасной вариант: только то расписание, что загружено
+  }
+
+  function countLessonsForTeacher(name){
+    var byDay = getTeacherIndex().byTeacher[name];
+    if(!byDay) return 0;
+    var n = 0;
+    Object.keys(byDay).forEach(function(d){ n += annotateParity(byDay[d]).filter(function(l){return !l.isGhost;}).length; });
+    return n;
+  }
+
+  function renderTeacherPicker(){
+    var teachers = getTeacherIndex().teachers;
+    $('pick-sub-teacher').textContent = 'Найдено преподавателей: ' + teachers.length;
+    renderTeacherList(teachers);
+    $('teacher-search').value = '';
+  }
+
+  function renderTeacherList(list){
+    var box = $('teacher-list');
+    if(list.length===0){
+      box.innerHTML = '<div class="empty-note">Ничего не нашлось. Проверьте написание.</div>';
+      return;
+    }
+    box.innerHTML = list.map(function(name){
+      var count = countLessonsForTeacher(name);
+      var selected = name===state.selectedTeacher;
+      return '<button class="group-item'+(selected?' selected':'')+'" data-teacher="'+esc(name)+'">'+
+        '<span class="g-name">'+esc(name)+'</span>'+
+        '<span class="g-hint">'+count+' '+pluralPairs(count)+'/нед.</span>'+
+      '</button>';
+    }).join('');
+    box.querySelectorAll('.group-item').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        selectTeacher(btn.getAttribute('data-teacher'));
+      });
+    });
+  }
+
+  $('teacher-search').addEventListener('input', function(e){
+    var q = e.target.value.trim().toLowerCase();
+    var teachers = getTeacherIndex().teachers;
+    var filtered = q ? teachers.filter(function(t){ return t.toLowerCase().indexOf(q)>=0 || (getTeacherFullName(t)||'').toLowerCase().indexOf(q)>=0; }) : teachers;
+    renderTeacherList(filtered);
+  });
+
+  async function selectTeacher(name){
+    markInteraction();
+    state.browseMode = 'teacher';
+    state.selectedTeacher = name;
+    var today = WEEKDAY_INDEX[new Date().getDay()];
+    state.viewedDay = resolveTodayViewedDay();
+    renderMain();
+    show('screen-main');
+    startTicking();
+  }
+
+  // Single source of "which lessons for this day", regardless of whether
+  // we're currently browsing by group or by teacher.
+  function getRawLessons(day){
+    if(state.browseMode==='teacher'){
+      var idx = getTeacherIndex();
+      return (state.selectedTeacher && idx.byTeacher[state.selectedTeacher] && idx.byTeacher[state.selectedTeacher][day]) || [];
+    }
+    return (state.parsed.byGroup[state.selectedGroup] && state.parsed.byGroup[state.selectedGroup][day]) || [];
+  }
+
+  // ---------- main schedule ----------
+  function renderTopbar(){
+    $('term-title').textContent = state.parsed.term || 'Расписание';
+    $('current-group').textContent = state.browseMode==='teacher' ? (state.selectedTeacher||'—') : state.selectedGroup;
+    $('mode-teacher-btn').classList.toggle('active', state.browseMode==='teacher');
+  }
+
+  function renderDayTabs(){
+    var wrap = $('day-tabs');
+    var today = WEEKDAY_INDEX[new Date().getDay()];
+    var tabsHtml = displayDayOrder().map(function(d){
+      var active = d===state.viewedDay;
+      var isToday = d===today;
+      return '<button class="day-tab'+(active?' active':'')+'" data-day="'+esc(d)+'">'+
+        (d==='ВОСКРЕСЕНЬЕ' ? APP_ICON_HTML : (DAY_SHORT[d]||d))+(isToday?'<span class="dot"></span>':'')+
+      '</button>';
+    }).join('');
+    if(wrap._sig===tabsHtml) return;      // ничего не изменилось — не трогаем (нет мигания и сброса прокрутки)
+    wrap._sig = tabsHtml;
+    wrap.innerHTML = tabsHtml;
+    wrap.querySelectorAll('.day-tab').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        state.viewedDay = btn.getAttribute('data-day');
+        if(state.viewedDay==='ВОСКРЕСЕНЬЕ' && Date.now()-annFetchedAt > 5*60*1000) refreshAnnouncements();
+        renderDayTabs();
+        renderContentDispatch();
+      });
+    });
+  }
+
+  function nowMinutes(){
+    var d = new Date();
+    return d.getHours()*60 + d.getMinutes();
+  }
+  function fmtClock(){
+    var d = new Date();
+    var p = function(n){ return (n<10?'0':'')+n; };
+    return p(d.getHours())+':'+p(d.getMinutes());
+  }
+  function fmtDuration(mins){
+    mins = Math.max(0, Math.round(mins));
+    var h = Math.floor(mins/60), m = mins%60;
+    if(h>0) return h+' ч'+(m>0? ' '+m+' мин':'');
+    return m+' мин';
+  }
+
+  // Insert an automatic "Обед"/"Перерыв" tile into gaps between timed lessons —
+  // the source file never lists lunch itself, only the lessons around it.
+  function buildTimelineItems(lessons){
+    var real = lessons.filter(function(l){ return !l.isGhost; });
+    var ghosts = lessons.filter(function(l){ return l.isGhost; });
+
+    var timed = real.filter(function(l){ return l.startMin!=null; })
+      .slice().sort(function(a,b){ return a.startMin-b.startMin; });
+    var untimed = real.filter(function(l){ return l.startMin==null; });
+    var items = [];
+    for(var i=0;i<timed.length;i++){
+      items.push({type:'lesson', l:timed[i]});
+      if(i<timed.length-1){
+        var gap = timed[i+1].startMin - timed[i].endMin;
+        if(gap>=BREAK_MIN_GAP){
+          var mid = (timed[i].endMin+timed[i+1].startMin)/2;
+          var isLunch = mid>=LUNCH_WINDOW[0] && mid<=LUNCH_WINDOW[1];
+          items.push({
+            type:'break',
+            startMin:timed[i].endMin, endMin:timed[i+1].startMin,
+            label:isLunch?'Обед':'Перерыв'
+          });
+        }
+      }
+    }
+    untimed.forEach(function(l){ items.push({type:'lesson', l:l}); });
+
+    // Ghost lessons (other week's parity) still get slotted in at their real time
+    // so the timeline reads naturally — they're just rendered greyed out.
+    function itemStartMin(item){ return item.type==='break' ? item.startMin : item.l.startMin; }
+    ghosts.forEach(function(g){
+      if(g.startMin==null){ items.push({type:'lesson', l:g}); return; }
+      var insertAt = items.length;
+      for(var k=0;k<items.length;k++){
+        var sm = itemStartMin(items[k]);
+        if(sm!=null && sm>g.startMin){ insertAt=k; break; }
+      }
+      items.splice(insertAt, 0, {type:'lesson', l:g});
+    });
+
+    return items;
+  }
+
+  function getDayRelation(day){
+    var today = WEEKDAY_INDEX[new Date().getDay()];
+    if(day==='ВОСКРЕСЕНЬЕ' && state.parsed.dayOrder.indexOf('ВОСКРЕСЕНЬЕ')===-1){
+      return today==='ВОСКРЕСЕНЬЕ' ? 'today' : 'future';
+    }
+    var idxToday = state.parsed.dayOrder.indexOf(today);
+    var idxDay = state.parsed.dayOrder.indexOf(day);
+    if(idxToday===-1 || idxDay===-1) return 'future';
+    if(idxDay===idxToday) return 'today';
+    return idxDay<idxToday ? 'past' : 'future';
+  }
+
+  function computeDayProgress(lessons, relation){
+    var real = lessons.filter(function(l){ return !l.isGhost; });
+    var timed = real.filter(function(l){ return l.startMin!=null; });
+    var dayStart = timed.length? Math.min.apply(null, timed.map(function(l){return l.startMin;})) : null;
+    var dayEnd = timed.length? Math.max.apply(null, timed.map(function(l){return l.endMin;})) : null;
+    if(relation==='past'){
+      return {pct:100, dayStart:dayStart, dayEnd:dayEnd, statusLabel:'День завершён'};
+    }
+    var nm = nowMinutes();
+    var pct = 0;
+    if(dayStart!=null && dayEnd!=null && dayEnd>dayStart){
+      pct = Math.max(0, Math.min(100, (nm-dayStart)/(dayEnd-dayStart)*100));
+    } else if(dayStart!=null && nm>=dayStart){
+      pct = 100;
+    }
+    var doneCount = timed.filter(function(l){ return nm>=l.endMin; }).length;
+    var statusLabel;
+    if(dayStart==null){ statusLabel = 'Пары не привязаны ко времени'; }
+    else if(nm < dayStart){ statusLabel = 'До начала пар: '+fmtDuration(dayStart-nm); }
+    else if(nm >= dayEnd){ statusLabel = 'Пары на сегодня закончены'; }
+    else { statusLabel = 'Пройдено '+doneCount+' из '+timed.length; }
+    return {pct:pct, dayStart:dayStart, dayEnd:dayEnd, statusLabel:statusLabel};
+  }
+
+  var BREAK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>';
+  var ALARM_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M5 3 2 6M19 3l3 3"/></svg>';
+  var CAL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>';
+
+  // ---------- lesson tile expand (alarm / calendar) ----------
+  // Keyed on day+time+subject rather than array index, so an expanded card
+  // survives the periodic 20s re-render instead of collapsing on its own.
+  var expandedLessonKeys = {};
+  function lessonKey(day, l){ return day+'|'+(l.startMin!=null?l.startMin:'x')+'|'+(l.subject||''); }
+
+  function updateLessonScrim(){
+    var any = Object.keys(expandedLessonKeys).length>0;
+    $('lesson-scrim').classList.toggle('show', any);
+  }
+  function collapseAllLessonTiles(){
+    expandedLessonKeys = {};
+    document.querySelectorAll('.lesson.expanded').forEach(function(li){ li.classList.remove('expanded'); });
+    updateLessonScrim();
+  }
+
+  // Finds the next calendar date (today included) that falls on the given
+  // canonical weekday name — needed since the schedule only stores a day
+  // name and a time, not an actual date.
+  function nextDateForWeekday(dayName){
+    var targetIdx = null;
+    for(var k in WEEKDAY_INDEX){ if(WEEKDAY_INDEX[k]===dayName){ targetIdx = +k; break; } }
+    var d = new Date();
+    if(targetIdx==null) return d;
+    var diff = (targetIdx - d.getDay() + 7) % 7;
+    d.setDate(d.getDate()+diff);
+    return d;
+  }
+  function icsDate(date, minutes){
+    var d = new Date(date.getFullYear(), date.getMonth(), date.getDate(), Math.floor(minutes/60), minutes%60, 0);
+    var p=function(n,l){ n=''+n; while(n.length<(l||2)) n='0'+n; return n; };
+    return p(d.getFullYear(),4)+p(d.getMonth()+1)+p(d.getDate())+'T'+p(d.getHours())+p(d.getMinutes())+'00';
+  }
+  function icsEsc(s){ return (s||'').toString().replace(/([,;])/g,'\\$1').replace(/\n/g,'\\n'); }
+
+  // Prefills the phone's alarm-clock app 20 minutes before the lesson — the
+  // person only has to confirm it. Android-only (Chrome's intent: scheme);
+  // harmless no-op elsewhere.
+  function buildAlarmHref(l){
+    if(l.startMin==null) return null;
+    var alarmMin = l.startMin - 20;
+    if(alarmMin<0) alarmMin += 24*60;
+    var h = Math.floor(alarmMin/60), m = alarmMin%60;
+    return 'intent:#Intent;action=android.intent.action.SET_ALARM;'+
+      'i.android.intent.extra.alarm.HOUR='+h+';'+
+      'i.android.intent.extra.alarm.MINUTES='+m+';'+
+      'S.android.intent.extra.alarm.MESSAGE='+encodeURIComponent(l.subject||'Пара')+';'+
+      'S.android.intent.extra.alarm.SKIP_UI=false;end';
+  }
+  // A downloadable single-event .ics — opens whatever calendar app is set
+  // as default, so it isn't tied to one specific calendar app or OS.
+  function buildCalendarHref(day, l){
+    if(l.startMin==null || l.endMin==null) return null;
+    var date = nextDateForWeekday(day);
+    var ics = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\n'+
+      'DTSTART:'+icsDate(date, l.startMin)+'\r\n'+
+      'DTEND:'+icsDate(date, l.endMin)+'\r\n'+
+      'SUMMARY:'+icsEsc(l.subject||'Пара')+'\r\n'+
+      (l.room? 'LOCATION:'+icsEsc(l.room)+'\r\n' : '')+
+      (l.teacher? 'DESCRIPTION:'+icsEsc(l.teacher)+'\r\n' : '')+
+      'END:VEVENT\r\nEND:VCALENDAR\r\n';
+    return 'data:text/calendar;charset=utf-8,'+encodeURIComponent(ics);
+  }
+  // Корпус и этаж по номеру аудитории: «У-409» -> учебный блок, 4 этаж.
+  // Буква в начале: У — учебный блок, Л — лабораторный, С — спортзал.
+  // Если буквы нет — это учебный блок (с пометкой, что буква не указана).
+  function describeRoom(raw){
+    var m = (raw||'').toString().trim().match(/^([А-Яа-яЁё]{1,2})?[\s.\-]*(\d+)/);
+    if(!m) return null;
+    var letter = m[1] ? m[1].toUpperCase() : '';
+    var num = m[2];
+    var blocks = { 'У':'Учебный блок', 'Л':'Лабораторный блок', 'СЗ':'Спортзал', 'С':'Спортзал' };
+    var block;
+    if(!letter) block = 'Учебный блок (буква не указана)';
+    else block = blocks[letter] || ('Корпус «'+letter+'»');
+    return { room: raw.toString().trim(), block: block, floor: num.charAt(0) };
+  }
+  function roomInfoHtml(roomStr){
+    if(!roomStr) return '';
+    var rooms = roomStr.split(',').map(function(x){ return x.trim(); }).filter(Boolean);
+    var parts = [];
+    rooms.forEach(function(r){
+      var d = describeRoom(r);
+      if(!d) return;
+      parts.push('<div><span class="lr-room">'+esc(d.room)+'</span> — '+esc(d.block)+'<br>'+esc(d.floor)+' этаж</div>');
+    });
+    return parts.length ? '<div class="lesson-room-info">'+parts.join('')+'</div>' : '';
+  }
+  function lessonActionsHtml(day, l){
+    var isAndroid = /Android/i.test(navigator.userAgent);
+    var alarmHref = (SHOW_LESSON_ACTION_BUTTONS && isAndroid) ? buildAlarmHref(l) : null;
+    var calHref = SHOW_LESSON_ACTION_BUTTONS ? buildCalendarHref(day, l) : null;
+    var fullName = l.teacher ? getTeacherFullName(l.teacher) : null;
+    var roomHtml = roomInfoHtml(l.room);
+    if(!alarmHref && !calHref && !fullName && !roomHtml) return '';
+    return '<div class="lesson-actions">'+
+      (fullName? '<div class="lesson-teacher-full">'+esc(fullName)+'</div>' : '')+
+      roomHtml+
+      (alarmHref || calHref ? '<div class="lesson-actions-btns">'+
+        (alarmHref? '<button type="button" class="lesson-action-btn" data-alarm-href="'+esc(alarmHref)+'">'+ALARM_ICON+'Будильник</button>' : '')+
+        (calHref? '<button type="button" class="lesson-action-btn" data-cal-href="'+esc(calHref)+'">'+CAL_ICON+'Календарь</button>' : '')+
+      '</div>' : '')+
+    '</div>';
+  }
+
+  function timelineHtml(lessons, relation, day){
+    // relation: 'past' | 'today' | 'future'. Kept accepting a boolean too (true→'today', false→'future')
+    // for any old call sites, so nothing else needs to change.
+    if(relation===true) relation='today';
+    if(relation===false) relation='future';
+    var items = buildTimelineItems(lessons);
+    var html = '<ul class="timeline">';
+    items.forEach(function(item, idx){
+      var isLast = idx===items.length-1;
+      if(item.type==='break'){
+        var status='plain';
+        if(relation==='past') status='done';
+        else if(relation==='today'){
+          var nmm=nowMinutes();
+          if(nmm<item.startMin) status='upcoming';
+          else if(nmm<item.endMin) status='current';
+          else status='done';
+        }
+        var chip='';
+        if(status==='current') chip='<span class="status-chip status-current">Сейчас · осталось '+fmtDuration(item.endMin-nowMinutes())+'</span>';
+        else if(status==='upcoming') chip='<span class="status-chip status-upcoming">через '+fmtDuration(item.startMin-nowMinutes())+'</span>';
+        else if(status==='done') chip='<span class="status-chip status-done">Прошёл</span>';
+        var lineCls='lesson is-break';
+        if(status==='done') lineCls+=' is-done';
+        if(status==='current') lineCls+=' is-current';
+        html += '<li class="'+lineCls+'" style="animation-delay:'+(idx*35)+'ms">'+
+          '<div class="lesson-time"><div>'+minToLabel(item.startMin)+'</div><div class="end">'+minToLabel(item.endMin)+'</div></div>'+
+          '<div class="lesson-rail"><div class="lesson-dot"></div>'+(isLast?'':'<div class="lesson-line"></div>')+'</div>'+
+          '<div class="lesson-card">'+
+            '<div class="lesson-head">'+chip+'<div class="lesson-subject">'+BREAK_ICON+esc(item.label)+'</div></div>'+
+          '</div>'+
+        '</li>';
+        return;
+      }
+      var l = item.l;
+      var status = 'plain';
+      var lchip='';
+      if(l.isGhost){
+        status = 'ghost';
+      } else if(relation==='past' && l.startMin!=null) status='done';
+      else if(relation==='today' && l.startMin!=null){
+        var nm2 = nowMinutes();
+        if(nm2 < l.startMin) status='upcoming';
+        else if(nm2 < l.endMin) status='current';
+        else status='done';
+      }
+      if(status==='current'){
+        lchip = '<span class="status-chip status-current">Сейчас · осталось '+fmtDuration(l.endMin-nowMinutes())+'</span>';
+      } else if(status==='upcoming'){
+        lchip = '<span class="status-chip status-upcoming">через '+fmtDuration(l.startMin-nowMinutes())+'</span>';
+      } else if(status==='done'){
+        lchip = '<span class="status-chip status-done">Пройдено</span>';
+      } else if(status==='ghost'){
+        lchip = '<span class="status-chip status-ghost">'+(l.parity==='even'?'на чётной неделе':'на нечётной неделе')+'</span>';
+      }
+      var metaParts = [];
+      if(l.group) metaParts.push(esc(l.group));
+      else if(l.teacher) metaParts.push(esc(l.teacher));
+      if(l.room) metaParts.push(esc(l.room));
+      var tappable = !l.isGhost && l.startMin!=null;
+      var key = lessonKey(day, l);
+      var isExpanded = tappable && !!expandedLessonKeys[key];
+      var lineCls2 = 'lesson';
+      if(status==='done') lineCls2+=' is-done';
+      if(status==='current') lineCls2+=' is-current';
+      if(status==='ghost') lineCls2+=' is-ghost';
+      if(tappable) lineCls2+=' is-tappable';
+      if(isExpanded) lineCls2+=' expanded';
+      html += '<li class="'+lineCls2+'" style="animation-delay:'+(idx*35)+'ms"'+(tappable? ' data-lesson-key="'+esc(key)+'"':'')+'>'+
+        '<div class="lesson-time">'+
+          (l.startLabel? '<div>'+esc(l.startLabel)+'</div>':'<div>'+esc(l.time)+'</div>')+
+          (l.endLabel? '<div class="end">'+esc(l.endLabel)+'</div>':'')+
+        '</div>'+
+        '<div class="lesson-rail"><div class="lesson-dot"></div>'+(isLast?'':'<div class="lesson-line"></div>')+'</div>'+
+        '<div class="lesson-card">'+
+          '<div class="lesson-head">'+lchip+'<div class="lesson-subject">'+esc(l.subject||'Занятие')+'</div></div>'+
+          (metaParts.length? '<div class="lesson-meta">'+metaParts.join(' · ')+'</div>':'')+
+          (l.note? '<div class="lesson-note">'+esc(l.note)+'</div>':'')+
+          (tappable? '<div class="lesson-handle"></div>'+lessonActionsHtml(day, l) : '')+
+        '</div>'+
+      '</li>';
+    });
+    html += '</ul>';
+    return html;
+  }
+
+  function emptyStateHtml(day){
+    var title = DAY_TITLE[day]||day;
+    return (day==='ВОСКРЕСЕНЬЕ' ? sundayInfoHtml()+announcementsHtml() : '')+'<div class="empty-state">'+
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 4v5"/></svg>'+
+      '<div class="es-title">'+title+' — пар нет</div>'+
+      '<div class="es-sub">В расписании этой группы на '+title.toLowerCase()+' занятий не найдено.</div>'+
+    '</div>';
+  }
+
+  function renderContent(target){
+    var box = target || $('content');
+    var day = state.viewedDay;
+    var relation = getDayRelation(day);
+    var lessons = annotateParity(getRawLessons(day));
+
+    if(lessons.length===0){ box.innerHTML = emptyStateHtml(day); return; }
+
+    var html = '';
+    if(relation==='today' || relation==='past'){
+      var prog = computeDayProgress(lessons, relation);
+      html += '<div class="progress-card">'+
+        '<div class="progress-top"><div class="now">'+(relation==='past'? '✓' : fmtClock())+'</div><div class="label">'+esc(prog.statusLabel)+'</div></div>'+
+        '<div class="progress-track"><div class="progress-fill" style="width:'+prog.pct+'%"></div></div>'+
+        '<div class="progress-foot"><span>'+(prog.dayStart!=null? minToLabel(prog.dayStart):'—')+'</span><span>'+(prog.dayEnd!=null? minToLabel(prog.dayEnd):'—')+'</span></div>'+
+      '</div>';
+    }
+    html += timelineHtml(lessons, relation, day);
+    box.innerHTML = html;
+  }
+
+  function renderWeekLayoutBar(){
+    var layout = prefs.weekLayout || 'table';
+    return '<div class="week-layout-bar">' +
+      '<div class="week-layout-left">' +
+        '<div class="week-layout-toggle">' +
+          '<button type="button" class="wlt-btn' + (layout==='table'?' active':'') + '" data-wlayout="table">' +
+            '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>' +
+            'Таблица' +
+          '</button>' +
+          '<button type="button" class="wlt-btn' + (layout==='list'?' active':'') + '" data-wlayout="list">' +
+            '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>' +
+            'Список' +
+          '</button>' +
+        '</div>' +
+        (layout==='table' ? '<button type="button" class="week-export-btn" id="btn-export-week-png" title="Скачать таблицу расписания в PNG"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Скачать PNG</button>' : '') +
+      '</div>' +
+      '<div class="week-hint">Время на строках · Дни по столбцам</div>' +
+    '</div>';
+  }
+
+  var MONTH_SHORT_RU = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+  var WEEKDAY_OFFSETS = { 'ПОНЕДЕЛЬНИК': 0, 'ВТОРНИК': 1, 'СРЕДА': 2, 'ЧЕТВЕРГ': 3, 'ПЯТНИЦА': 4, 'СУББОТА': 5, 'ВОСКРЕСЕНЬЕ': 6 };
+  function getDateForWeekdayThisWeek(dayName){
+    var offset = WEEKDAY_OFFSETS[dayName];
+    if(offset == null) return null;
+    var now = new Date();
+    var mon = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
+    return new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + offset);
+  }
+
+  function renderWeekListHtml(){
+    var html = renderWeekLayoutBar();
+    state.parsed.dayOrder.forEach(function(d){
+      var lessons = annotateParity(getRawLessons(d));
+      var relation = getDayRelation(d);
+      html += '<div class="week-day-block">';
+      html += '<div class="week-day-head"><span>'+(DAY_TITLE[d]||d)+'</span>'+(relation==='today'?'<span class="week-today-badge">Сегодня</span>':(relation==='past'?'<span class="week-today-badge week-past-badge">Завершён</span>':''))+'</div>';
+      if(lessons.length===0){
+        html += '<div class="week-empty">Пар нет</div>';
+      } else {
+        if(relation==='today' || relation==='past'){
+          var prog = computeDayProgress(lessons, relation);
+          html += '<div class="week-progress"><div class="week-progress-fill" style="width:'+prog.pct+'%"></div></div>';
+        }
+        html += timelineHtml(lessons, relation, d);
+      }
+      html += '</div>';
+    });
+    return html;
+  }
+
+  function renderWeekTableHtml(){
+    var allDays = (state.parsed && state.parsed.dayOrder) || [];
+    var days = allDays.filter(function(d){ return d !== 'ВОСКРЕСЕНЬЕ'; });
+    if(!days.length) days = allDays;
+
+    var dayLessonsMap = {};
+    var slotMap = {};
+    days.forEach(function(d){
+      var list = annotateParity(getRawLessons(d));
+      dayLessonsMap[d] = list;
+      list.forEach(function(l){
+        if(l.startMin != null && l.endMin != null){
+          var key = l.startMin + '_' + l.endMin;
+          if(!slotMap[key]){
+            slotMap[key] = {
+              startMin: l.startMin,
+              endMin: l.endMin,
+              startLabel: l.startLabel || labelFromMin(l.startMin),
+              endLabel: l.endLabel || labelFromMin(l.endMin)
+            };
+          }
+        }
+      });
+    });
+
+    var slots = Object.keys(slotMap).map(function(k){ return slotMap[k]; }).sort(function(a, b){ return a.startMin - b.startMin; });
+    window._currentWeekTableData = dayLessonsMap;
+    window._currentWeekTableSlots = slots;
+
+    var html = '<div class="week-table-wrap">' + renderWeekLayoutBar();
+
+    if(!slots.length){
+      html += '<div class="week-empty" style="text-align:center;padding:40px 16px;">В расписании нет пар на эту неделю</div></div>';
+      return html;
+    }
+
+    var today = WEEKDAY_INDEX[new Date().getDay()];
+    var nowM = nowMinutes();
+
+    html += '<div class="week-table-scroll">' +
+      '<table class="week-table">' +
+      '<thead><tr>' +
+      '<th class="wt-th wt-th-time">Время</th>';
+
+    var satHasLessons = dayLessonsMap['СУББОТА'] && dayLessonsMap['СУББОТА'].length > 0;
+
+    days.forEach(function(d){
+      var isToday = d === today;
+      var shortD = DAY_SHORT[d] || d;
+      var tDate = getDateForWeekdayThisWeek(d);
+      var dateStr = tDate ? (tDate.getDate() + ' ' + MONTH_SHORT_RU[tDate.getMonth()]) : '';
+      var isSatCompact = (d === 'СУББОТА' && !satHasLessons);
+
+      html += '<th class="wt-th wt-th-day' + (isToday ? ' is-today' : '') + (isSatCompact ? ' wt-col-sat-compact' : '') + '">' +
+        '<div class="wt-th-name">' + esc(shortD) + '</div>' +
+        (isSatCompact
+          ? '<div class="wt-th-date" style="font-size:10px;opacity:0.6;">вых.</div>'
+          : (dateStr ? '<div class="wt-th-date">' + esc(dateStr) + '</div>' : '')) +
+        (isToday ? '<span class="wt-now-badge" style="margin-top:2px;">Сегодня</span>' : '') +
+        '</th>';
+    });
+    html += '</tr></thead><tbody>';
+
+    slots.forEach(function(slot, slotIdx){
+      var pairNum = slotIdx + 1;
+      var isCurrentSlot = nowM >= slot.startMin && nowM < slot.endMin;
+      var timeHtml = slot.startLabel + '<br>' + slot.endLabel;
+
+      html += '<tr>' +
+        '<td class="wt-td wt-td-time' + (isCurrentSlot ? ' is-current-slot' : '') + '">' +
+          '<div class="wt-pair-num">' + pairNum + '</div>' +
+          '<div class="wt-pair-time">' + timeHtml + '</div>' +
+          (isCurrentSlot ? '<span class="wt-now-badge">СЕЙЧАС</span>' : '') +
+        '</td>';
+
+      days.forEach(function(d){
+        var isToday = d === today;
+        var isCurrentLessonNow = isToday && isCurrentSlot;
+        var isSatCompact = (d === 'СУББОТА' && !satHasLessons);
+        var list = (dayLessonsMap[d] || []).filter(function(l){
+          return l.startMin === slot.startMin && l.endMin === slot.endMin;
+        });
+
+        var tdCls = 'wt-td wt-td-cell';
+        if(isToday) tdCls += ' is-today-col';
+        if(isCurrentLessonNow) tdCls += ' is-current-lesson-now';
+        else if(isCurrentSlot) tdCls += ' is-current-slot';
+        if(isSatCompact) tdCls += ' wt-col-sat-compact';
+
+        html += '<td class="' + tdCls + '">';
+        if(!list.length){
+          html += '<div class="wt-empty">' + (isSatCompact ? '' : '—') + '</div>';
+        } else {
+          var mainL = list.find(function(l){ return !l.isGhost; }) || list[0];
+          var altL = list.length > 1 ? list.find(function(l){ return l !== mainL; }) : null;
+
+          var isGhost = mainL.isGhost;
+          var parityTag = '';
+          if(mainL.parity === 'even') parityTag = '<span class="wt-parity even">чёт</span>';
+          else if(mainL.parity === 'odd') parityTag = '<span class="wt-parity odd">нечёт</span>';
+
+          var typeBadge = '';
+          var cleanSubj = mainL.subject || '—';
+          if(/^Лекция:\s*/i.test(cleanSubj)){
+            typeBadge = '<span class="wt-type-badge lek">Лек</span>';
+            cleanSubj = cleanSubj.replace(/^Лекция:\s*/i, '');
+          } else if(/^Практика:\s*/i.test(cleanSubj)){
+            typeBadge = '<span class="wt-type-badge pr">Пр</span>';
+            cleanSubj = cleanSubj.replace(/^Практика:\s*/i, '');
+          } else if(/^(Лаб\.|Лабораторная):\s*/i.test(cleanSubj)){
+            typeBadge = '<span class="wt-type-badge lab">Лаб</span>';
+            cleanSubj = cleanSubj.replace(/^(Лаб\.|Лабораторная):\s*/i, '');
+          }
+
+          var roomBadge = mainL.room ? '<span class="wt-room-badge">' + esc(mainL.room) + '</span>' : '';
+          var who = state.browseMode === 'teacher' ? (mainL.group || '') : (mainL.teacher || '');
+
+          var altHtml = '';
+          if(altL){
+            var altParityStr = altL.parity === 'even' ? 'в чёт' : (altL.parity === 'odd' ? 'в нечёт' : 'или');
+            var altCleanSubj = (altL.subject || '—').replace(/^(Лекция|Практика|Лаб\.|Лабораторная):\s*/i, '');
+            var altRoomStr = altL.room ? (' · ' + esc(altL.room)) : '';
+            altHtml = '<div class="wt-alt-strip" title="' + esc(altL.subject + (altL.room ? ' (' + altL.room + ')' : '')) + '">' +
+              '<strong>↳ ' + altParityStr + ':</strong> ' + esc(altCleanSubj) + altRoomStr +
+              '</div>';
+          }
+
+          html += '<div class="wt-cell-inner" data-wt-day="' + esc(d) + '" data-wt-slot="' + slotIdx + '" title="Нажмите для подробностей">' +
+            '<div class="wt-main-card' + (isGhost ? ' is-ghost' : '') + '">' +
+              '<div class="wt-card-top">' + typeBadge + parityTag + '</div>' +
+              '<div class="wt-card-subj">' + esc(cleanSubj) + '</div>' +
+              '<div class="wt-card-bottom">' +
+                (who ? '<div class="wt-card-who">' + esc(who) + '</div>' : '<div style="flex:1;"></div>') +
+                roomBadge +
+              '</div>' +
+            '</div>' +
+            altHtml +
+            '</div>';
+        }
+        html += '</td>';
+      });
+      html += '</tr>';
+    });
+
+    html += '</tbody></table></div></div>';
+    return html;
+  }
+
+  function exportWeekSchedulePng(exportTheme){
+    var allDays = (state.parsed && state.parsed.dayOrder) || [];
+    var days = allDays.filter(function(d){ return d !== 'ВОСКРЕСЕНЬЕ'; });
+    if(!days.length) days = allDays;
+    var slots = window._currentWeekTableSlots || [];
+    var dayLessonsMap = window._currentWeekTableData || {};
+
+    if(!slots.length || !days.length){
+      alert('В расписании нет пар для экспорта.');
+      return;
+    }
+
+    var chosenTheme = exportTheme || getResolvedTheme();
+    var isDark = chosenTheme === 'dark';
+    var isVo = currentType === 'vo';
+
+    var primaryColor = isDark ? (isVo ? '#ffb4a9' : '#b4b2ff') : (isVo ? '#d8432e' : '#4b4adb');
+
+    var C = isDark ? {
+      bg: '#14161b',
+      headerBg: '#1a1d24',
+      colHeaderBg: '#1f232c',
+      todayColHeaderBg: '#282b3d',
+      todayColBg: 'rgba(180, 178, 255, 0.04)',
+      border: '#2c313d',
+      cardBorder: '#353a47',
+      cardBorderGhost: '#2c313d',
+      cardBg: '#1e222a',
+      cardBgGhost: '#171920',
+      altBg: '#252933',
+      altBorder: '#353a47',
+      satCompactBg: '#171920',
+      timeColBg: '#1a1d24',
+      footerBg: '#1a1d24',
+      textTitle: '#e6e8ee',
+      textSub: primaryColor,
+      textMuted: '#9aa0aa',
+      textColHeader: '#e1e3e8',
+      textColHeaderToday: '#c5c3ff',
+      textDate: '#8c93a0',
+      textDateToday: primaryColor,
+      textPairNum: primaryColor,
+      textPairTime: '#9aa0aa',
+      textSubj: '#e6e8ee',
+      textSubjGhost: '#707784',
+      textTeacher: '#a5abb6',
+      textRoom: primaryColor,
+      textAlt: '#a5abb6',
+      textEmpty: '#353a47',
+      textFooter: '#707784'
+    } : {
+      bg: '#ffffff',
+      headerBg: '#f8f9fa',
+      colHeaderBg: '#f1f3f6',
+      todayColHeaderBg: '#e8eafc',
+      todayColBg: 'rgba(75, 74, 219, 0.03)',
+      border: '#d9dee4',
+      cardBorder: '#d2d7e0',
+      cardBorderGhost: '#e0e0e0',
+      cardBg: '#f5f6f9',
+      cardBgGhost: '#fdfdfd',
+      altBg: '#eceef2',
+      altBorder: '#d5d9e0',
+      satCompactBg: '#fafbfc',
+      timeColBg: '#fafbfc',
+      footerBg: '#fafbfc',
+      textTitle: '#1a1d20',
+      textSub: primaryColor,
+      textMuted: '#5f6368',
+      textColHeader: '#202124',
+      textColHeaderToday: isVo ? '#a82c1b' : '#2a28b8',
+      textDate: '#70757a',
+      textDateToday: primaryColor,
+      textPairNum: primaryColor,
+      textPairTime: '#5f6368',
+      textSubj: '#1c1e21',
+      textSubjGhost: '#7f8897',
+      textTeacher: '#5f6368',
+      textRoom: primaryColor,
+      textAlt: '#555b66',
+      textEmpty: '#dadce0',
+      textFooter: '#80868b'
+    };
+
+    var weekInfo = getCurrentWeekInfo();
+    var termTitle = (state.parsed && state.parsed.term) ? state.parsed.term : 'Расписание занятий';
+    var targetLabel = state.browseMode === 'teacher' ? ('Преподаватель: ' + (state.selectedTeacher || '—')) : ('Группа: ' + (state.selectedGroup || '—'));
+    var weekLabel = 'Неделя ' + weekInfo.num + ' (' + (weekInfo.parity === 'even' ? 'чётная' : 'нечётная') + ')';
+    var today = WEEKDAY_INDEX[new Date().getDay()];
+
+    var width = 1200;
+    var headerH = 75;
+    var colHeaderH = 42;
+    var rowH = 70;
+    var footerH = 32;
+    var height = headerH + colHeaderH + (slots.length * rowH) + footerH;
+
+    var satHasLessons = dayLessonsMap['СУББОТА'] && dayLessonsMap['СУББОТА'].length > 0;
+    var satCompact = days.indexOf('СУББОТА') >= 0 && !satHasLessons;
+    var timeColW = 92;
+    var satColW = 64;
+    var normalDayColW = satCompact ? ((width - timeColW - satColW) / (days.length - 1)) : ((width - timeColW) / days.length);
+
+    function getColXAndW(di){
+      var d = days[di];
+      var x = timeColW;
+      for(var i = 0; i < di; i++){
+        var prevD = days[i];
+        var prevW = (satCompact && prevD === 'СУББОТА') ? satColW : normalDayColW;
+        x += prevW;
+      }
+      var w = (satCompact && d === 'СУББОТА') ? satColW : normalDayColW;
+      return { x: x, w: w };
+    }
+
+    var scale = 2;
+    var canvas = document.createElement('canvas');
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+    var ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+
+    // Full canvas background
+    ctx.fillStyle = C.bg;
+    ctx.fillRect(0, 0, width, height);
+
+    // Header background
+    ctx.fillStyle = C.headerBg;
+    ctx.fillRect(0, 0, width, headerH);
+
+    ctx.fillStyle = C.textTitle;
+    ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(termTitle, 20, 16);
+
+    ctx.font = '600 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillStyle = C.textSub;
+    ctx.fillText(targetLabel, 20, 44);
+
+    ctx.font = '500 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillStyle = C.textMuted;
+    ctx.textAlign = 'right';
+    ctx.fillText(weekLabel, width - 20, 44);
+
+    var startY = headerH;
+
+    // Column headers
+    ctx.fillStyle = C.colHeaderBg;
+    ctx.fillRect(0, startY, width, colHeaderH);
+
+    ctx.strokeStyle = C.border;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0, startY, timeColW, colHeaderH);
+
+    ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillStyle = C.textMuted;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Время', timeColW / 2, startY + (colHeaderH / 2));
+
+    days.forEach(function(d, di){
+      var colInfo = getColXAndW(di);
+      var colX = colInfo.x;
+      var dayColW = colInfo.w;
+      var isToday = d === today;
+      var isSat = satCompact && d === 'СУББОТА';
+
+      if(isToday){
+        ctx.fillStyle = C.todayColHeaderBg;
+        ctx.fillRect(colX, startY, dayColW, colHeaderH);
+      }
+      ctx.strokeStyle = C.border;
+      ctx.strokeRect(colX, startY, dayColW, colHeaderH);
+
+      var shortD = DAY_SHORT[d] || d;
+      var tDate = getDateForWeekdayThisWeek(d);
+      var dateStr = isSat ? 'вых.' : (tDate ? (tDate.getDate() + ' ' + MONTH_SHORT_RU[tDate.getMonth()]) : '');
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      if(dateStr){
+        ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillStyle = isToday ? C.textColHeaderToday : (isSat ? C.textMuted : C.textColHeader);
+        ctx.fillText(shortD, colX + (dayColW / 2), startY + 14);
+
+        ctx.font = (isSat ? '500 10px' : '500 11px') + ' -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillStyle = isToday ? C.textDateToday : C.textDate;
+        ctx.fillText(dateStr, colX + (dayColW / 2), startY + 29);
+      } else {
+        ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillStyle = isToday ? C.textColHeaderToday : C.textColHeader;
+        ctx.fillText(shortD, colX + (dayColW / 2), startY + (colHeaderH / 2));
+      }
+    });
+
+    // Slots rows
+    slots.forEach(function(slot, si){
+      var rowY = startY + colHeaderH + (si * rowH);
+
+      ctx.fillStyle = C.timeColBg;
+      ctx.fillRect(0, rowY, timeColW, rowH);
+      ctx.strokeStyle = C.border;
+      ctx.strokeRect(0, rowY, timeColW, rowH);
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.fillStyle = C.textPairNum;
+      ctx.fillText((si + 1) + ' пара', timeColW / 2, rowY + 24);
+
+      ctx.font = '500 11.5px "Roboto Mono", monospace';
+      ctx.fillStyle = C.textPairTime;
+      ctx.fillText(slot.startLabel + '–' + slot.endLabel, timeColW / 2, rowY + 48);
+
+      days.forEach(function(d, di){
+        var colInfo = getColXAndW(di);
+        var colX = colInfo.x;
+        var dayColW = colInfo.w;
+        var isToday = d === today;
+        var isSat = satCompact && d === 'СУББОТА';
+
+        if(isToday){
+          ctx.fillStyle = C.todayColBg;
+          ctx.fillRect(colX, rowY, dayColW, rowH);
+        } else if(isSat){
+          ctx.fillStyle = C.satCompactBg;
+          ctx.fillRect(colX, rowY, dayColW, rowH);
+        }
+        ctx.strokeStyle = C.border;
+        ctx.strokeRect(colX, rowY, dayColW, rowH);
+
+        if(isSat){
+          return; // Saturday with 0 lessons is kept as a neat, empty compact column
+        }
+
+        var list = (dayLessonsMap[d] || []).filter(function(l){
+          return l.startMin === slot.startMin && l.endMin === slot.endMin;
+        });
+
+        if(!list.length){
+          ctx.font = '14px sans-serif';
+          ctx.fillStyle = C.textEmpty;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('—', colX + (dayColW / 2), rowY + (rowH / 2));
+        } else {
+          var mainL = list.find(function(l){ return !l.isGhost; }) || list[0];
+          var altL = list.length > 1 ? list.find(function(l){ return l !== mainL; }) : null;
+
+          var cardPadding = 3;
+          var cardW = dayColW - (cardPadding * 2);
+          var altH = altL ? 17 : 0;
+          var cardH = altL ? (rowH - (cardPadding * 2) - altH - 2) : (rowH - (cardPadding * 2));
+          var cardX = colX + cardPadding;
+          var cardY = rowY + cardPadding;
+
+          ctx.fillStyle = mainL.isGhost ? C.cardBgGhost : C.cardBg;
+          ctx.fillRect(cardX, cardY, cardW, cardH);
+          ctx.strokeStyle = mainL.isGhost ? C.cardBorderGhost : C.cardBorder;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(cardX, cardY, cardW, cardH);
+
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'top';
+
+          var cleanSubj = (mainL.subject || '—').replace(/^(Лекция|Практика|Лаб\.|Лабораторная):\s*/i, '');
+          var typePrefix = '';
+          if(/^Лекция:/i.test(mainL.subject)) typePrefix = 'Лек · ';
+          else if(/^Практика:/i.test(mainL.subject)) typePrefix = 'Пр · ';
+          else if(/^(Лаб\.|Лабораторная):/i.test(mainL.subject)) typePrefix = 'Лаб · ';
+
+          // Subject text gets up to 3 lines (or 2 if alternating strip present)
+          ctx.font = 'bold 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+          ctx.fillStyle = mainL.isGhost ? C.textSubjGhost : C.textSubj;
+          var maxSubjLines = altL ? 2 : 3;
+          drawWrappedText(ctx, typePrefix + cleanSubj, cardX + 4, cardY + 4, cardW - 8, 13.5, maxSubjLines);
+
+          // Pinned to bottom of the card: Teacher on left, Room on right
+          var who = state.browseMode === 'teacher' ? (mainL.group || '') : (mainL.teacher || '');
+          var footerLineY = cardY + cardH - 14;
+          var roomW = 0;
+
+          if(mainL.room){
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'top';
+            ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            ctx.fillStyle = C.textRoom;
+            ctx.fillText(mainL.room, cardX + cardW - 4, footerLineY);
+            roomW = ctx.measureText(mainL.room).width + 6;
+          }
+
+          if(who){
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.font = '500 10.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            ctx.fillStyle = C.textTeacher;
+            drawWrappedText(ctx, who, cardX + 4, footerLineY, cardW - 8 - roomW, 11, 1);
+          }
+
+          if(altL){
+            var altY = cardY + cardH + 2;
+            ctx.fillStyle = C.altBg;
+            ctx.fillRect(cardX, altY, cardW, altH);
+            ctx.strokeStyle = C.altBorder;
+            ctx.strokeRect(cardX, altY, cardW, altH);
+
+            var altParStr = altL.parity === 'even' ? 'в чёт' : (altL.parity === 'odd' ? 'в нечёт' : 'или');
+            var altCleanSubj = (altL.subject || '—').replace(/^(Лекция|Практика|Лаб\.|Лабораторная):\s*/i, '');
+            var altWho = state.browseMode === 'teacher' ? (altL.group || '') : (altL.teacher || '');
+            var altText = '↳ ' + altParStr + ': ' + altCleanSubj;
+            if(altL.room) altText += ' · ' + altL.room;
+            if(altWho) altText += ' (' + altWho + ')';
+
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.font = '500 9.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            ctx.fillStyle = C.textAlt;
+            drawWrappedText(ctx, altText, cardX + 4, altY + (altH / 2) - 5, cardW - 8, 11, 1);
+          }
+        }
+      });
+    });
+
+    var footerY = height - footerH;
+    ctx.fillStyle = C.footerBg;
+    ctx.fillRect(0, footerY, width, footerH);
+    ctx.strokeStyle = C.border;
+    ctx.strokeRect(0, footerY, width, footerH);
+
+    ctx.font = '500 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillStyle = C.textFooter;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('СФТИ НИЯУ МИФИ', 20, footerY + (footerH / 2));
+
+    ctx.textAlign = 'right';
+    var nowFmt = new Date().toLocaleDateString('ru-RU') + ' ' + fmtClock();
+    ctx.fillText(nowFmt, width - 20, footerY + (footerH / 2));
+
+    function drawWrappedText(c, text, x, y, maxW, lineH, maxL){
+      if(!text) return 0;
+      maxL = maxL || 3;
+      var words = text.split(/\s+/);
+      var line = '';
+      var lines = [];
+      for(var n = 0; n < words.length; n++){
+        var testLine = line ? (line + ' ' + words[n]) : words[n];
+        if(c.measureText(testLine).width > maxW && n > 0){
+          if(lines.length === maxL - 1){
+            var trunc = line;
+            while(trunc.length > 0 && c.measureText(trunc + '…').width > maxW){
+              trunc = trunc.slice(0, -1);
+            }
+            lines.push(trunc + '…');
+            line = '';
+            break;
+          }
+          lines.push(line);
+          line = words[n];
+        } else {
+          line = testLine;
+        }
+      }
+      if(line && lines.length < maxL){
+        while(line.length > 0 && c.measureText(line).width > maxW){
+          line = line.slice(0, -1);
+        }
+        lines.push(line);
+      }
+      for(var i = 0; i < lines.length; i++){
+        c.fillText(lines[i], x, y + (i * lineH));
+      }
+      return lines.length;
+    }
+
+    var themeSuffix = chosenTheme === 'dark' ? '_dark' : '';
+    var fileName = 'Расписание_' + (state.browseMode === 'teacher' ? (state.selectedTeacher || 'teacher') : (state.selectedGroup || 'group')) + '_неделя_' + weekInfo.num + themeSuffix + '.png';
+    fileName = fileName.replace(/[\/\\?%*:|"<>]/g, '_');
+
+    if(canvas.toBlob){
+      canvas.toBlob(function(blob){
+        if(!blob) return;
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function(){
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 300);
+      }, 'image/png');
+    } else {
+      var a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function(){ document.body.removeChild(a); }, 300);
+    }
+  }
+
+  function renderWeekContent(target){
+    var box = target || $('content');
+    var layout = prefs.weekLayout || 'table';
+    box.innerHTML = layout === 'table' ? renderWeekTableHtml() : renderWeekListHtml();
+  }
+
+  // --- мягкое обновление: сравниваем новую разметку с текущей и меняем только отличия ---
+  function syncAttrs(o, n){
+    var i, a;
+    for(i=o.attributes.length-1; i>=0; i--){
+      a = o.attributes[i];
+      if(!n.hasAttribute(a.name)) o.removeAttribute(a.name);
+    }
+    for(i=0; i<n.attributes.length; i++){
+      a = n.attributes[i];
+      if(o.getAttribute(a.name)!==a.value) o.setAttribute(a.name, a.value);
+    }
+  }
+  function pulse(el){
+    if(!el || !el.classList) return;
+    el.classList.remove('tick-fade');
+    void el.offsetWidth;
+    el.classList.add('tick-fade');
+  }
+  function patchNode(o, n){
+    if(o.nodeType!==n.nodeType || o.nodeName!==n.nodeName){ o.parentNode.replaceChild(n.cloneNode(true), o); return; }
+    if(o.nodeType===3){
+      if(o.nodeValue!==n.nodeValue){ o.nodeValue = n.nodeValue; pulse(o.parentNode); }
+      return;
+    }
+    if(o.nodeType!==1) return;
+    syncAttrs(o, n);
+    patchChildren(o, n);
+  }
+  function patchChildren(o, n){
+    if(o.childNodes.length!==n.childNodes.length){ o.innerHTML = n.innerHTML; return; }
+    for(var i=0; i<o.childNodes.length; i++) patchNode(o.childNodes[i], n.childNodes[i]);
+  }
+
+  function renderContentDispatch(isTick){
+    var box = $('content');
+    if(isTick!==true || !box.firstChild){
+      // полная перерисовка (смена дня/группы): плитки плавно «выезжают» один раз
+      box.classList.add('rise');
+      clearTimeout(box._riseT);
+      box._riseT = setTimeout(function(){ box.classList.remove('rise'); }, 900);
+      if(state.viewMode==='week') renderWeekContent();
+      else renderContent();
+      return;
+    }
+    var holder = document.createElement('div');
+    if(state.viewMode==='week') renderWeekContent(holder);
+    else renderContent(holder);
+    patchChildren(box, holder);
+  }
+
+  function minToLabel(m){
+    var h=Math.floor(m/60), mm=m%60;
+    var p=function(n){return (n<10?'0':'')+n;};
+    return p(h)+':'+p(mm);
+  }
+
+  function renderWeekBadge(){
+    var info = getCurrentWeekInfo();
+    $('wb-num').textContent = info.num;
+    $('wb-parity').textContent = info.parity==='even' ? 'чётная' : 'нечётная';
+    var badge = $('week-badge');
+    badge.classList.toggle('is-even', info.parity==='even');
+    badge.classList.toggle('is-odd', info.parity==='odd');
+  }
+
+  function renderMain(){
+    renderTopbar();
+    renderWeekBadge();
+    renderDayTabs();
+    renderContentDispatch();
+  }
+
+  function startTicking(){
+    if(tickTimer) clearInterval(tickTimer);
+    tickTimer = setInterval(function(){
+      if($('screen-main').classList.contains('active')){
+        renderWeekBadge();
+        renderDayTabs();
+        renderContentDispatch(true);
+      }
+    }, 20000);
+  }
+
+  $('view-toggle').addEventListener('click', function(e){
+    var btn = e.target.closest('.vt-btn');
+    if(!btn) return;
+    var mode = btn.getAttribute('data-mode');
+    if(mode===state.viewMode) return;
+    state.viewMode = mode;
+    $('view-toggle').querySelectorAll('.vt-btn').forEach(function(b){ b.classList.toggle('active', b===btn); });
+    $('day-tabs').style.display = mode==='week' ? 'none' : '';
+    renderContentDispatch();
+  });
+
+  // Tap a lesson tile to reveal its alarm/calendar shortcuts. Delegated on
+  // the container so it keeps working across re-renders.
+  $('content').addEventListener('click', function(e){
+    var exportBtn = e.target.closest('#btn-export-week-png');
+    if(exportBtn){
+      e.stopPropagation();
+      markInteraction();
+      openExportPngSheet();
+      return;
+    }
+    var wlt = e.target.closest('.wlt-btn');
+    if(wlt){
+      var wl = wlt.getAttribute('data-wlayout');
+      if(wl && wl !== prefs.weekLayout){
+        prefs.weekLayout = wl;
+        savePrefs();
+        renderContentDispatch();
+      }
+      return;
+    }
+    var wtCell = e.target.closest('.wt-cell-inner') || e.target.closest('.wt-card');
+    if(wtCell){
+      var d = wtCell.getAttribute('data-wt-day');
+      var sIdx = +wtCell.getAttribute('data-wt-slot');
+      if(window._currentWeekTableData && window._currentWeekTableData[d] && window._currentWeekTableSlots){
+        var slot = window._currentWeekTableSlots[sIdx];
+        if(slot){
+          var list = (window._currentWeekTableData[d] || []).filter(function(l){
+            return l.startMin === slot.startMin && l.endMin === slot.endMin;
+          });
+          if(list.length){
+            openLessonDetailSheet(list, d, slot);
+          }
+        }
+      }
+      return;
+    }
+    var actionBtn = e.target.closest('.lesson-action-btn');
+    if(actionBtn){
+      e.stopPropagation();
+      markInteraction();
+      var alarmHref = actionBtn.getAttribute('data-alarm-href');
+      var calHref = actionBtn.getAttribute('data-cal-href');
+      if(alarmHref){
+        window.location.href = alarmHref;
+      } else if(calHref){
+        var a = document.createElement('a');
+        a.href = calHref;
+        a.download = 'lesson.ics';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+      return;
+    }
+    var li = e.target.closest('.lesson.is-tappable');
+    if(!li) return;
+    var key = li.getAttribute('data-lesson-key');
+    if(!key) return;
+    markInteraction();
+    if(expandedLessonKeys[key]){ delete expandedLessonKeys[key]; li.classList.remove('expanded'); }
+    else { expandedLessonKeys[key] = true; li.classList.add('expanded'); }
+    updateLessonScrim();
+  });
+  $('lesson-scrim').addEventListener('click', function(){
+    markInteraction();
+    collapseAllLessonTiles();
+  });
+
+  // ---------- lesson detail sheet (from week table) ----------
+  function openLessonDetailSheet(target, day, slot){
+    if(!target) return;
+    markInteraction();
+    var list = Array.isArray(target) ? target : [target];
+    if(!list.length) return;
+
+    var mainL = list.find(function(l){ return !l.isGhost; }) || list[0];
+    var altL = list.length > 1 ? list.find(function(l){ return l !== mainL; }) : null;
+
+    var timeStr = (slot && slot.startLabel && slot.endLabel) ? (slot.startLabel + '–' + slot.endLabel) : ((mainL.startLabel && mainL.endLabel) ? (mainL.startLabel + '–' + mainL.endLabel) : (mainL.time || ''));
+    $('ld-subject').textContent = mainL.subject || 'Без названия';
+    $('ld-time').textContent = timeStr;
+
+    var html = '';
+
+    // Day & Parity for main
+    var parityLabel = 'Каждую неделю';
+    if(mainL.parity === 'even') parityLabel = 'Только по чётным неделям';
+    else if(mainL.parity === 'odd') parityLabel = 'Только по нечётным неделям';
+    html += '<div class="ld-row"><div class="ld-label">День и повтор</div><div class="ld-val">' +
+      esc(DAY_TITLE[day] || day) + ' · ' + parityLabel + (mainL.isGhost ? ' <span class="ld-sub">(не на этой неделе)</span>' : '') + '</div></div>';
+
+    // Group or Teacher
+    if(state.browseMode === 'teacher'){
+      var gName = mainL.group || state.selectedGroup || '';
+      if(gName){
+        html += '<div class="ld-row"><div class="ld-label">Группа</div><div class="ld-val">' + esc(gName) + '</div></div>';
+      }
+    } else {
+      if(mainL.teacher){
+        var fullT = getTeacherFullName(mainL.teacher);
+        html += '<div class="ld-row"><div class="ld-label">Преподаватель</div><div class="ld-val">' +
+          esc(fullT || mainL.teacher) + (fullT ? ' <span class="ld-sub">(' + esc(mainL.teacher) + ')</span>' : '') +
+          '</div></div>';
+      }
+    }
+
+    // Room
+    if(mainL.room){
+      var rDesc = describeRoom(mainL.room);
+      var rText = esc(mainL.room);
+      if(rDesc){
+        rText += ' — ' + esc(rDesc.block) + ', ' + esc(rDesc.floor) + ' этаж';
+      }
+      html += '<div class="ld-row"><div class="ld-label">Аудитория</div><div class="ld-val">' + rText + '</div></div>';
+    }
+
+    // Note
+    if(mainL.note){
+      html += '<div class="ld-row"><div class="ld-label">Примечание</div><div class="ld-val">' + esc(mainL.note) + '</div></div>';
+    }
+
+    // Alternating lesson info if present
+    if(altL){
+      var altParLabel = altL.parity === 'even' ? 'чётным неделям' : (altL.parity === 'odd' ? 'нечётным неделям' : 'другим неделям');
+      html += '<div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--outline);">';
+      html += '<div class="ld-label" style="margin-bottom:6px;color:var(--primary);">Чередующаяся пара (по ' + altParLabel + '):</div>';
+      html += '<div class="ld-val" style="font-weight:700;">' + esc(altL.subject || '—') + '</div>';
+      if(state.browseMode === 'teacher' && altL.group){
+        html += '<div class="ld-sub" style="margin-top:2px;">Группа: ' + esc(altL.group) + '</div>';
+      } else if(altL.teacher){
+        var altFullT = getTeacherFullName(altL.teacher);
+        html += '<div class="ld-sub" style="margin-top:2px;">Преподаватель: ' + esc(altFullT || altL.teacher) + '</div>';
+      }
+      if(altL.room){
+        var altRDesc = describeRoom(altL.room);
+        html += '<div class="ld-sub" style="margin-top:2px;">Аудитория: ' + esc(altL.room) + (altRDesc ? ' (' + esc(altRDesc.block) + ')' : '') + '</div>';
+      }
+      if(altL.note){
+        html += '<div class="ld-sub" style="margin-top:2px;">Примечание: ' + esc(altL.note) + '</div>';
+      }
+      html += '</div>';
+    }
+
+    // Action button
+    html += '<div class="ld-actions">' +
+      '<button type="button" class="btn btn-filled btn-block" id="ld-btn-go-day">Открыть этот день (' + esc(DAY_SHORT[day] || day) + ')</button>' +
+      '</div>';
+
+    $('ld-body').innerHTML = html;
+
+    $('ld-btn-go-day').onclick = function(){
+      closeGenericSheet('lesson-detail-sheet', 'lesson-detail-scrim');
+      state.viewMode = 'day';
+      state.viewedDay = day;
+      $('view-toggle').querySelectorAll('.vt-btn').forEach(function(b){
+        b.classList.toggle('active', b.getAttribute('data-mode') === 'day');
+      });
+      $('day-tabs').style.display = '';
+      renderDayTabs();
+      renderContentDispatch();
+    };
+
+    openGenericSheet('lesson-detail-sheet', 'lesson-detail-scrim');
+  }
+
+  $('lesson-detail-scrim').addEventListener('click', function(){
+    closeGenericSheet('lesson-detail-sheet', 'lesson-detail-scrim');
+  });
+
+  // ---------- Navigation back buttons ----------
+  $('main-back-btn').addEventListener('click', async function(){
+    markInteraction();
+    kioskLive = false;
+    pendingFile = null;
+    $('drop-zone').querySelector('.drop-title').textContent = 'Загрузить своё';
+    $('drop-zone').querySelector('.drop-sub').textContent = 'выбрать файл .xls / .xlsx или перетащить сюда';
+    $('btn-parse').style.display = 'none';
+    $('file-input').value = '';
+    setUploadError('');
+    var saved = await loadStateRaw();
+    var isStale = saved && saved.parserVersion !== PARSER_VERSION;
+    var validSaved = (saved && !isStale && saved.parsed && saved.selectedGroup && saved.parsed.byGroup[saved.selectedGroup]) ? saved : null;
+    renderQuickContinue(validSaved);
+    initGithubSchedules();
+    show('screen-upload');
+  });
+
+  $('group-pick-back').addEventListener('click', function(){
+    markInteraction();
+    if(state.selectedGroup && state.parsed){
+      show('screen-main');
+    } else {
+      show('screen-upload');
+    }
+  });
+
+  $('teacher-pick-back').addEventListener('click', function(){
+    markInteraction();
+    if(state.selectedGroup || state.selectedTeacher){
+      show('screen-main');
+    } else {
+      show('screen-upload');
+    }
+  });
+
+  // ---------- settings sheet ----------
+  function openGenericSheet(sheetId, scrimId){
+    $(scrimId).classList.add('show');
+    $(sheetId).classList.add('show');
+  }
+  function closeGenericSheet(sheetId, scrimId){
+    $(scrimId).classList.remove('show');
+    $(sheetId).classList.remove('show');
+  }
+
+  function openSheet(){
+    var info = 'Файл: '+(state.fileName||'—');
+    if(state.savedAt){
+      try{
+        var d = new Date(state.savedAt);
+        info += ' · загружен '+d.toLocaleDateString('ru-RU',{day:'numeric',month:'long'});
+      }catch(e){}
+    }
+    $('sheet-info').textContent = info;
+    openGenericSheet('settings-sheet','scrim');
+  }
+  function closeSheet(){ closeGenericSheet('settings-sheet','scrim'); }
+
+  $('settings-btn').addEventListener('click', openSheet);
+  $('group-switch-btn').addEventListener('click', function(){
+    markInteraction();
+    if(state.browseMode==='teacher'){
+      renderTeacherPicker();
+      show('screen-pick-teacher');
+    } else {
+      renderGroupPicker();
+      show('screen-pick');
+    }
+  });
+  $('mode-teacher-btn').addEventListener('click', function(){
+    markInteraction();
+    if(state.browseMode==='teacher'){
+      // Toggle back to the last group — the teacher stays remembered for next time.
+      state.browseMode = 'group';
+      if(state.selectedGroup){ renderMain(); }
+      else { renderGroupPicker(); show('screen-pick'); }
+    } else if(state.selectedTeacher){
+      state.browseMode = 'teacher';
+      renderMain();
+    } else {
+      renderTeacherPicker();
+      show('screen-pick-teacher');
+    }
+  });
+  $('scrim').addEventListener('click', closeSheet);
+  $('sheet-change-group').addEventListener('click', function(){
+    closeSheet();
+    state.browseMode = 'group';
+    renderGroupPicker();
+    show('screen-pick');
+  });
+  $('sheet-reupload').addEventListener('click', async function(){
+    closeSheet();
+    kioskLive = false;
+    // Just navigate to the entry screen — don't wipe the saved schedule/group.
+    // A page refresh doesn't lose it either, so this shouldn't behave differently.
+    pendingFile = null;
+    $('drop-zone').querySelector('.drop-title').textContent = 'Загрузить своё';
+    $('drop-zone').querySelector('.drop-sub').textContent = 'выбрать файл .xls / .xlsx или перетащить сюда';
+    $('btn-parse').style.display='none';
+    $('file-input').value='';
+    setUploadError('');
+    var saved = await loadStateRaw();
+    var isStale = saved && saved.parserVersion !== PARSER_VERSION;
+    var validSaved = (saved && !isStale && saved.parsed && saved.selectedGroup && saved.parsed.byGroup[saved.selectedGroup]) ? saved : null;
+    renderQuickContinue(validSaved);
+    show('screen-upload');
+    initGithubSchedules();
+  });
+
+  // ---------- week parity sheet ----------
+  function weekRowHtml(label, info){
+    var parWord = info.parity==='even' ? 'чётная' : 'нечётная';
+    return '<div class="week-info-row">'+
+      '<div><div class="wi-label">'+label+'</div>'+
+      '<div class="wi-main">'+info.num+' неделя · <span class="'+(info.parity==='even'?'wi-even':'wi-odd')+'">'+parWord+'</span></div></div>'+
+      '<div class="wi-dates">'+isoToRu(info.from)+' – '+isoToRu(info.to)+'</div>'+
+    '</div>';
+  }
+  function weekSourceText(cur, nxt){
+    if(cur.source==='sfti' && nxt.source==='sfti'){
+      return 'Источник: официальный сайт расписания колледжа (raspisanie.sphti.ru). Данные подтягиваются автоматически несколько раз в день.';
+    }
+    if(cur.source==='sfti'){
+      return 'Текущая неделя взята с официального сайта расписания колледжа. Для следующей недели там данных ещё нет, поэтому она определена по запасному графику.';
+    }
+    if(cur.source==='file' && nxt.source==='file'){
+      return 'Источник: график недель колледжа из файла weeks.json (по объявлению в колледже). График действует до '+isoToRu(weekCalendar.lastTo, true)+', дальше счёт идёт по календарю с начала года.';
+    }
+    if(cur.source==='file'){
+      return 'Текущая неделя взята из графика колледжа (weeks.json). Для следующей недели в графике данных уже нет, поэтому она посчитана по календарной нумерации с начала года (ISO) — чётность может отличаться от колледжа.';
+    }
+    if(weekCalendar){
+      return 'График недель в weeks.json закончился (он действовал до '+isoToRu(weekCalendar.lastTo, true)+'), поэтому используется календарная нумерация с начала года (ISO). Чётность может отличаться от колледжа — нужно обновить файл.';
+    }
+    return 'Файл с графиком недель (weeks.json) не найден, поэтому используется календарная нумерация с начала года (ISO). Чётность может отличаться от колледжа.';
+  }
+  function openWeekSheet(){
+    var now = new Date();
+    var nd = new Date(now.getFullYear(), now.getMonth(), now.getDate()+7);
+    var cur = getWeekInfoForDate(now);
+    var nxt = getWeekInfoForDate(nd);
+    $('week-sheet-body').innerHTML =
+      weekRowHtml('Сейчас', cur) +
+      weekRowHtml('Следующая неделя', nxt) +
+      '<div class="week-source">'+esc(weekSourceText(cur, nxt))+'</div>';
+    openGenericSheet('week-sheet','week-scrim');
+  }
+  $('week-badge').addEventListener('click', function(){ markInteraction(); openWeekSheet(); });
+  $('week-scrim').addEventListener('click', function(){ closeGenericSheet('week-sheet','week-scrim'); });
+
+  // ---------- theme ----------
+  function applyTheme(){
+    document.documentElement.setAttribute('data-theme', prefs.theme==='dark' ? 'dark' : 'light');
+    $('theme-switch').setAttribute('aria-checked', prefs.theme==='dark' ? 'true':'false');
+  }
+  $('theme-switch').addEventListener('click', function(){
+    prefs.theme = prefs.theme==='dark' ? 'light' : 'dark';
+    applyTheme();
+    savePrefs();
+  });
+
+  // ---------- schedule type (СПО / ВО) ----------
+  function applyScheduleTypeTheme(){
+    document.documentElement.setAttribute('data-schedule-type', currentType);
+  }
+  function renderTypeSwitchUI(){
+    document.querySelectorAll('.type-toggle-btn').forEach(function(btn){
+      btn.classList.toggle('active', btn.getAttribute('data-type')===currentType);
+    });
+  }
+  // Переключатель СПО/ВО только переключает тип: остаёмся на экране входа,
+  // а «Продолжить» для выбранного типа человек нажимает сам.
+  async function switchScheduleType(newType){
+    if(!SCHEDULE_TYPES[newType]) return;
+    if(searchOpen) setSearchOpen(false);
+    if(newType===currentType) return;
+    markInteraction();
+
+    currentType = newType;
+    prefs.scheduleType = currentType;
+    savePrefs();
+    applyScheduleTypeTheme();
+    renderTypeSwitchUI();
+    kioskLive = false;
+
+    state = { parsed:null, selectedGroup:null, viewedDay:null, savedAt:null, fileName:null, viewMode:'day', browseMode:'group', selectedTeacher:null, ghName:null, ghDate:null };
+    pendingFile = null;
+    $('drop-zone').querySelector('.drop-title').textContent = 'Загрузить своё';
+    $('drop-zone').querySelector('.drop-sub').textContent = 'выбрать файл .xls / .xlsx или перетащить сюда';
+    $('btn-parse').style.display='none';
+    $('file-input').value='';
+    setUploadError('');
+    renderQuickContinue(null);
+
+    var myType = currentType;
+    var saved = await loadStateRaw();
+    if(myType!==currentType) return;   // успели переключить ещё раз
+    var isStale = saved && saved.parserVersion !== PARSER_VERSION;
+    var validSaved = (saved && !isStale && saved.parsed && saved.selectedGroup && saved.parsed.byGroup[saved.selectedGroup]) ? saved : null;
+    if(isStale){
+      setUploadError('Разбор расписания был улучшен — загрузите файл ещё раз, чтобы обновить данные.', true);
+    }
+    renderQuickContinue(validSaved);
+    show('screen-upload');
+    initGithubSchedules();
+  }
+  document.querySelectorAll('.type-toggle-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){ switchScheduleType(btn.getAttribute('data-type')); });
+  });
+
+  // ---------- demo mode toggle ----------
+  // Temporarily disabled from the UI (kept in prefs/logic so it's a one-line
+  // flip to bring back later) — force it off regardless of any previously
+  // saved value, and ignore taps on the greyed-out switch.
+  prefs.demoEnabled = false;
+  function applyDemoSwitch(){
+    $('demo-switch').setAttribute('aria-checked', 'false');
+  }
+  $('demo-switch').addEventListener('click', function(e){
+    e.preventDefault();
+  });
+
+  // ---------- share sheet ----------
+  function openShareSheet(){
+    closeSheet();
+    $('share-qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(PAGE_URL);
+    $('share-link-text').textContent = PAGE_URL.replace(/^https?:\/\//,'').replace(/\/$/,'');
+    openGenericSheet('share-sheet','share-scrim');
+  }
+  $('sheet-share').addEventListener('click', openShareSheet);
+  $('share-scrim').addEventListener('click', function(){ closeGenericSheet('share-sheet','share-scrim'); });
+  $('share-copy-btn').addEventListener('click', function(){
+    var btn = $('share-copy-btn');
+    var done = function(){ btn.textContent='Скопировано'; btn.classList.add('copied'); setTimeout(function(){ btn.textContent='Копировать'; btn.classList.remove('copied'); }, 1800); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(PAGE_URL).then(done).catch(done);
+    } else { done(); }
+  });
+  $('share-native-btn').addEventListener('click', function(){
+    if(navigator.share){
+      navigator.share({ title:'Расписание', url: PAGE_URL }).catch(function(){});
+    } else {
+      $('share-copy-btn').click();
+    }
+  });
+
+  $('sheet-contact').addEventListener('click', function(){
+    window.location.href = 'mailto:a68590260@gmail.com';
+  });
+
+  // ---------- kiosk / demo mode ----------
+  // Public-kiosk display: reuses the normal main screen (with full group
+  // switching) rather than a stripped-down view, so anyone can walk up, tap
+  // the group name, find their own schedule, and leave. Left alone, it keeps
+  // itself moving so it doesn't just sit on one group's schedule forever:
+  // if nobody ever touches the screen it advances every 10 minutes; once
+  // someone touches it, the next advance happens 5 minutes after they stop.
+  async function enterKioskLive(){
+    if(!state.parsed){
+      try{
+        if(!ghSchedules.length) ghSchedules = await fetchGithubSchedules();
+        if(!ghSchedules.length) return;
+        var res = await fetch(ghSchedules[0].url);
+        if(!res.ok) return;
+        var buf = await res.arrayBuffer();
+        var wb = XLSX.read(new Uint8Array(buf), {type:'array'});
+        state.parsed = parseWorkbook(wb, parseOptsForType(currentType));
+        state.fileName = ghSchedules[0].name;
+      }catch(e){ return; }
+    }
+    if(!state.parsed.groups.length) return;
+
+    kioskLive = true;
+    kioskTouchedSinceEntry = false;
+    kioskGroupIdx = 0;
+    state.browseMode = 'group';
+    state.selectedGroup = state.parsed.groups[kioskGroupIdx];
+    var today = WEEKDAY_INDEX[new Date().getDay()];
+    state.viewedDay = resolveTodayViewedDay();
+    state.viewMode = 'day';
+    renderMain();
+    show('screen-main');
+    startTicking();
+    lastInteractionAt = Date.now();
+  }
+
+  function advanceKioskGroup(){
+    if(!state.parsed || !state.parsed.groups.length) return;
+    kioskGroupIdx = (kioskGroupIdx+1) % state.parsed.groups.length;
+    state.selectedGroup = state.parsed.groups[kioskGroupIdx];
+    var today = WEEKDAY_INDEX[new Date().getDay()];
+    state.viewedDay = resolveTodayViewedDay();
+    renderMain();
+    kioskTouchedSinceEntry = false;
+    lastInteractionAt = Date.now();
+  }
+
+  // Single watcher covers both halves: waiting on the upload screen for the
+  // idle timeout to trigger kiosk-live, and — once live — deciding when to
+  // roll on to the next group.
+  setInterval(function(){
+    var idleMs = Date.now() - lastInteractionAt;
+    if(!kioskLive){
+      if(!prefs.demoEnabled) return;
+      if(!$('screen-upload').classList.contains('active')) return;
+      if(idleMs < IDLE_DEMO_MS) return;
+      enterKioskLive();
+      return;
+    }
+    if(!prefs.demoEnabled){ kioskLive = false; return; }
+    var threshold = kioskTouchedSinceEntry ? IDLE_DEMO_TOUCHED_MS : IDLE_DEMO_MS;
+    if(idleMs < threshold) return;
+    advanceKioskGroup();
+  }, 15000);
+
+  document.addEventListener('pointerdown', function(){
+    markInteraction();
+  });
+
+  // ---------- поиск группы по всем расписаниям ----------
+  // По нажатию на лупу скачиваются свежие файлы СПО и ВО (из ВО берутся листы
+  // «Дневники», «Вечер», «Магистры»), и группа ищется сразу во всех четырёх разделах.
+  // Если файл не скачался — берём то, что уже сохранено на устройстве.
+  var searchIndex = {};
+  var searchLoadedAt = 0, searchLoading = false, searchOpen = false;
+  var LATIN_LOOKALIKE = {A:'А',B:'В',C:'С',E:'Е',H:'Н',K:'К',M:'М',O:'О',P:'Р',T:'Т',X:'Х',Y:'У'};
+  function normSearch(q){
+    return (q||'').toString().toUpperCase().replace(/[ABCEHKMOPTXY]/g, function(c){ return LATIN_LOOKALIKE[c]; }).replace(/\s+/g,'');
+  }
+  function setSearchOpen(open){
+    searchOpen = open;
+    document.querySelector('#screen-upload .onboard').classList.toggle('searching', open);
+    $('search-panel').style.display = open ? '' : 'none';
+    $('search-open-btn').classList.toggle('active', open);
+    if(open){
+      $('global-search').value = '';
+      renderSearchResults();
+      loadSearchIndex();
+      setTimeout(function(){ $('global-search').focus(); }, 60);
+    }
+  }
+  async function loadSearchIndex(){
+    if(searchLoading) return;
+    if(Object.keys(searchIndex).length && Date.now()-searchLoadedAt < 10*60*1000){ renderSearchStatus(); return; }
+    searchLoading = true;
+    renderSearchStatus();
+    var books = {};
+    var dirs = ['spo','vo'];
+    await Promise.all(dirs.map(async function(dir){
+      try{
+        var list = await fetchGithubSchedules(dir);
+        if(!list.length) return;
+        var res = await fetch(list[0].url);
+        if(!res.ok) return;
+        var buf = await res.arrayBuffer();
+        books[dir] = { wb: XLSX.read(new Uint8Array(buf), {type:'array'}), meta: list[0] };
+      }catch(e){}
+    }));
+    var next = {};
+    var types = Object.keys(SCHEDULE_TYPES);
+    for(var i=0; i<types.length; i++){
+      var type = types[i], t = SCHEDULE_TYPES[type], entry = null;
+      var book = books[t.ghDir];
+      if(book){
+        try{
+          var parsed = parseWorkbook(book.wb, parseOptsForType(type));
+          entry = { parsed: parsed, fileName: book.meta.name, ghName: book.meta.name, ghDate: book.meta.date||null, from:'github' };
+        }catch(e){ entry = null; }
+      }
+      if(!entry){
+        var saved = await loadStateRawForType(type);
+        if(saved && saved.parsed && saved.parserVersion===PARSER_VERSION){
+          entry = { parsed: saved.parsed, fileName: saved.fileName, ghName: saved.ghName||null, ghDate: saved.ghDate||null, from:'saved' };
+        }
+      }
+      if(entry) next[type] = entry;
+      await new Promise(function(r){ setTimeout(r, 0); });   // даём интерфейсу вздохнуть между тяжёлыми разборами
+    }
+    searchIndex = next;
+    searchLoadedAt = Date.now();
+    searchLoading = false;
+    renderSearchStatus();
+    renderSearchResults();
+  }
+  function renderSearchStatus(){
+    var box = $('search-status');
+    if(searchLoading){
+      box.innerHTML = '<span class="spinner spinner-dark" style="width:14px;height:14px;border-width:2px;"></span><span>Скачиваю расписания СПО, ВО, вечерних и магистров…</span>';
+      return;
+    }
+    var types = Object.keys(SCHEDULE_TYPES);
+    var ok = types.filter(function(k){ return searchIndex[k]; });
+    var missing = types.filter(function(k){ return !searchIndex[k]; }).map(function(k){ return SCHEDULE_TYPES[k].label; });
+    var fromSaved = ok.filter(function(k){ return searchIndex[k].from==='saved'; }).map(function(k){ return SCHEDULE_TYPES[k].label; });
+    var total = 0; ok.forEach(function(k){ total += searchIndex[k].parsed.groups.length; });
+    var msg = ok.length ? ('Готово: '+total+' групп в разделах '+ok.map(function(k){ return SCHEDULE_TYPES[k].label; }).join(', ')+'.') : 'Не удалось загрузить расписания.';
+    if(fromSaved.length) msg += ' Из сохранённой копии: '+fromSaved.join(', ')+'.';
+    if(ok.length && missing.length) msg += ' Нет данных: '+missing.join(', ')+'.';
+    if(!sfti) msg += ' Преподавателей в поиске пока нет: данные с сайта колледжа не загружены.';
+    box.textContent = msg;
+  }
+  function renderSearchResults(){
+    var box = $('search-results');
+    var q = normSearch($('global-search').value);
+    if(!q){
+      box.innerHTML = '<div class="empty-note" style="grid-column:1/-1;">Начните вводить группу или фамилию преподавателя — результаты появятся здесь</div>';
+      return;
+    }
+    var items = [];
+    var teacherItems = [];
+    var order = Object.keys(SCHEDULE_TYPES);
+    searchTeacherNames().forEach(function(n){
+      var full = getTeacherFullName(n) || '';
+      if(normSearch(n).indexOf(q)>=0 || (full && normSearch(full).indexOf(q)>=0)) teacherItems.push({ name:n, full:full });
+    });
+    teacherItems.sort(function(a,b){ return a.name.localeCompare(b.name,'ru'); });
+    order.forEach(function(type){
+      var e = searchIndex[type];
+      if(!e) return;
+      e.parsed.groups.forEach(function(g){
+        if(normSearch(g).indexOf(q)>=0) items.push({ type:type, group:g });
+      });
+    });
+    if(!items.length && !teacherItems.length){
+      box.innerHTML = '<div class="empty-note" style="grid-column:1/-1;">'+(searchLoading ? 'Ищу…' : 'Ничего не нашлось. Проверьте написание.')+'</div>';
+      return;
+    }
+    items.sort(function(a,b){ return a.group.localeCompare(b.group,'ru') || order.indexOf(a.type)-order.indexOf(b.type); });
+    var both = items.length && teacherItems.length;
+    var html = '';
+    if(items.length){
+      if(both) html += '<div class="block-label" style="grid-column:1/-1;padding:4px 4px 0;">Группы</div>';
+      html += items.slice(0,40).map(function(it){
+        return '<button class="group-item" data-type="'+esc(it.type)+'" data-group="'+esc(it.group)+'">'+
+          '<span class="g-name">'+esc(it.group)+'</span>'+
+          '<span class="g-hint">'+esc(SCHEDULE_TYPES[it.type].label)+'</span>'+
+        '</button>';
+      }).join('');
+    }
+    if(teacherItems.length){
+      if(both) html += '<div class="block-label" style="grid-column:1/-1;padding:10px 4px 0;">Преподаватели</div>';
+      html += teacherItems.slice(0,24).map(function(t){
+        return '<button class="group-item" data-teacher="'+esc(t.name)+'">'+
+          '<span class="g-name">'+esc(t.name)+'</span>'+
+          '<span class="g-hint">'+esc(t.full || 'преподаватель')+'</span>'+
+        '</button>';
+      }).join('');
+    }
+    box.innerHTML = html;
+  }
+  var _sftiNamesFor = null, _sftiNames = [];
+  function searchTeacherNames(){
+    if(!sfti || !Array.isArray(sfti.rows)) return [];
+    if(_sftiNamesFor===sfti) return _sftiNames;
+    var seen = {};
+    sfti.rows.forEach(function(r){ var n = normSftiTeacher(r.teacher_name); if(n) seen[n] = true; });
+    _sftiNames = Object.keys(seen);
+    _sftiNamesFor = sfti;
+    return _sftiNames;
+  }
+  function openTeacherFromSearch(name){
+    var type = searchIndex[currentType] ? currentType : Object.keys(searchIndex)[0];
+    if(!type){ $('search-status').textContent = 'Расписания ещё загружаются — нажмите ещё раз через секунду.'; return; }
+    markInteraction();
+    if(type!==currentType){
+      currentType = type; prefs.scheduleType = type; savePrefs(); applyScheduleTypeTheme(); renderTypeSwitchUI();
+    }
+    var entry = searchIndex[type];
+    state.parsed = entry.parsed;
+    state.fileName = entry.fileName;
+    state.ghName = entry.ghName;
+    state.ghDate = entry.ghDate;
+    state.selectedGroup = null;
+    state.browseMode = 'teacher';
+    state.selectedTeacher = name;
+    state.viewMode = 'day';
+    state.viewedDay = resolveTodayViewedDay();
+    setSearchOpen(false);
+    renderMain();
+    show('screen-main');
+    startTicking();
+  }
+  function openFromSearch(type, group){
+    var entry = searchIndex[type];
+    if(!entry || !entry.parsed.byGroup[group]) return;
+    markInteraction();
+    currentType = type;
+    prefs.scheduleType = type;
+    savePrefs();
+    applyScheduleTypeTheme();
+    renderTypeSwitchUI();
+    state.parsed = entry.parsed;
+    state.fileName = entry.fileName;
+    state.savedAt = new Date().toISOString();
+    state.ghName = entry.ghName;
+    state.ghDate = entry.ghDate;
+    state.viewMode = 'day';
+    setSearchOpen(false);
+    selectGroup(group);
+  }
+  $('search-open-btn').addEventListener('click', function(){ markInteraction(); setSearchOpen(!searchOpen); });
+  $('global-search').addEventListener('input', renderSearchResults);
+  $('search-results').addEventListener('click', function(e){
+    var btn = e.target.closest('.group-item');
+    if(!btn) return;
+    if(btn.hasAttribute('data-teacher')) openTeacherFromSearch(btn.getAttribute('data-teacher'));
+    else openFromSearch(btn.getAttribute('data-type'), btn.getAttribute('data-group'));
+  });
+
+  // ---------- boot ----------
+  (async function init(){
+    await loadPrefs();
+    await loadWeekCalendar();
+    await loadSftiFromCache();
+    refreshSfti();
+    await loadAnnouncementsFromCache();
+    refreshAnnouncements();
+    currentType = SCHEDULE_TYPES[prefs.scheduleType] ? prefs.scheduleType : 'spo';
+    applyTheme();
+    applyScheduleTypeTheme();
+    renderTypeSwitchUI();
+    applyDemoSwitch();
+
+    var saved = await loadStateRaw();
+    var isStale = saved && saved.parserVersion !== PARSER_VERSION;
+    var validSaved = (saved && !isStale && saved.parsed && saved.selectedGroup && saved.parsed.byGroup[saved.selectedGroup]) ? saved : null;
+
+    if(isStale){
+      setUploadError('Разбор расписания был улучшен — загрузите файл ещё раз, чтобы обновить данные.', true);
+    }
+    renderQuickContinue(validSaved);
+    show('screen-upload');
+    initGithubSchedules();
+  })();
+
+})();
+</script>
+</body>
+</html>
