@@ -280,6 +280,7 @@
   }
   .group-list{
     display:grid;grid-template-columns:repeat(2,1fr);gap:12px;
+    align-content:start;grid-auto-rows:min-content;
     padding:6px 16px calc(24px + env(safe-area-inset-bottom));
   }
   .group-item{
@@ -290,6 +291,7 @@
     transition:transform .08s ease, background .12s ease;
   }
   .group-item:active{transform:scale(.96);background:var(--surface-container);}
+  .group-item.wide{grid-column:1/-1;min-height:72px;padding:14px 16px;}
   .group-item.selected{border-color:var(--primary);background:var(--primary-container);}
   .group-item .g-name{font-size:16px;font-weight:700;letter-spacing:-.1px;color:var(--text);}
   .group-item .g-hint{font-size:11px;color:var(--text-tertiary);}
@@ -1778,10 +1780,11 @@
       box.innerHTML = '<div class="empty-note">Ничего не нашлось. Проверьте написание.</div>';
       return;
     }
-    box.innerHTML = list.map(function(g){
+    box.innerHTML = list.map(function(g, i){
       var count = countLessonsForGroup(g);
       var selected = g===state.selectedGroup;
-      return '<button class="group-item'+(selected?' selected':'')+'" data-group="'+esc(g)+'">'+
+      var wide = (list.length%2===1 && i===list.length-1) ? ' wide' : '';
+      return '<button class="group-item'+(selected?' selected':'')+wide+'" data-group="'+esc(g)+'">'+
         '<span class="g-name">'+esc(g)+'</span>'+
         '<span class="g-hint">'+count+' '+pluralPairs(count)+'/нед.</span>'+
       '</button>';
@@ -2053,10 +2056,11 @@
       box.innerHTML = '<div class="empty-note">Ничего не нашлось. Проверьте написание.</div>';
       return;
     }
-    box.innerHTML = list.map(function(name){
+    box.innerHTML = list.map(function(name, i){
       var count = countLessonsForTeacher(name);
       var selected = name===state.selectedTeacher;
-      return '<button class="group-item'+(selected?' selected':'')+'" data-teacher="'+esc(name)+'">'+
+      var wide = (list.length%2===1 && i===list.length-1) ? ' wide' : '';
+      return '<button class="group-item'+(selected?' selected':'')+wide+'" data-teacher="'+esc(name)+'">'+
         '<span class="g-name">'+esc(name)+'</span>'+
         '<span class="g-hint">'+count+' '+pluralPairs(count)+'/нед.</span>'+
       '</button>';
@@ -3015,8 +3019,10 @@
     var html = '';
     if(items.length){
       if(both) html += '<div class="block-label" style="grid-column:1/-1;padding:4px 4px 0;">Группы</div>';
-      html += items.slice(0,40).map(function(it){
-        return '<button class="group-item" data-type="'+esc(it.type)+'" data-group="'+esc(it.group)+'">'+
+      var shownGroups = items.slice(0,40);
+      html += shownGroups.map(function(it, i){
+        var wide = (shownGroups.length%2===1 && i===shownGroups.length-1) ? ' wide' : '';
+        return '<button class="group-item'+wide+'" data-type="'+esc(it.type)+'" data-group="'+esc(it.group)+'">'+
           '<span class="g-name">'+esc(it.group)+'</span>'+
           '<span class="g-hint">'+esc(SCHEDULE_TYPES[it.type].label)+'</span>'+
         '</button>';
@@ -3024,8 +3030,10 @@
     }
     if(teacherItems.length){
       if(both) html += '<div class="block-label" style="grid-column:1/-1;padding:10px 4px 0;">Преподаватели</div>';
-      html += teacherItems.slice(0,24).map(function(t){
-        return '<button class="group-item" data-teacher="'+esc(t.name)+'">'+
+      var shownTeachers = teacherItems.slice(0,24);
+      html += shownTeachers.map(function(t, i){
+        var wide = (shownTeachers.length%2===1 && i===shownTeachers.length-1) ? ' wide' : '';
+        return '<button class="group-item'+wide+'" data-teacher="'+esc(t.name)+'">'+
           '<span class="g-name">'+esc(t.name)+'</span>'+
           '<span class="g-hint">'+esc(t.full || 'преподаватель')+'</span>'+
         '</button>';
