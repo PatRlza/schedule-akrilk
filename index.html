@@ -1184,6 +1184,8 @@
   var tickTimer=null;
   var BREAK_MIN_GAP = 15;   // minutes — shorter gaps are just passing time between pairs
   var BREAK_MAX_GAP = 100000; // effectively no cap — any free stretch gets its own tile now
+  var LUNCH_MAX_MIN = 120;   // свободный промежуток длиннее 2 часов — это уже «Окно», а не обед
+  var WINDOW_MIN_MIN = 75;   // от 75 минут вне обеда — «Окно», короче — «Перерыв»
   var LUNCH_WINDOW = [630, 930]; // 10:30–15:30, gaps overlapping this get labeled "Обед"
 
   // ---------- persistence ----------
@@ -1834,6 +1836,33 @@
     Object.keys(starts).map(Number).sort(function(a,b){ return a-b; }).forEach(function(m,i){ map[m]=i+1; });
     return map;
   }
+  // Номер пары определяем по звонкам колледжа (время начала -> номер пары), а не по порядку
+  // времён в листе: у вечерних групп и магистров первая пара дня — 6-я (17:25), а не «первая».
+  var BUILTIN_PAIR_STARTS = {510:1, 615:2, 720:3, 770:3, 825:4, 870:4, 970:5, 1045:6, 1140:7, 1235:8};
+  function pairNumberForStart(startMin){
+    if(startMin==null) return null;
+    if(sfti && Array.isArray(sfti.bells)){
+      if(!sfti._pairMap){
+        var counts = {};
+        sfti.bells.forEach(function(b){
+          var ts = (b.time_start||'').split(':');
+          var sm = (+ts[0])*60 + (+ts[1]);
+          if(!(sm>=360) || !b.pair_number) return;          // служебные записи вида 00:00:04 пропускаем
+          counts[sm] = counts[sm] || {};
+          counts[sm][b.pair_number] = (counts[sm][b.pair_number]||0) + 1;
+        });
+        var map = {};
+        Object.keys(counts).forEach(function(sm){
+          var best = null;
+          Object.keys(counts[sm]).forEach(function(pn){ if(best===null || counts[sm][pn]>counts[sm][best]) best = pn; });
+          map[sm] = +best;
+        });
+        sfti._pairMap = map;
+      }
+      if(sfti._pairMap[startMin]) return sfti._pairMap[startMin];
+    }
+    return BUILTIN_PAIR_STARTS[startMin] || null;
+  }
   var PERIOD_ORDINALS = ['первой','второй','третьей','четвёртой','пятой','шестой','седьмой','восьмой','девятой','десятой'];
 
   function sundayInfoHtml(){
@@ -1861,9 +1890,10 @@
       sub = '';
     }else{
       var first = monLessons[0];
-      var num = getPeriodNumberMap('ПОНЕДЕЛЬНИК')[first.startMin] || 1;
-      var word = PERIOD_ORDINALS[num-1];
-      main = when+' вам к '+num+'-й'+(word? ' ('+word+')' : '')+' паре';
+      var num = pairNumberForStart(first.startMin);
+      var word = num ? PERIOD_ORDINALS[num-1] : null;
+      if(num) main = when+' вам к '+num+'-й'+(word? ' ('+word+')' : '')+' паре';
+      else main = when+' пары начинаются в '+first.startLabel;
       sub = when+' — '+monLessons.length+' '+pluralPairs(monLessons.length)+', начало в '+first.startLabel+'.';
     }
     return '<div class="sunday-info-card">'+
@@ -2121,20 +2151,35 @@
     var timed = real.filter(function(l){ return l.startMin!=null; })
       .slice().sort(function(a,b){ return a.startMin-b.startMin; });
     var untimed = real.filter(function(l){ return l.startMin==null; });
+    var ghostIv = ghosts.filter(function(g){ return g.startMin!=null && g.endMin!=null; })
+      .map(function(g){ return [g.startMin, g.endMin]; })
+      .sort(function(a,b){ return a[0]-b[0]; });
+    function subtractIntervals(a, b, ivs){
+      var res = [], cur = a;
+      ivs.forEach(function(iv){
+        if(iv[1]<=cur || iv[0]>=b) return;
+        if(iv[0]>cur) res.push([cur, iv[0]]);
+        cur = Math.max(cur, iv[1]);
+      });
+      if(cur<b) res.push([cur, b]);
+      return res;
+    }
     var items = [];
     for(var i=0;i<timed.length;i++){
       items.push({type:'lesson', l:timed[i]});
       if(i<timed.length-1){
-        var gap = timed[i+1].startMin - timed[i].endMin;
-        if(gap>=BREAK_MIN_GAP){
-          var mid = (timed[i].endMin+timed[i+1].startMin)/2;
-          var isLunch = mid>=LUNCH_WINDOW[0] && mid<=LUNCH_WINDOW[1];
+        // Свободное время между парами. Время, занятое парой другой чётности (серой плиткой),
+        // вычитаем: иначе окно «накрывало» бы серую пару и называлось «Обедом» на 2,5 часа.
+        subtractIntervals(timed[i].endMin, timed[i+1].startMin, ghostIv).forEach(function(seg){
+          var dur = seg[1]-seg[0];
+          if(dur<BREAK_MIN_GAP) return;
+          var mid = (seg[0]+seg[1])/2;
+          var isLunch = mid>=LUNCH_WINDOW[0] && mid<=LUNCH_WINDOW[1] && dur<=LUNCH_MAX_MIN;
           items.push({
-            type:'break',
-            startMin:timed[i].endMin, endMin:timed[i+1].startMin,
-            label:isLunch?'Обед':'Перерыв'
+            type:'break', startMin:seg[0], endMin:seg[1],
+            label: isLunch ? 'Обед' : (dur>=WINDOW_MIN_MIN ? 'Окно' : 'Перерыв')
           });
-        }
+        });
       }
     }
     untimed.forEach(function(l){ items.push({type:'lesson', l:l}); });
@@ -2353,7 +2398,12 @@
       } else if(status==='done'){
         lchip = '<span class="status-chip status-done">Пройдено</span>';
       } else if(status==='ghost'){
-        lchip = '<span class="status-chip status-ghost">'+(l.parity==='even'?'на чётной неделе':'на нечётной неделе')+'</span>';
+        var ghostTxt = l.parity==='even' ? 'на чётной неделе' : 'на нечётной неделе';
+        if(relation==='today' && l.startMin!=null && l.endMin!=null){
+          var ngm = nowMinutes();
+          if(ngm>=l.startMin && ngm<l.endMin) ghostTxt = 'сейчас окно ('+ghostTxt+')';
+        }
+        lchip = '<span class="status-chip status-ghost">'+ghostTxt+'</span>';
       }
       var metaParts = [];
       if(l.group) metaParts.push(esc(l.group));
