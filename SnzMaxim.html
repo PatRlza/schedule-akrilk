@@ -865,6 +865,8 @@
   .ann-tag{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.85);}
   .ann-date{font-size:11px;color:rgba(255,255,255,.75);}
   .ann-card h3{margin:0 0 6px;font-size:17px;line-height:1.25;}
+  .ann-btn{display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:9px 18px;border-radius:100px;background:#fff;color:#2B2A8F;font-size:13px;font-weight:700;text-decoration:none;}
+  .ann-btn:active{opacity:.8;}
   .ann-card p{margin:0;font-size:13.5px;line-height:1.5;white-space:pre-line;color:rgba(255,255,255,.95);}
 
   a{color:inherit;}
@@ -1367,6 +1369,15 @@
     if(/^[a-z][a-z0-9+.-]*:/i.test(v) || v.indexOf('//')===0) return '';   // только https или файл из репозитория
     return encodeURI(v.replace(/^\.?\//,'')).replace(/['"()\\]/g,'');
   }
+  // Кнопка-ссылка в объявлении: поля link (адрес) и linkText (подпись, по умолчанию «Перейти»).
+  // Разрешены только https-ссылки и пути внутри сайта; открывается в новой вкладке.
+  function annLinkUrl(v){
+    if(!v || typeof v!=='string') return '';
+    v = v.trim();
+    if(/^https:\/\//i.test(v)) return v;
+    if(/^[a-z][a-z0-9+.-]*:/i.test(v) || v.indexOf('//')===0) return '';
+    return v;
+  }
   function announcementsHtml(){
     if(!announcements.length) return '';
     return '<div class="ann-wrap"><div class="ann-title">Объявления</div>'+announcements.map(function(a){
@@ -1375,6 +1386,7 @@
         '<div class="ann-top"><span class="ann-tag">'+esc(a.tag||'Объявление')+'</span>'+(a.date? '<span class="ann-date">'+esc(a.date)+'</span>' : '')+'</div>'+
         (a.title? '<h3>'+esc(a.title)+'</h3>' : '')+
         (a.text? '<p>'+esc(a.text)+'</p>' : '')+
+        (annLinkUrl(a.link||a.url)? '<a class="ann-btn" href="'+esc(annLinkUrl(a.link||a.url))+'" target="_blank" rel="noopener noreferrer">'+esc(a.linkText||a.button||'Перейти')+' <span aria-hidden="true">→</span></a>' : '')+
       '</article>';
     }).join('')+'</div>';
   }
@@ -1899,7 +1911,7 @@
     setUploadError('');
     setGhBusy(true);
     try{
-      var res = await fetch(f.url);
+      var res = await fetchT(f.url, 30000);
       if(!res.ok) throw new Error('fetch_failed');
       var buf = await res.arrayBuffer();
       loadWorkbookAndProceed(buf, f.name, f);
@@ -1909,6 +1921,14 @@
     setGhBusy(false);
   }
 
+  // fetch с таймаутом: если GitHub «завис», не ждём бесконечно, а показываем ошибку
+  function fetchT(url, ms, opts){
+    var ctrl = (typeof AbortController!=='undefined') ? new AbortController() : null;
+    var t = ctrl ? setTimeout(function(){ ctrl.abort(); }, ms) : null;
+    opts = Object.assign({}, opts||{});
+    if(ctrl) opts.signal = ctrl.signal;
+    return fetch(url, opts).then(function(r){ if(t) clearTimeout(t); return r; }, function(e){ if(t) clearTimeout(t); throw e; });
+  }
   var ghListCache = {};   // папка -> {t, data}: СПО/ВО/Вечер/Маг делят одни и те же запросы
   async function fetchGithubSchedules(dirOverride){
     var dir = dirOverride || SCHEDULE_TYPES[currentType].ghDir;
@@ -1920,14 +1940,14 @@
   }
   async function fetchGithubSchedulesUncached(dir){
     var apiUrl = 'https://api.github.com/repos/'+GITHUB_OWNER+'/'+GITHUB_REPO+'/contents/'+dir+'/';
-    var res = await fetch(apiUrl);
+    var res = await fetchT(apiUrl, 12000);
     if(!res.ok) throw new Error('list_failed');
     var items = await res.json();
     var files = items.filter(function(it){ return it.type==='file' && /\.(xlsx|xls)$/i.test(it.name); });
     var withDates = await Promise.all(files.map(async function(f){
       var date = null;
       try{
-        var cRes = await fetch('https://api.github.com/repos/'+GITHUB_OWNER+'/'+GITHUB_REPO+'/commits?path='+encodeURIComponent(f.path)+'&per_page=1');
+        var cRes = await fetchT('https://api.github.com/repos/'+GITHUB_OWNER+'/'+GITHUB_REPO+'/commits?path='+encodeURIComponent(f.path)+'&per_page=1', 8000);
         if(cRes.ok){
           var commits = await cRes.json();
           if(commits && commits[0] && commits[0].commit && commits[0].commit.committer) date = commits[0].commit.committer.date;
@@ -3933,7 +3953,7 @@
       try{
         var list = await fetchGithubSchedules(dir);
         if(!list.length) return;
-        var res = await fetch(list[0].url);
+        var res = await fetchT(list[0].url, 30000);
         if(!res.ok) return;
         var buf = await res.arrayBuffer();
         books[dir] = { wb: XLSX.read(new Uint8Array(buf), {type:'array'}), meta: list[0] };
