@@ -1384,9 +1384,9 @@
   // Bump this whenever the parsing logic changes — it guards against silently
   // showing a schedule that was parsed by an older, buggier version of this app.
   var PARSER_VERSION = 5;
-  var GITHUB_OWNER = 'PatRlza';
+  var GITHUB_OWNER = 'SnzMaxim';
   var GITHUB_REPO = 'schedule-akrilk';
-  var PAGE_URL = 'https://PatRlza.github.io/schedule-akrilk/SnzMaxim.html';
+  var PAGE_URL = 'https://snzmaxim.github.io/schedule-akrilk/';
   try {
     var hostParts = (window.location.hostname || '').split('.');
     if(hostParts.length >= 3 && hostParts[1] === 'github' && hostParts[2] === 'io'){
@@ -3732,15 +3732,15 @@
   $('week-scrim').addEventListener('click', function(){ closeGenericSheet('week-sheet','week-scrim'); });
 
   // ---------- theme ----------
-  function applyTheme(){
-    document.documentElement.setAttribute('data-theme', prefs.theme==='dark' ? 'dark' : 'light');
-    $('theme-switch').setAttribute('aria-checked', prefs.theme==='dark' ? 'true':'false');
+  function getResolvedTheme(){
+    if(prefs.theme==='system') return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    return prefs.theme==='dark' ? 'dark' : 'light';
   }
-  $('theme-switch').addEventListener('click', function(){
-    prefs.theme = prefs.theme==='dark' ? 'light' : 'dark';
-    applyTheme();
-    savePrefs();
-  });
+  function applyTheme(){
+    document.documentElement.setAttribute('data-theme', getResolvedTheme());
+    var sel = $('theme-mode-select'); if(sel) sel.value = prefs.theme;
+  }
+  $('theme-mode-select').addEventListener('change', function(e){ prefs.theme = e.target.value; applyTheme(); savePrefs(); });
 
   // ---------- schedule type (СПО / ВО) ----------
   function applyScheduleTypeTheme(){
