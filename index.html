@@ -6,9 +6,9 @@
 <title>Расписание</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%234B4ADB'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round' transform='translate(11 11) scale(1.75)'%3E%3Crect x='3' y='4' width='18' height='18' rx='3'/%3E%3Cpath d='M3 9h18M8 4v5'/%3E%3Cpath d='M7.5 14h2M7.5 17h2M11.5 14h2M11.5 17h2M15.5 14h2M15.5 17h2'/%3E%3C/g%3E%3C/svg%3E">
 <meta name="theme-color" content="#4B4ADB">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Mono:wght@500&display=swap">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="fonts/fonts.css">
+<script src="lib/xlsx.full.min.js"></script>
+<script src="lib/qrcode.js"></script>
 <script src="teachers-data.js"></script>
 <style>
   :root{
@@ -675,6 +675,26 @@
   .ann-btn:active{opacity:.8;}
   .ann-card p{margin:0;font-size:13.5px;line-height:1.5;white-space:pre-line;color:rgba(255,255,255,.95);}
 
+  /* ---------- переключатель из трёх положений, настройки только для приложения Android, плашка сверху ---------- */
+  .sheet{max-height:92vh;overflow-y:auto;}
+  .seg{display:flex;background:var(--surface-container);border-radius:100px;padding:3px;gap:3px;}
+  .seg button{flex:1 1 0;min-width:0;border:none;background:transparent;border-radius:100px;padding:9px 6px;font-size:13px;font-weight:600;color:var(--text-secondary);white-space:nowrap;}
+  .seg button.active{background:var(--primary);color:var(--on-primary);}
+  .sheet-block{padding:6px 4px 10px;}
+  .sheet-block-title{font-size:12px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--text-tertiary);padding:6px 0 8px;}
+  .sheet-note{font-size:12px;color:var(--text-secondary);line-height:1.5;padding:4px 0 8px;}
+  .sheet-mini-btn{border:none;border-radius:100px;background:var(--surface-container-high);color:var(--text);font-size:12px;font-weight:600;padding:8px 14px;}
+  .android-only{display:none;}
+  html.is-android-app .android-only{display:block;}
+  #net-banner{
+    position:fixed;left:50%;top:0;z-index:40;transform:translate(-50%,-160%);opacity:0;pointer-events:none;
+    margin-top:calc(10px + env(safe-area-inset-top));display:flex;align-items:center;gap:10px;
+    max-width:min(92vw,440px);background:var(--surface);color:var(--text);border-radius:100px;padding:11px 18px;
+    box-shadow:0 8px 28px rgba(20,17,50,.22);font-size:14px;font-weight:600;line-height:1.3;
+    transition:transform .55s cubic-bezier(.2,.8,.2,1), opacity .4s ease;
+  }
+  #net-banner.show{transform:translate(-50%,0);opacity:1;}
+  #net-banner svg{width:18px;height:18px;color:var(--secondary);flex-shrink:0;}
   a{color:inherit;}
 </style>
 </head>
@@ -835,6 +855,12 @@
 
 </div>
 
+<!-- Плашка сверху: «Работает офлайн» и подобные сообщения -->
+<div id="net-banner" role="status" aria-live="polite">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M8.5 16.4a5 5 0 0 1 7 0"/><path d="M5 12.9a10 10 0 0 1 5.2-2.7"/><path d="M19 12.9a10 10 0 0 0-2.4-1.7"/><path d="M2 8.8a15 15 0 0 1 4.2-2.6"/><path d="M22 8.8a15 15 0 0 0-8.6-3.7"/><path d="m2 2 20 20"/></svg>
+  <span id="net-banner-text"></span>
+</div>
+
 <!-- Lesson-tile expand scrim -->
 <div class="lesson-scrim" id="lesson-scrim"></div>
 
@@ -852,12 +878,13 @@
     Загрузить другой файл
   </button>
 
-  <div class="sheet-toggle-row">
-    <div class="sheet-toggle-label">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-      Тёмная тема
+  <div class="sheet-block">
+    <div class="sheet-block-title">Тема оформления</div>
+    <div class="seg" id="theme-seg" role="radiogroup" aria-label="Тема оформления">
+      <button type="button" data-theme-mode="system">Системная</button>
+      <button type="button" data-theme-mode="light">Светлая</button>
+      <button type="button" data-theme-mode="dark">Тёмная</button>
     </div>
-    <button class="switch" id="theme-switch" role="switch" aria-checked="false"><span class="switch-knob"></span></button>
   </div>
 
   <div class="sheet-toggle-row is-disabled">
@@ -867,6 +894,39 @@
       <span class="sheet-toggle-soon">скоро</span>
     </div>
     <button class="switch" id="demo-switch" role="switch" aria-checked="false" aria-disabled="true"><span class="switch-knob"></span></button>
+  </div>
+
+  <div class="android-only" id="android-settings">
+    <div class="sheet-block">
+      <div class="sheet-block-title">Уведомления о парах</div>
+      <div class="sheet-toggle-row" style="padding:4px 0 10px;">
+        <div class="sheet-toggle-label">Напоминать о парах</div>
+        <button class="switch" id="remind-switch" role="switch" aria-checked="false"><span class="switch-knob"></span></button>
+      </div>
+      <div id="remind-options" style="display:none;">
+        <div class="seg" id="remind-mode-seg" style="margin-bottom:8px;">
+          <button type="button" data-remind-mode="first">Перед первой парой</button>
+          <button type="button" data-remind-mode="all">Перед каждой парой</button>
+        </div>
+        <div class="seg" id="remind-min-seg">
+          <button type="button" data-remind-min="10">10 мин</button>
+          <button type="button" data-remind-min="20">20 мин</button>
+          <button type="button" data-remind-min="30">30 мин</button>
+          <button type="button" data-remind-min="60">1 час</button>
+        </div>
+        <div class="sheet-note" id="remind-status"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+          <button type="button" class="sheet-mini-btn" id="remind-perm-btn" style="display:none;">Разрешить уведомления</button>
+          <button type="button" class="sheet-mini-btn" id="remind-exact-btn" style="display:none;">Точное время</button>
+          <button type="button" class="sheet-mini-btn" id="remind-test-btn">Проверить уведомление</button>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-block">
+      <div class="sheet-block-title">Данные на телефоне</div>
+      <div class="sheet-note" id="data-status">—</div>
+      <button type="button" class="sheet-mini-btn" id="data-sync-btn">Обновить сейчас</button>
+    </div>
   </div>
 
   <button class="sheet-row" id="sheet-share">
@@ -924,7 +984,7 @@
   // Мини-иконка приложения (вместо «Вс» на вкладке информации)
   var APP_ICON_HTML = '<span class="app-ico" aria-label="Информация"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 4v5"/><path d="M7.5 14h2M7.5 17h2M11.5 14h2M11.5 17h2M15.5 14h2M15.5 17h2"/></svg></span>';
   // Кнопки «Будильник» и «Календарь» пока скрыты (код оставлен — вернутся в Android-приложении).
-  var SHOW_LESSON_ACTION_BUTTONS = false;
+  var SHOW_LESSON_ACTION_BUTTONS = false;   // в браузере кнопки скрыты; в приложении Android используются настоящие (см. nativeActionButtonsHtml)
   var WEEKDAY_INDEX = {1:'ПОНЕДЕЛЬНИК',2:'ВТОРНИК',3:'СРЕДА',4:'ЧЕТВЕРГ',5:'ПЯТНИЦА',6:'СУББОТА',0:'ВОСКРЕСЕНЬЕ'};
 
   // ---------- week parity (some slots alternate subjects week to week) ----------
@@ -1194,7 +1254,19 @@
   }
 
   var state = { parsed:null, selectedGroup:null, viewedDay:null, savedAt:null, fileName:null, viewMode:'day', browseMode:'group', selectedTeacher:null, ghName:null, ghDate:null };
-  var prefs = { theme:'light', demoEnabled:false, scheduleType:'spo' };
+  // ---------- режим «внутри приложения Android» ----------
+  // В APK страница открывается в WebView, и приложение подкладывает объект AndroidBridge
+  // (будильник, календарь, уведомления, хранение файлов). В браузере его нет — все
+  // настройки и кнопки, которые от него зависят, там скрыты.
+  var ANDROID = (typeof window.AndroidBridge !== 'undefined' && window.AndroidBridge) ? window.AndroidBridge : null;
+  if(ANDROID) document.documentElement.classList.add('is-android-app');
+  function bridgeCall(name){
+    try{
+      if(!ANDROID) return undefined;
+      return ANDROID[name].apply(ANDROID, Array.prototype.slice.call(arguments, 1));
+    }catch(e){ return undefined; }
+  }
+  var prefs = { theme:'system', demoEnabled:false, scheduleType:'spo', remind:false, remindMode:'first', remindMin:20 };
   var tickTimer=null;
   var BREAK_MIN_GAP = 15;   // minutes — shorter gaps are just passing time between pairs
   var BREAK_MAX_GAP = 100000; // effectively no cap — any free stretch gets its own tile now
@@ -1256,7 +1328,10 @@
     if(!raw) return;
     try{
       var p = JSON.parse(raw);
-      if(p.theme==='dark' || p.theme==='light') prefs.theme = p.theme;
+      if(p.theme==='dark' || p.theme==='light' || p.theme==='system') prefs.theme = p.theme;
+      prefs.remind = !!p.remind;
+      if(p.remindMode==='all' || p.remindMode==='first') prefs.remindMode = p.remindMode;
+      if([10,20,30,60].indexOf(+p.remindMin)>=0) prefs.remindMin = +p.remindMin;
       prefs.demoEnabled = !!p.demoEnabled;
       if(SCHEDULE_TYPES[p.scheduleType]) prefs.scheduleType = p.scheduleType;
     }catch(e){}
@@ -1654,6 +1729,13 @@
     return result;
   }
   async function fetchGithubSchedulesUncached(dir){
+    if(ANDROID){
+      // В приложении файлы лежат на телефоне: список берём из локального манифеста (его ведёт приложение)
+      var lr = await fetchT('data/schedules.json?ts='+Date.now(), 8000, { cache:'no-store' });
+      if(!lr.ok) throw new Error('list_failed');
+      var man = await lr.json();
+      return (man[dir]||[]).map(function(f){ return { name:f.name, url:f.url, date:f.date||null }; });
+    }
     var apiUrl = 'https://api.github.com/repos/'+GITHUB_OWNER+'/'+GITHUB_REPO+'/contents/'+dir+'/';
     var res = await fetchT(apiUrl, 12000);
     if(!res.ok) throw new Error('list_failed');
@@ -1741,6 +1823,18 @@
   // ---------- quick continue (remembered group) ----------
   var lastQuickContinueSaved = null; // whatever renderQuickContinue is currently showing, for the freshness check below
 
+  function openSaved(saved){
+    state.parsed = saved.parsed;
+    state.selectedGroup = saved.selectedGroup;
+    state.savedAt = saved.savedAt;
+    state.fileName = saved.fileName;
+    state.ghName = saved.ghName || null;
+    state.ghDate = saved.ghDate || null;
+    state.viewedDay = resolveTodayViewedDay();
+    renderMain();
+    show('screen-main');
+    startTicking();
+  }
   function renderQuickContinue(saved){
     lastQuickContinueSaved = saved;
     if(saved && saved.parsed && saved.selectedGroup && saved.parsed.byGroup[saved.selectedGroup]){
@@ -1749,17 +1843,7 @@
       $('quick-continue').style.display='';
       $('qc-btn').onclick = function(){
         markInteraction();
-        state.parsed = saved.parsed;
-        state.selectedGroup = saved.selectedGroup;
-        state.savedAt = saved.savedAt;
-        state.fileName = saved.fileName;
-        state.ghName = saved.ghName || null;
-        state.ghDate = saved.ghDate || null;
-        var today = WEEKDAY_INDEX[new Date().getDay()];
-        state.viewedDay = resolveTodayViewedDay();
-        renderMain();
-        show('screen-main');
-        startTicking();
+        openSaved(saved);
       };
     } else {
       $('quick-continue').style.display='none';
@@ -2352,7 +2436,37 @@
     });
     return parts.length ? '<div class="lesson-room-info">'+parts.join('')+'</div>' : '';
   }
+  // Номер дня недели в формате Calendar.DAY_OF_WEEK (воскресенье = 1 … суббота = 7) — нужен будильнику Android
+  var CAL_DAY_NUM = {'ВОСКРЕСЕНЬЕ':1,'ПОНЕДЕЛЬНИК':2,'ВТОРНИК':3,'СРЕДА':4,'ЧЕТВЕРГ':5,'ПЯТНИЦА':6,'СУББОТА':7};
+  // Ближайшее начало пары (с учётом чётности): от него строится событие в календаре
+  function lessonStartDate(day, l){
+    var d = nextDateForWeekday(day);
+    function atStart(dt){ return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 0, l.startMin, 0, 0); }
+    if(atStart(d).getTime() <= Date.now()) d.setDate(d.getDate()+7);
+    if(l.parity && getWeekInfoForDate(d).parity!==l.parity) d.setDate(d.getDate()+7);
+    return atStart(d);
+  }
+  function nativeActionButtonsHtml(day, l){
+    if(l.startMin==null || l.endMin==null) return '';
+    var title = l.subject || 'Пара';
+    var alarmMin = l.startMin - 20;
+    var start = lessonStartDate(day, l);
+    var fullName = l.teacher ? getTeacherFullName(l.teacher) : null;
+    var desc = [fullName || l.teacher || '', l.group || ''].filter(Boolean).join('\n');
+    var rrule = l.parity ? 'FREQ=WEEKLY;INTERVAL=2' : 'FREQ=WEEKLY';
+    return '<div class="lesson-actions-btns">'+
+      (alarmMin>=0 ? '<button type="button" class="lesson-action-btn" data-act="alarm" data-h="'+Math.floor(alarmMin/60)+'" data-m="'+(alarmMin%60)+'" data-day="'+(CAL_DAY_NUM[day]||0)+'" data-label="'+esc(title)+'">'+ALARM_ICON+'Будильник</button>' : '')+
+      '<button type="button" class="lesson-action-btn" data-act="cal" data-start="'+start.getTime()+'" data-end="'+(start.getTime()+(l.endMin-l.startMin)*60000)+'" data-title="'+esc(title)+'" data-loc="'+esc(l.room||'')+'" data-desc="'+esc(desc)+'" data-rrule="'+rrule+'">'+CAL_ICON+'В календарь</button>'+
+    '</div>';
+  }
   function lessonActionsHtml(day, l){
+    if(ANDROID){
+      var fn = l.teacher ? getTeacherFullName(l.teacher) : null;
+      var rh = roomInfoHtml(l.room);
+      var nb = nativeActionButtonsHtml(day, l);
+      if(!fn && !rh && !nb) return '';
+      return '<div class="lesson-actions">'+(fn? '<div class="lesson-teacher-full">'+esc(fn)+'</div>' : '')+rh+nb+'</div>';
+    }
     var isAndroid = /Android/i.test(navigator.userAgent);
     var alarmHref = (SHOW_LESSON_ACTION_BUTTONS && isAndroid) ? buildAlarmHref(l) : null;
     var calHref = SHOW_LESSON_ACTION_BUTTONS ? buildCalendarHref(day, l) : null;
@@ -2582,6 +2696,7 @@
     renderWeekBadge();
     renderDayTabs();
     renderContentDispatch();
+    syncReminders();
   }
 
   function startTicking(){
@@ -2613,6 +2728,16 @@
     if(actionBtn){
       e.stopPropagation();
       markInteraction();
+      var act = actionBtn.getAttribute('data-act');
+      if(act==='alarm'){
+        bridgeCall('setAlarm', +actionBtn.getAttribute('data-h'), +actionBtn.getAttribute('data-m'), actionBtn.getAttribute('data-label')||'Пара', +actionBtn.getAttribute('data-day'));
+        return;
+      }
+      if(act==='cal'){
+        bridgeCall('addToCalendar', actionBtn.getAttribute('data-title')||'Пара', actionBtn.getAttribute('data-start'), actionBtn.getAttribute('data-end'),
+          actionBtn.getAttribute('data-loc')||'', actionBtn.getAttribute('data-desc')||'', actionBtn.getAttribute('data-rrule')||'');
+        return;
+      }
       var alarmHref = actionBtn.getAttribute('data-alarm-href');
       var calHref = actionBtn.getAttribute('data-cal-href');
       if(alarmHref){
@@ -2641,6 +2766,161 @@
     collapseAllLessonTiles();
   });
 
+  // ---------- плашка сверху («Работает офлайн») ----------
+  var bannerTimer = null;
+  function showBanner(text, ms){
+    var b = $('net-banner');
+    $('net-banner-text').textContent = text;
+    b.classList.add('show');
+    clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(function(){ b.classList.remove('show'); }, ms || 3600);
+  }
+  window.addEventListener('offline', function(){ if(ANDROID) showBanner('Нет сети — работает офлайн'); });
+
+  // ---------- напоминания о парах (только приложение Android) ----------
+  // Список считается здесь (чётность, расписание группы), а ставит напоминания система Android.
+  var REMIND_DAYS = 14, REMIND_MAX = 120;
+  function buildReminderList(){
+    if(!ANDROID || !state.parsed || !state.selectedGroup) return null;     // null = ничего не менять
+    var byDay = state.parsed.byGroup[state.selectedGroup];
+    if(!byDay) return null;
+    var now = Date.now(), list = [];
+    for(var i=0; i<REMIND_DAYS; i++){
+      var date = new Date(); date.setHours(12,0,0,0); date.setDate(date.getDate()+i);
+      var dayName = WEEKDAY_INDEX[date.getDay()];
+      var parity = getWeekInfoForDate(date).parity;
+      var lessons = annotateParityFor(byDay[dayName]||[], parity)
+        .filter(function(l){ return !l.isGhost && l.startMin!=null; })
+        .sort(function(a,b){ return a.startMin-b.startMin; });
+      var chosen = prefs.remindMode==='all' ? lessons : lessons.slice(0,1);
+      chosen.forEach(function(l){
+        var start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, l.startMin, 0, 0).getTime();
+        var at = start - prefs.remindMin*60000;
+        if(at<=now) return;
+        list.push({
+          at: at,
+          title: (prefs.remindMode==='first' ? 'Первая пара в ' : 'Пара в ')+minToLabel(l.startMin),
+          text: (l.subject||'Занятие')+(l.room? ' · '+l.room : '')
+        });
+      });
+    }
+    list.sort(function(a,b){ return a.at-b.at; });
+    return list.slice(0, REMIND_MAX);
+  }
+  var remindTimer = null;
+  function syncReminders(){
+    if(!ANDROID) return;
+    clearTimeout(remindTimer);
+    remindTimer = setTimeout(function(){
+      if(!prefs.remind){ bridgeCall('syncReminders', '[]'); return; }
+      var list = buildReminderList();
+      if(list===null) return;
+      bridgeCall('syncReminders', JSON.stringify(list));
+    }, 400);
+  }
+
+  // ---------- настройки, видимые только в приложении ----------
+  function setSegActive(id, attr, value){
+    document.querySelectorAll('#'+id+' button').forEach(function(b){ b.classList.toggle('active', b.getAttribute(attr)===String(value)); });
+  }
+  function updateRemindUI(){
+    $('remind-switch').setAttribute('aria-checked', prefs.remind ? 'true' : 'false');
+    $('remind-options').style.display = prefs.remind ? '' : 'none';
+    setSegActive('remind-mode-seg', 'data-remind-mode', prefs.remindMode);
+    setSegActive('remind-min-seg', 'data-remind-min', prefs.remindMin);
+  }
+  function refreshAndroidStatus(){
+    if(!ANDROID) return;
+    var st = null;
+    try{ st = JSON.parse(bridgeCall('getStatus')); }catch(e){}
+    if(!st) return;
+    var parts = [];
+    if(prefs.remind){
+      parts.push(st.notifications ? 'Уведомления разрешены.' : 'Уведомления не разрешены — нажмите «Разрешить уведомления».');
+      if(st.notifications && !st.exactAlarms) parts.push('Без разрешения на точное время напоминания могут приходить с задержкой в несколько минут.');
+      parts.push('Запланировано напоминаний: '+(st.scheduled||0)+'.');
+    }
+    $('remind-status').textContent = parts.join(' ');
+    $('remind-perm-btn').style.display = (prefs.remind && !st.notifications) ? '' : 'none';
+    $('remind-exact-btn').style.display = (prefs.remind && st.notifications && !st.exactAlarms) ? '' : 'none';
+    var lines = [];
+    [['spo','СПО'],['vo','ВО']].forEach(function(k){
+      var f = st.files && st.files[k[0]];
+      lines.push(esc(k[1])+': '+(f && f.name ? esc(f.name)+(f.date? ' ('+esc(formatGhDate(f.date))+')' : '') : 'файла нет'));
+    });
+    lines.push('Проверено: '+(st.lastSync ? esc(new Date(st.lastSync).toLocaleString('ru-RU')) : 'ещё не проверялось')+(st.online ? '' : ' · нет сети'));
+    $('data-status').innerHTML = lines.join('<br>');
+  }
+  if(ANDROID){
+    $('remind-switch').addEventListener('click', function(){
+      prefs.remind = !prefs.remind;
+      savePrefs();
+      if(prefs.remind) bridgeCall('requestNotificationPermission');
+      updateRemindUI();
+      syncReminders();
+      setTimeout(refreshAndroidStatus, 700);
+    });
+    $('remind-mode-seg').addEventListener('click', function(e){
+      var b = e.target.closest('button[data-remind-mode]'); if(!b) return;
+      prefs.remindMode = b.getAttribute('data-remind-mode'); savePrefs(); updateRemindUI(); syncReminders(); setTimeout(refreshAndroidStatus, 700);
+    });
+    $('remind-min-seg').addEventListener('click', function(e){
+      var b = e.target.closest('button[data-remind-min]'); if(!b) return;
+      prefs.remindMin = +b.getAttribute('data-remind-min'); savePrefs(); updateRemindUI(); syncReminders(); setTimeout(refreshAndroidStatus, 700);
+    });
+    $('remind-perm-btn').addEventListener('click', function(){ bridgeCall('requestNotificationPermission'); });
+    $('remind-exact-btn').addEventListener('click', function(){ bridgeCall('openExactAlarmSettings'); });
+    $('remind-test-btn').addEventListener('click', function(){ bridgeCall('testNotification'); });
+    $('data-sync-btn').addEventListener('click', function(){
+      $('data-status').textContent = 'Проверяю обновления…';
+      bridgeCall('syncNow');
+    });
+  }
+  // Приложение вызывает это, когда скачало свежие файлы (расписание, неделю, объявления)
+  window.onNativeDataUpdated = function(){
+    try{
+      ghListCache = {};
+      refreshSfti();
+      refreshAnnouncements();
+      loadWeekCalendar().then(function(){
+        if(state.parsed && $('screen-main').classList.contains('active')){ renderWeekBadge(); renderContentDispatch(true); }
+      });
+      if($('screen-upload').classList.contains('active')) initGithubSchedules();
+      if(state.ghName && state.parsed){
+        fetchGithubSchedules(SCHEDULE_TYPES[currentType].ghDir).then(function(lst){
+          if(lst.length && isNewerGithubFile(lst[0], state.ghName, state.ghDate)) showBanner('Вышло новое расписание: Настройки → Загрузить другой файл', 5600);
+        }).catch(function(){});
+      }
+      syncReminders();
+      if($('settings-sheet').classList.contains('show')) refreshAndroidStatus();
+    }catch(e){}
+  };
+  window.onNativePermissionResult = function(){ refreshAndroidStatus(); syncReminders(); };
+
+  // Кнопка «Назад» в Android: сначала закрываем то, что открыто, и только потом выходим из приложения
+  window.__androidBack = function(){
+    try{
+      if($('settings-sheet').classList.contains('show')){ closeSheet(); return true; }
+      if($('week-sheet').classList.contains('show')){ closeGenericSheet('week-sheet','week-scrim'); return true; }
+      if($('share-sheet').classList.contains('show')){ closeGenericSheet('share-sheet','share-scrim'); return true; }
+      if(Object.keys(expandedLessonKeys).length){ collapseAllLessonTiles(); return true; }
+      if(searchOpen){ setSearchOpen(false); return true; }
+      var inPick = $('screen-pick').classList.contains('active'), inTPick = $('screen-pick-teacher').classList.contains('active');
+      if(inPick || inTPick){
+        if(state.parsed){
+          if(inTPick && state.selectedTeacher) state.browseMode = 'teacher';
+          else if(state.selectedGroup) state.browseMode = 'group';
+          else { show('screen-upload'); return true; }
+          renderMain(); show('screen-main'); startTicking();
+          return true;
+        }
+        show('screen-upload');
+        return true;
+      }
+    }catch(e){}
+    return false;
+  };
+
   // ---------- settings sheet ----------
   function openGenericSheet(sheetId, scrimId){
     $(scrimId).classList.add('show');
@@ -2660,6 +2940,7 @@
       }catch(e){}
     }
     $('sheet-info').textContent = info;
+    if(ANDROID){ updateRemindUI(); refreshAndroidStatus(); }
     openGenericSheet('settings-sheet','scrim');
   }
   function closeSheet(){ closeGenericSheet('settings-sheet','scrim'); }
@@ -2758,15 +3039,43 @@
   $('week-scrim').addEventListener('click', function(){ closeGenericSheet('week-sheet','week-scrim'); });
 
   // ---------- theme ----------
-  function applyTheme(){
-    document.documentElement.setAttribute('data-theme', prefs.theme==='dark' ? 'dark' : 'light');
-    $('theme-switch').setAttribute('aria-checked', prefs.theme==='dark' ? 'true':'false');
+  function systemIsDark(){
+    if(ANDROID){ var v = bridgeCall('isSystemDark'); if(typeof v==='boolean') return v; }
+    return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
   }
-  $('theme-switch').addEventListener('click', function(){
-    prefs.theme = prefs.theme==='dark' ? 'light' : 'dark';
+  function resolveTheme(){
+    if(prefs.theme==='system') return systemIsDark() ? 'dark' : 'light';
+    return prefs.theme==='dark' ? 'dark' : 'light';
+  }
+  function applyTheme(){
+    var theme = resolveTheme();
+    document.documentElement.setAttribute('data-theme', theme);
+    document.querySelectorAll('#theme-seg button').forEach(function(b){
+      var on = b.getAttribute('data-theme-mode')===prefs.theme;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-checked', on ? 'true' : 'false');
+    });
+    var bg = theme==='dark' ? '#131218' : '#F6F5FB';
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if(meta) meta.setAttribute('content', bg);
+    if(ANDROID) bridgeCall('setSystemBars', theme==='dark', bg);
+  }
+  $('theme-seg').addEventListener('click', function(e){
+    var btn = e.target.closest('button[data-theme-mode]');
+    if(!btn) return;
+    prefs.theme = btn.getAttribute('data-theme-mode');
     applyTheme();
     savePrefs();
   });
+  (function watchSystemTheme(){
+    var onChange = function(){ if(prefs.theme==='system') applyTheme(); };
+    if(window.matchMedia){
+      var mq = window.matchMedia('(prefers-color-scheme: dark)');
+      if(mq.addEventListener) mq.addEventListener('change', onChange);
+      else if(mq.addListener) mq.addListener(onChange);
+    }
+    window.onSystemThemeChanged = onChange;   // приложение Android вызывает это при смене системной темы
+  })();
 
   // ---------- schedule type (СПО / ВО) ----------
   function applyScheduleTypeTheme(){
@@ -2832,7 +3141,10 @@
   // ---------- share sheet ----------
   function openShareSheet(){
     closeSheet();
-    $('share-qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(PAGE_URL);
+    var qrSrc = '';
+    try{ var qr = qrcode(0,'M'); qr.addData(PAGE_URL); qr.make(); qrSrc = qr.createDataURL(6, 2); }catch(e){}
+    if(qrSrc){ $('share-qr-img').src = qrSrc; $('share-qr-img').style.display = ''; }
+    else { $('share-qr-img').style.display = 'none'; }
     $('share-link-text').textContent = PAGE_URL.replace(/^https?:\/\//,'').replace(/\/$/,'');
     openGenericSheet('share-sheet','share-scrim');
   }
@@ -2846,7 +3158,9 @@
     } else { done(); }
   });
   $('share-native-btn').addEventListener('click', function(){
-    if(navigator.share){
+    if(ANDROID){
+      bridgeCall('shareText', 'Расписание: '+PAGE_URL);
+    } else if(navigator.share){
       navigator.share({ title:'Расписание', url: PAGE_URL }).catch(function(){});
     } else {
       $('share-copy-btn').click();
@@ -3142,6 +3456,24 @@
       setUploadError('Разбор расписания был улучшен — загрузите файл ещё раз, чтобы обновить данные.', true);
     }
     renderQuickContinue(validSaved);
+
+    // Приложение Android: если расписание уже выбрано и нового файла нет — сразу открываем сегодняшний день.
+    // Экран загрузки показываем, только когда вышло новое расписание или обновился сам разбор файла.
+    if(ANDROID && validSaved){
+      var goDirect = true;
+      if(validSaved.ghName){
+        try{
+          var localList = await fetchGithubSchedules(SCHEDULE_TYPES[currentType].ghDir);
+          if(localList.length && isNewerGithubFile(localList[0], validSaved.ghName, validSaved.ghDate)) goDirect = false;
+        }catch(e){}
+      }
+      if(goDirect){
+        openSaved(validSaved);
+        if(bridgeCall('isOnline')===false) setTimeout(function(){ showBanner('Работает офлайн'); }, 700);
+        initGithubSchedules();
+        return;
+      }
+    }
     show('screen-upload');
     initGithubSchedules();
   })();
