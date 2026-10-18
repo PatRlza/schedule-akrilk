@@ -686,10 +686,37 @@
   .sheet-mini-btn{border:none;border-radius:100px;background:var(--surface-container-high);color:var(--text);font-size:12px;font-weight:600;padding:8px 14px;}
   .android-only{display:none;}
   html.is-android-app .android-only{display:block;}
+  .android-only-btn{display:none;}
+  html.is-android-app .android-only-btn{display:inline-flex;}
+  html.is-android-app .web-only{display:none !important;}
+  .sheet-row-hint{margin-left:auto;font-size:12px;color:var(--text-tertiary);}
+  .sheet-mini-btn:disabled{opacity:.5;}
+  .remind-custom{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--text-secondary);}
+  .remind-custom input{width:84px;border:2px solid var(--outline);background:var(--surface);color:var(--text);border-radius:12px;padding:8px 10px;font-size:14px;font-family:inherit;}
+  .remind-custom input:focus{outline:none;border-color:var(--primary);}
+  /* мини-схема напоминаний: пары по времени, над ними плашки «когда придёт напоминание» */
+  #notify-preview{margin:14px 0 4px;}
+  .np-head,.np-body{display:grid;grid-template-columns:16px repeat(6,minmax(0,1fr));gap:3px;}
+  .np-head{font-size:10px;font-weight:700;color:var(--text-tertiary);text-align:center;margin-bottom:3px;}
+  .np-head .np-today-h{color:var(--primary);}
+  .np-ax{position:relative;font-size:8px;color:var(--text-tertiary);}
+  .np-ax span{position:absolute;right:1px;transform:translateY(-50%);line-height:1;}
+  .np-col{position:relative;border-radius:7px;background-color:var(--surface-container);
+    background-image:repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--hpx) - 1px), var(--outline) calc(var(--hpx) - 1px), var(--outline) var(--hpx));}
+  .np-col.np-today{outline:2px solid var(--primary);outline-offset:-2px;}
+  .np-l{position:absolute;left:2px;right:2px;border-radius:5px;background:var(--primary-container);color:var(--on-primary-container);
+    font-size:8.5px;font-weight:700;overflow:hidden;padding:2px 3px;line-height:1.1;}
+  .np-p{position:absolute;left:0;right:0;height:12px;border-radius:5px;background:var(--secondary);color:var(--surface);
+    font-size:8.5px;font-weight:800;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,.25);}
+  .np-legend{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;font-size:11px;color:var(--text-secondary);margin-top:8px;}
+  .np-dot{display:inline-block;width:12px;height:8px;border-radius:3px;margin-right:5px;vertical-align:middle;}
+  .np-dot-l{background:var(--primary-container);}
+  .np-dot-p{background:var(--secondary);}
   #net-banner{
     position:fixed;left:50%;top:0;z-index:40;transform:translate(-50%,-160%);opacity:0;pointer-events:none;
     margin-top:calc(10px + env(safe-area-inset-top));display:flex;align-items:center;gap:10px;
     max-width:min(92vw,440px);background:var(--surface);color:var(--text);border-radius:100px;padding:11px 18px;
+    border:2px solid var(--primary);
     box-shadow:0 8px 28px rgba(20,17,50,.22);font-size:14px;font-weight:600;line-height:1.3;
     transition:transform .55s cubic-bezier(.2,.8,.2,1), opacity .4s ease;
   }
@@ -873,6 +900,11 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
     Сменить группу
   </button>
+  <button class="sheet-row" id="open-mygroup">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+    Моя группа
+    <span class="sheet-row-hint" id="mygroup-hint"></span>
+  </button>
   <button class="sheet-row" id="sheet-reupload">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
     Загрузить другой файл
@@ -887,7 +919,7 @@
     </div>
   </div>
 
-  <div class="sheet-toggle-row is-disabled">
+  <div class="sheet-toggle-row is-disabled web-only">
     <div class="sheet-toggle-label">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
       Демо-режим на экране входа
@@ -897,36 +929,15 @@
   </div>
 
   <div class="android-only" id="android-settings">
-    <div class="sheet-block">
-      <div class="sheet-block-title">Уведомления о парах</div>
-      <div class="sheet-toggle-row" style="padding:4px 0 10px;">
-        <div class="sheet-toggle-label">Напоминать о парах</div>
-        <button class="switch" id="remind-switch" role="switch" aria-checked="false"><span class="switch-knob"></span></button>
-      </div>
-      <div id="remind-options" style="display:none;">
-        <div class="seg" id="remind-mode-seg" style="margin-bottom:8px;">
-          <button type="button" data-remind-mode="first">Перед первой парой</button>
-          <button type="button" data-remind-mode="all">Перед каждой парой</button>
-        </div>
-        <div class="seg" id="remind-min-seg">
-          <button type="button" data-remind-min="10">10 мин</button>
-          <button type="button" data-remind-min="20">20 мин</button>
-          <button type="button" data-remind-min="30">30 мин</button>
-          <button type="button" data-remind-min="60">1 час</button>
-        </div>
-        <div class="sheet-note" id="remind-status"></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
-          <button type="button" class="sheet-mini-btn" id="remind-perm-btn" style="display:none;">Разрешить уведомления</button>
-          <button type="button" class="sheet-mini-btn" id="remind-exact-btn" style="display:none;">Точное время</button>
-          <button type="button" class="sheet-mini-btn" id="remind-test-btn">Проверить уведомление</button>
-        </div>
-      </div>
-    </div>
-    <div class="sheet-block">
-      <div class="sheet-block-title">Данные на телефоне</div>
-      <div class="sheet-note" id="data-status">—</div>
-      <button type="button" class="sheet-mini-btn" id="data-sync-btn">Обновить сейчас</button>
-    </div>
+    <button class="sheet-row" id="open-notify-sheet">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+      Уведомления о парах
+      <span class="sheet-row-hint" id="notify-hint"></span>
+    </button>
+    <button class="sheet-row" id="open-data-sheet">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4-4m4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+      Данные на телефоне
+    </button>
   </div>
 
   <button class="sheet-row" id="sheet-share">
@@ -943,6 +954,112 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.94 4.6 18.6 20.36c-.25 1.1-.9 1.37-1.83.85l-5.06-3.73-2.44 2.35c-.27.27-.5.5-1.02.5l.36-5.16 9.4-8.5c.41-.36-.09-.56-.63-.2L6.3 13.1l-5.02-1.57c-1.09-.34-1.11-1.09.23-1.61L20.57 3.6c.91-.34 1.7.2 1.37 1z"/></svg>
     Вопросы и ошибки
   </button>
+</div>
+
+<!-- Моя группа (по умолчанию) -->
+<div class="scrim" id="mygroup-scrim"></div>
+<div class="sheet" id="mygroup-sheet">
+  <div class="sheet-handle"></div>
+  <div class="share-title">Моя группа</div>
+  <div class="sheet-note">Приложение открывается на вашей группе, и напоминания приходят именно для неё, даже если вы заглядываете в расписание друзей.</div>
+  <div class="sheet-note" id="mygroup-current" style="font-weight:600;color:var(--text);"></div>
+  <button type="button" class="sheet-row" id="mygroup-set-current">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>
+    <span id="mygroup-set-label">Сделать моей текущую группу</span>
+  </button>
+  <button type="button" class="sheet-row" id="mygroup-pick">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+    Выбрать из списка…
+  </button>
+  <button type="button" class="sheet-row" id="mygroup-clear">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    Сбросить
+  </button>
+</div>
+
+<!-- Уведомления о парах (только приложение Android) -->
+<div class="scrim" id="notify-scrim"></div>
+<div class="sheet" id="notify-sheet">
+  <div class="sheet-handle"></div>
+  <div class="share-title">Уведомления о парах</div>
+  <div class="sheet-toggle-row" style="padding:4px 0 10px;">
+    <div class="sheet-toggle-label">Напоминать о парах</div>
+    <button class="switch" id="remind-switch" role="switch" aria-checked="false"><span class="switch-knob"></span></button>
+  </div>
+  <div id="remind-options" style="display:none;">
+    <div class="sheet-block-title">Когда напоминать</div>
+    <div class="seg" id="remind-mode-seg">
+      <button type="button" data-remind-mode="first">Первая пара</button>
+      <button type="button" data-remind-mode="blocks">Блок пар</button>
+      <button type="button" data-remind-mode="all">Каждая пара</button>
+    </div>
+    <div class="sheet-note" id="remind-mode-note" style="padding-top:8px;"></div>
+    <div class="sheet-block-title" style="padding-top:8px;">За сколько минут до пары</div>
+    <div class="seg" id="remind-min-seg">
+      <button type="button" data-remind-min="10">10 мин</button>
+      <button type="button" data-remind-min="20">20 мин</button>
+      <button type="button" data-remind-min="30">30 мин</button>
+    </div>
+    <div class="remind-custom">
+      <label for="remind-min-input">или своё значение</label>
+      <input id="remind-min-input" type="number" inputmode="numeric" min="1" max="1440" placeholder="45">
+      <span>мин</span>
+    </div>
+    <div id="notify-preview"></div>
+    <div class="sheet-note" id="remind-status"></div>
+  <button type="button" class="sheet-row" id="remind-perm-btn" style="display:none;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+    Разрешить уведомления
+  </button>
+  <button type="button" class="sheet-row" id="remind-exact-btn" style="display:none;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+    Разрешить точное время
+  </button>
+  <button type="button" class="sheet-row" id="remind-test-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg>
+    Проверить уведомление
+  </button>
+  <button type="button" class="sheet-row" id="remind-sound-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+    Звук напоминаний
+  </button>
+  </div>
+  <div class="sheet-toggle-row" style="padding:10px 0 4px;">
+    <div class="sheet-toggle-label">Сообщать о новом расписании</div>
+    <button class="switch" id="newsched-switch" role="switch" aria-checked="true"><span class="switch-knob"></span></button>
+  </div>
+  <div class="sheet-toggle-row" style="padding:4px 0 6px;">
+    <div class="sheet-toggle-label">Новости и сообщения</div>
+    <button class="switch" id="news-switch" role="switch" aria-checked="true"><span class="switch-knob"></span></button>
+  </div>
+  <button type="button" class="sheet-row" id="news-sound-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+    Звук новостей и расписания
+  </button>
+</div>
+
+<!-- Данные на телефоне и обновление приложения (только приложение Android) -->
+<div class="scrim" id="data-scrim"></div>
+<div class="sheet" id="data-sheet">
+  <div class="sheet-handle"></div>
+  <div class="share-title">Данные на телефоне</div>
+  <div class="sheet-note" id="data-status">—</div>
+  <button type="button" class="sheet-row" id="data-sync-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
+    Обновить данные сейчас
+  </button>
+  <div class="sheet-note" id="data-sync-msg" style="padding-top:8px;"></div>
+  <div class="sheet-block-title" style="padding-top:12px;">Приложение</div>
+  <div class="sheet-note" id="app-version-line">—</div>
+  <button type="button" class="sheet-row" id="app-update-check-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
+    Проверить обновление приложения
+  </button>
+  <button type="button" class="sheet-row" id="app-update-install-btn" style="display:none;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4-4m4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+    Скачать и установить
+  </button>
+  <div class="sheet-note" id="app-update-msg" style="padding-top:8px;"></div>
 </div>
 
 <!-- Week parity sheet -->
@@ -962,6 +1079,12 @@
     <img id="share-qr-img" alt="QR-код ссылки" width="180" height="180">
   </div>
   <button class="btn btn-filled btn-block" id="share-native-btn">Поделиться ссылкой…</button>
+  <button class="btn btn-tonal btn-block android-only-btn" id="share-apk-btn" style="margin-top:8px;">Поделиться приложением (APK)</button>
+  <div class="sheet-block-title" style="padding-top:14px;">Расписание картинкой (с QR-кодом)</div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn btn-tonal" id="share-img-this" style="flex:1;padding:12px 8px;">Эта неделя</button>
+    <button class="btn btn-tonal" id="share-img-next" style="flex:1;padding:12px 8px;">Следующая</button>
+  </div>
   <div class="share-link-row">
     <span class="share-link-text" id="share-link-text">patrlza.github.io/schedule-akrilk</span>
     <button class="share-copy-btn" id="share-copy-btn">Копировать</button>
@@ -1266,7 +1389,7 @@
       return ANDROID[name].apply(ANDROID, Array.prototype.slice.call(arguments, 1));
     }catch(e){ return undefined; }
   }
-  var prefs = { theme:'system', demoEnabled:false, scheduleType:'spo', remind:false, remindMode:'first', remindMin:20 };
+  var prefs = { theme:'system', demoEnabled:false, scheduleType:'spo', remind:false, remindMode:'first', remindMin:20, myGroup:null, notifyNew:true, notifyNews:true };
   var tickTimer=null;
   var BREAK_MIN_GAP = 15;   // minutes — shorter gaps are just passing time between pairs
   var BREAK_MAX_GAP = 100000; // effectively no cap — any free stretch gets its own tile now
@@ -1314,7 +1437,7 @@
       await kvSet(typeStorageKey(), JSON.stringify({
         parsed: state.parsed, selectedGroup: state.selectedGroup,
         savedAt: state.savedAt, fileName: state.fileName, parserVersion: PARSER_VERSION,
-        ghName: state.ghName, ghDate: state.ghDate
+        ghName: state.ghName, ghDate: state.ghDate, ghSha: state.ghSha || null
       }));
     }catch(e){ /* best effort */ }
   }
@@ -1330,8 +1453,11 @@
       var p = JSON.parse(raw);
       if(p.theme==='dark' || p.theme==='light' || p.theme==='system') prefs.theme = p.theme;
       prefs.remind = !!p.remind;
-      if(p.remindMode==='all' || p.remindMode==='first') prefs.remindMode = p.remindMode;
-      if([10,20,30,60].indexOf(+p.remindMin)>=0) prefs.remindMin = +p.remindMin;
+      prefs.notifyNew = p.notifyNew !== false;
+      prefs.notifyNews = p.notifyNews !== false;
+      if(p.myGroup && typeof p.myGroup.group==='string' && SCHEDULE_TYPES[p.myGroup.type]) prefs.myGroup = { type:p.myGroup.type, group:p.myGroup.group };
+      if(p.remindMode==='all' || p.remindMode==='first' || p.remindMode==='blocks') prefs.remindMode = p.remindMode;
+      if(+p.remindMin>=1 && +p.remindMin<=1440) prefs.remindMin = Math.round(+p.remindMin);
       prefs.demoEnabled = !!p.demoEnabled;
       if(SCHEDULE_TYPES[p.scheduleType]) prefs.scheduleType = p.scheduleType;
     }catch(e){}
@@ -1582,6 +1708,7 @@
   // ---------- DOM helpers ----------
   function $(id){ return document.getElementById(id); }
   function show(id){
+    if(id!=='screen-pick') state.pickForDefault = false;
     document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
     $(id).classList.add('active');
   }
@@ -1618,6 +1745,7 @@
       state.savedAt = new Date().toISOString();
       state.ghName = ghMeta ? ghMeta.name : null;
       state.ghDate = ghMeta ? (ghMeta.date || null) : null;
+      state.ghSha = ghMeta ? (ghMeta.sha || null) : null;
       renderGroupPicker();
       show('screen-pick');
       return true;
@@ -1734,7 +1862,7 @@
       var lr = await fetchT('data/schedules.json?ts='+Date.now(), 8000, { cache:'no-store' });
       if(!lr.ok) throw new Error('list_failed');
       var man = await lr.json();
-      return (man[dir]||[]).map(function(f){ return { name:f.name, url:f.url, date:f.date||null }; });
+      return (man[dir]||[]).map(function(f){ return { name:f.name, url:f.url, date:f.date||null, sha:f.sha||null }; });
     }
     var apiUrl = 'https://api.github.com/repos/'+GITHUB_OWNER+'/'+GITHUB_REPO+'/contents/'+dir+'/';
     var res = await fetchT(apiUrl, 12000);
@@ -1750,7 +1878,7 @@
           if(commits && commits[0] && commits[0].commit && commits[0].commit.committer) date = commits[0].commit.committer.date;
         }
       }catch(e){}
-      return { name: f.name, url: f.download_url, date: date };
+      return { name: f.name, url: f.download_url, date: date, sha: f.sha||null };
     }));
     withDates.sort(function(a,b){
       var da = a.date? new Date(a.date).getTime():0, db = b.date? new Date(b.date).getTime():0;
@@ -1830,6 +1958,7 @@
     state.fileName = saved.fileName;
     state.ghName = saved.ghName || null;
     state.ghDate = saved.ghDate || null;
+    state.ghSha = saved.ghSha || null;
     state.viewedDay = resolveTodayViewedDay();
     renderMain();
     show('screen-main');
@@ -1854,8 +1983,9 @@
   // file has since shown up there (a different file, or the same one
   // re-uploaded with new content), that button would otherwise keep quietly
   // reopening the stale version forever — so drop it and point at the fresh one.
-  function isNewerGithubFile(latest, savedName, savedDate){
+  function isNewerGithubFile(latest, savedName, savedDate, savedSha){
     if(!latest || !savedName) return false;
+    if(latest.sha && savedSha) return latest.sha !== savedSha;      // самый надёжный признак — содержимое файла изменилось
     if(latest.name !== savedName) return true;
     if(!savedDate || !latest.date) return false; // nothing to compare — assume unchanged
     return new Date(latest.date).getTime() > new Date(savedDate).getTime();
@@ -1863,7 +1993,7 @@
   async function checkQuickContinueFreshness(){
     if(!lastQuickContinueSaved || !lastQuickContinueSaved.ghName) return; // only applies to GitHub-sourced saves
     if(!ghSchedules.length) return;
-    if(isNewerGithubFile(ghSchedules[0], lastQuickContinueSaved.ghName, lastQuickContinueSaved.ghDate)){
+    if(isNewerGithubFile(ghSchedules[0], lastQuickContinueSaved.ghName, lastQuickContinueSaved.ghDate, lastQuickContinueSaved.ghSha)){
       await clearState();
       renderQuickContinue(null);
       setUploadError('Появилось новое расписание — сохранённое больше не актуально, выберите свежий файл ниже.', true);
@@ -1873,7 +2003,7 @@
   // ---------- group picker ----------
   function renderGroupPicker(){
     var groups = state.parsed.groups;
-    $('pick-sub').textContent = 'Найдено групп: ' + groups.length;
+    $('pick-sub').textContent = state.pickForDefault ? 'Выберите свою группу — на неё будут приходить напоминания' : 'Найдено групп: ' + groups.length;
     renderGroupList(groups);
     $('group-search').value = '';
   }
@@ -2022,6 +2152,13 @@
     markInteraction();
     state.browseMode = 'group';
     state.selectedGroup = g;
+    // «Моя группа»: выбирается явно; первая выбранная группа становится ею автоматически
+    if(state.pickForDefault || !prefs.myGroup){
+      prefs.myGroup = { type:currentType, group:g };
+      state.pickForDefault = false;
+      savePrefs();
+      syncAlertPrefs();
+    }
     var today = WEEKDAY_INDEX[new Date().getDay()];
     state.viewedDay = resolveTodayViewedDay();
     if(kioskLive){
@@ -2779,27 +2916,67 @@
 
   // ---------- напоминания о парах (только приложение Android) ----------
   // Список считается здесь (чётность, расписание группы), а ставит напоминания система Android.
-  var REMIND_DAYS = 14, REMIND_MAX = 120;
-  function buildReminderList(){
-    if(!ANDROID || !state.parsed || !state.selectedGroup) return null;     // null = ничего не менять
-    var byDay = state.parsed.byGroup[state.selectedGroup];
+  var REMIND_DAYS = 14, REMIND_MAX = 120, BLOCK_GAP_MIN = 30;
+  var REMIND_MODE_NOTES = {
+    first:  'Одно напоминание в день: только перед первой парой.',
+    blocks: 'Напоминание перед первой парой каждого блока. Пары подряд (перерыв меньше 30 минут) считаются одним блоком, поэтому на вторую пару подряд оно не приходит, а после «окна» или обеда придёт снова.',
+    all:    'Напоминание перед каждой парой. Если пара идёт сразу после другой, напоминание придёт, пока предыдущая ещё не закончилась.'
+  };
+  // Какие пары дня получают напоминание — зависит от выбранного режима
+  function pickReminderLessons(lessons){
+    var uniq = [], seen = {};
+    lessons.forEach(function(l){ if(!seen[l.startMin]){ seen[l.startMin] = true; uniq.push(l); } });
+    if(prefs.remindMode==='all') return uniq;
+    if(prefs.remindMode==='blocks'){
+      var res = [], busyUntil = null;
+      uniq.forEach(function(l){
+        if(busyUntil===null || l.startMin - busyUntil >= BLOCK_GAP_MIN) res.push(l);
+        var end = (l.endMin==null) ? l.startMin : l.endMin;
+        busyUntil = (busyUntil===null) ? end : Math.max(busyUntil, end);
+      });
+      return res;
+    }
+    return uniq.slice(0, 1);
+  }
+  function lessonsOfDate(byDay, date, parity){
+    var dayName = WEEKDAY_INDEX[date.getDay()];
+    return annotateParityFor(byDay[dayName]||[], parity)
+      .filter(function(l){ return !l.isGhost && l.startMin!=null; })
+      .sort(function(a,b){ return a.startMin-b.startMin; });
+  }
+  // Откуда брать расписание для напоминаний: «моя» группа (даже если сейчас открыта чужая)
+  async function getReminderSource(){
+    var my = prefs.myGroup;
+    if(my && SCHEDULE_TYPES[my.type]){
+      var parsed = null;
+      if(my.type===currentType && state.parsed && state.parsed.byGroup[my.group]) parsed = state.parsed;
+      else {
+        var saved = await loadStateRawForType(my.type);
+        if(saved && saved.parserVersion===PARSER_VERSION && saved.parsed && saved.parsed.byGroup[my.group]) parsed = saved.parsed;
+      }
+      if(parsed) return { parsed:parsed, group:my.group, type:my.type, mine:true };
+    }
+    if(state.parsed && state.selectedGroup && state.parsed.byGroup[state.selectedGroup]) return { parsed:state.parsed, group:state.selectedGroup, type:currentType, mine:false };
+    return null;
+  }
+  async function buildReminderList(){
+    if(!ANDROID) return null;
+    var src = await getReminderSource();
+    if(!src) return null;                                                   // null = ничего не менять
+    var byDay = src.parsed.byGroup[src.group];
     if(!byDay) return null;
     var now = Date.now(), list = [];
     for(var i=0; i<REMIND_DAYS; i++){
       var date = new Date(); date.setHours(12,0,0,0); date.setDate(date.getDate()+i);
-      var dayName = WEEKDAY_INDEX[date.getDay()];
-      var parity = getWeekInfoForDate(date).parity;
-      var lessons = annotateParityFor(byDay[dayName]||[], parity)
-        .filter(function(l){ return !l.isGhost && l.startMin!=null; })
-        .sort(function(a,b){ return a.startMin-b.startMin; });
-      var chosen = prefs.remindMode==='all' ? lessons : lessons.slice(0,1);
-      chosen.forEach(function(l){
+      var lessons = lessonsOfDate(byDay, date, getWeekInfoForDate(date).parity);
+      var first = lessons[0];
+      pickReminderLessons(lessons).forEach(function(l){
         var start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, l.startMin, 0, 0).getTime();
         var at = start - prefs.remindMin*60000;
         if(at<=now) return;
         list.push({
           at: at,
-          title: (prefs.remindMode==='first' ? 'Первая пара в ' : 'Пара в ')+minToLabel(l.startMin),
+          title: (l===first ? 'Первая пара в ' : 'Пара в ')+minToLabel(l.startMin),
           text: (l.subject||'Занятие')+(l.room? ' · '+l.room : '')
         });
       });
@@ -2813,21 +2990,102 @@
     clearTimeout(remindTimer);
     remindTimer = setTimeout(function(){
       if(!prefs.remind){ bridgeCall('syncReminders', '[]'); return; }
-      var list = buildReminderList();
-      if(list===null) return;
-      bridgeCall('syncReminders', JSON.stringify(list));
+      buildReminderList().then(function(list){
+        if(list===null) return;
+        bridgeCall('syncReminders', JSON.stringify(list));
+      });
     }, 400);
+  }
+
+  // ---------- мини-схема недели: пары и плашки «когда придёт напоминание» ----------
+  // Плашка стоит над парой на высоте, пропорциональной времени «за сколько минут»:
+  // чем раньше придёт напоминание, тем выше над парой плашка.
+  function renderNotifyPreview(){
+    var box = $('notify-preview');
+    if(!box) return;
+    getReminderSource().then(function(src){ drawNotifyPreview(box, src); });
+  }
+  function drawNotifyPreview(box, src){
+    if(!src){
+      box.innerHTML = '<div class="sheet-note">Выберите группу — здесь появится схема напоминаний на неделю.</div>';
+      return;
+    }
+    var byDay = src.parsed.byGroup[src.group];
+    var now = new Date();
+    var mon = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
+    mon.setDate(mon.getDate() - ((mon.getDay()+6)%7));
+    var parity = getWeekInfoForDate(mon).parity;
+    var days = [], minT = 1e9, maxT = 0;
+    for(var i=0; i<6; i++){
+      var date = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate()+i, 12, 0, 0);
+      var lessons = lessonsOfDate(byDay, date, parity);
+      var picked = prefs.remind ? pickReminderLessons(lessons) : [];
+      lessons.forEach(function(l){
+        minT = Math.min(minT, l.startMin);
+        maxT = Math.max(maxT, l.endMin!=null ? l.endMin : l.startMin+90);
+      });
+      picked.forEach(function(l){ minT = Math.min(minT, l.startMin - prefs.remindMin); });
+      days.push({ name: DAY_SHORT[WEEKDAY_INDEX[date.getDay()]]||'', lessons: lessons, picked: picked, today: dateKey(date)===dateKey(now) });
+    }
+    if(!days.some(function(d){ return d.lessons.length; })){
+      box.innerHTML = '<div class="sheet-note">На этой неделе пар нет.</div>';
+      return;
+    }
+    var t0 = Math.max(360, Math.floor((minT-10)/60)*60);
+    var t1 = Math.min(24*60, Math.ceil((maxT+5)/60)*60);
+    var K = 0.3, H = Math.round((t1-t0)*K), PH = 12;
+    var html = '<div class="np" style="--hpx:'+(60*K)+'px">';
+    html += '<div class="np-head"><span></span>'+days.map(function(d){ return '<span'+(d.today?' class="np-today-h"':'')+'>'+esc(d.name)+'</span>'; }).join('')+'</div>';
+    html += '<div class="np-body" style="height:'+H+'px">';
+    html += '<div class="np-ax">';
+    for(var h=Math.ceil(t0/60); h*60<=t1; h++) html += '<span style="top:'+Math.round((h*60-t0)*K)+'px">'+h+'</span>';
+    html += '</div>';
+    days.forEach(function(d){
+      html += '<div class="np-col'+(d.today?' np-today':'')+'">';
+      d.lessons.forEach(function(l){
+        var end = l.endMin!=null ? l.endMin : l.startMin+90;
+        html += '<div class="np-l" style="top:'+Math.round((l.startMin-t0)*K)+'px;height:'+Math.max(12, Math.round((end-l.startMin)*K))+'px">'+minToLabel(l.startMin)+'</div>';
+      });
+      d.picked.forEach(function(l){
+        var rem = l.startMin - prefs.remindMin;
+        var y = Math.max(PH, Math.round((rem-t0)*K));
+        html += '<div class="np-p" style="top:'+(y-PH)+'px">'+minToLabel(((rem%1440)+1440)%1440)+'</div>';
+      });
+      html += '</div>';
+    });
+    html += '</div></div>';
+    html += '<div class="sheet-note" style="padding:6px 0 0;">Группа: '+esc(src.group)+(src.mine ? ' (моя)' : '')+'</div><div class="np-legend"><span><span class="np-dot np-dot-l"></span>пара (время начала)</span>'+
+      (prefs.remind ? '<span><span class="np-dot np-dot-p"></span>когда придёт напоминание</span>' : '<span>напоминания выключены</span>')+'</div>';
+    box.innerHTML = html;
   }
 
   // ---------- настройки, видимые только в приложении ----------
   function setSegActive(id, attr, value){
     document.querySelectorAll('#'+id+' button').forEach(function(b){ b.classList.toggle('active', b.getAttribute(attr)===String(value)); });
   }
+  function fmtMinutes(n){ return (n>=60 && n%60===0) ? (n/60)+' ч' : n+' мин'; }
+  function updateRemindHint(){
+    var h = $('notify-hint');
+    if(h) h.textContent = prefs.remind ? ('за '+fmtMinutes(prefs.remindMin)) : 'выключены';
+  }
   function updateRemindUI(){
     $('remind-switch').setAttribute('aria-checked', prefs.remind ? 'true' : 'false');
+    $('newsched-switch').setAttribute('aria-checked', prefs.notifyNew ? 'true' : 'false');
+    $('news-switch').setAttribute('aria-checked', prefs.notifyNews ? 'true' : 'false');
     $('remind-options').style.display = prefs.remind ? '' : 'none';
     setSegActive('remind-mode-seg', 'data-remind-mode', prefs.remindMode);
     setSegActive('remind-min-seg', 'data-remind-min', prefs.remindMin);
+    var inp = $('remind-min-input');
+    if(document.activeElement!==inp) inp.value = ([10,20,30].indexOf(prefs.remindMin)>=0) ? '' : prefs.remindMin;
+    $('remind-mode-note').textContent = REMIND_MODE_NOTES[prefs.remindMode] || '';
+    updateRemindHint();
+    renderNotifyPreview();
+  }
+  function remindSettingsChanged(){
+    savePrefs();
+    updateRemindUI();
+    syncReminders();
+    setTimeout(refreshAndroidStatus, 700);
   }
   function refreshAndroidStatus(){
     if(!ANDROID) return;
@@ -2846,39 +3104,340 @@
     var lines = [];
     [['spo','СПО'],['vo','ВО']].forEach(function(k){
       var f = st.files && st.files[k[0]];
-      lines.push(esc(k[1])+': '+(f && f.name ? esc(f.name)+(f.date? ' ('+esc(formatGhDate(f.date))+')' : '') : 'файла нет'));
+      lines.push(esc(k[1])+': '+(f && f.name ? esc(f.name)+(f.date? ' (файл от '+esc(formatGhDate(f.date))+')' : '') : 'файла нет'));
     });
-    lines.push('Проверено: '+(st.lastSync ? esc(new Date(st.lastSync).toLocaleString('ru-RU')) : 'ещё не проверялось')+(st.online ? '' : ' · нет сети'));
+    lines.push('Проверка обновлений: '+(st.lastSync ? esc(new Date(st.lastSync).toLocaleString('ru-RU')) : 'ещё не проводилась')+(st.online ? '' : ' · нет сети'));
     $('data-status').innerHTML = lines.join('<br>');
   }
+  var syncMsgTimer = null;
+  var SYNC_MESSAGES = {
+    updated: 'Готово: данные обновлены.',
+    same:    'У вас самые свежие данные.',
+    offline: 'Нет соединения с интернетом. Приложение работает на сохранённых данных.',
+    error:   'Не удалось проверить обновления: сервер не ответил. Попробуйте позже.'
+  };
+  function showSyncResult(result){
+    clearTimeout(syncMsgTimer);
+    var btn = $('data-sync-btn');
+    if(btn) btn.disabled = false;
+    var msg = $('data-sync-msg');
+    if(msg && SYNC_MESSAGES[result]) msg.textContent = SYNC_MESSAGES[result];
+  }
+  var appUpdateAvailable = false;
+  function refreshAppVersionLine(){
+    var info = null;
+    try{ info = JSON.parse(bridgeCall('getAppInfo')); }catch(e){}
+    $('app-version-line').textContent = info && info.version ? ('Версия приложения: '+info.version) : '—';
+  }
   if(ANDROID){
+    $('open-notify-sheet').addEventListener('click', function(){
+      closeSheet(); updateRemindUI(); refreshAndroidStatus(); openGenericSheet('notify-sheet','notify-scrim');
+    });
+    $('open-data-sheet').addEventListener('click', function(){
+      closeSheet(); refreshAndroidStatus(); refreshAppVersionLine(); openGenericSheet('data-sheet','data-scrim');
+    });
     $('remind-switch').addEventListener('click', function(){
       prefs.remind = !prefs.remind;
-      savePrefs();
       if(prefs.remind) bridgeCall('requestNotificationPermission');
-      updateRemindUI();
-      syncReminders();
-      setTimeout(refreshAndroidStatus, 700);
+      remindSettingsChanged();
     });
     $('remind-mode-seg').addEventListener('click', function(e){
       var b = e.target.closest('button[data-remind-mode]'); if(!b) return;
-      prefs.remindMode = b.getAttribute('data-remind-mode'); savePrefs(); updateRemindUI(); syncReminders(); setTimeout(refreshAndroidStatus, 700);
+      prefs.remindMode = b.getAttribute('data-remind-mode'); remindSettingsChanged();
     });
     $('remind-min-seg').addEventListener('click', function(e){
       var b = e.target.closest('button[data-remind-min]'); if(!b) return;
-      prefs.remindMin = +b.getAttribute('data-remind-min'); savePrefs(); updateRemindUI(); syncReminders(); setTimeout(refreshAndroidStatus, 700);
+      prefs.remindMin = +b.getAttribute('data-remind-min'); remindSettingsChanged();
+    });
+    $('remind-min-input').addEventListener('input', function(){
+      var v = Math.round(+this.value);
+      if(!(v>=1 && v<=1440)) return;
+      prefs.remindMin = v;
+      savePrefs(); setSegActive('remind-min-seg','data-remind-min',v); updateRemindHint(); renderNotifyPreview(); syncReminders();
     });
     $('remind-perm-btn').addEventListener('click', function(){ bridgeCall('requestNotificationPermission'); });
     $('remind-exact-btn').addEventListener('click', function(){ bridgeCall('openExactAlarmSettings'); });
     $('remind-test-btn').addEventListener('click', function(){ bridgeCall('testNotification'); });
+    $('remind-sound-btn').addEventListener('click', function(){ bridgeCall('openNotificationSoundSettings', 'lessons'); });
+    $('news-sound-btn').addEventListener('click', function(){ bridgeCall('openNotificationSoundSettings', 'news'); });
+    $('newsched-switch').addEventListener('click', function(){
+      prefs.notifyNew = !prefs.notifyNew; savePrefs(); updateRemindUI(); syncAlertPrefs();
+      if(prefs.notifyNew) bridgeCall('requestNotificationPermission');
+    });
+    $('news-switch').addEventListener('click', function(){
+      prefs.notifyNews = !prefs.notifyNews; savePrefs(); updateRemindUI(); syncAlertPrefs();
+      if(prefs.notifyNews) bridgeCall('requestNotificationPermission');
+    });
+    $('share-apk-btn').addEventListener('click', function(){ bridgeCall('shareApk'); });
     $('data-sync-btn').addEventListener('click', function(){
-      $('data-status').textContent = 'Проверяю обновления…';
+      var msg = $('data-sync-msg');
+      if(bridgeCall('isOnline')===false){ msg.textContent = SYNC_MESSAGES.offline; return; }
+      $('data-sync-btn').disabled = true;
+      msg.textContent = 'Проверяю обновления…';
+      clearTimeout(syncMsgTimer);
+      syncMsgTimer = setTimeout(function(){ showSyncResult('error'); }, 45000);
       bridgeCall('syncNow');
     });
+    $('app-update-check-btn').addEventListener('click', function(){
+      var m = $('app-update-msg');
+      if(bridgeCall('isOnline')===false){ m.textContent = 'Нет соединения с интернетом.'; return; }
+      m.textContent = 'Проверяю…';
+      bridgeCall('checkAppUpdate', true);
+    });
+    $('app-update-install-btn').addEventListener('click', function(){
+      $('app-update-msg').textContent = 'Скачиваю обновление…';
+      bridgeCall('installAppUpdate');
+    });
   }
-  // Приложение вызывает это, когда скачало свежие файлы (расписание, неделю, объявления)
-  window.onNativeDataUpdated = function(){
+  ['notify','data'].forEach(function(n){
+    $(n+'-scrim').addEventListener('click', function(){ closeGenericSheet(n+'-sheet', n+'-scrim'); });
+  });
+  // ---------- «Моя группа» ----------
+  function syncAlertPrefs(){
+    if(!ANDROID) return;
+    var type = (prefs.myGroup && SCHEDULE_TYPES[prefs.myGroup.type]) ? prefs.myGroup.type : currentType;
+    bridgeCall('setWatchedSchedule', SCHEDULE_TYPES[type].ghDir);
+    bridgeCall('setAlertPrefs', !!prefs.notifyNew, !!prefs.notifyNews);
+  }
+  function updateMyGroupHint(){
+    var h = $('mygroup-hint');
+    if(h) h.textContent = prefs.myGroup ? (prefs.myGroup.group+' · '+SCHEDULE_TYPES[prefs.myGroup.type].label) : 'не выбрана';
+  }
+  function updateMyGroupSheet(){
+    var my = prefs.myGroup;
+    $('mygroup-current').textContent = my ? ('Сейчас: '+my.group+' ('+SCHEDULE_TYPES[my.type].label+')') : 'Группа ещё не выбрана.';
+    var cur = (state.parsed && state.browseMode==='group') ? state.selectedGroup : null;
+    var canSet = !!cur && !(my && my.group===cur && my.type===currentType);
+    var btn = $('mygroup-set-current');
+    btn.style.display = canSet ? '' : 'none';
+    if(canSet) $('mygroup-set-label').textContent = 'Сделать моей группой: '+cur;
+    $('mygroup-clear').style.display = my ? '' : 'none';
+  }
+  function myGroupChanged(){
+    savePrefs(); updateMyGroupHint(); updateMyGroupSheet(); syncAlertPrefs(); syncReminders();
+    if($('notify-sheet').classList.contains('show')) renderNotifyPreview();
+  }
+  $('open-mygroup').addEventListener('click', function(){
+    closeSheet(); updateMyGroupSheet(); openGenericSheet('mygroup-sheet','mygroup-scrim');
+  });
+  $('mygroup-scrim').addEventListener('click', function(){ closeGenericSheet('mygroup-sheet','mygroup-scrim'); });
+  $('mygroup-set-current').addEventListener('click', function(){
+    if(!state.selectedGroup) return;
+    prefs.myGroup = { type:currentType, group:state.selectedGroup };
+    myGroupChanged();
+  });
+  $('mygroup-pick').addEventListener('click', function(){
+    closeGenericSheet('mygroup-sheet','mygroup-scrim');
+    if(!state.parsed) return;
+    state.pickForDefault = true;
+    renderGroupPicker();
+    show('screen-pick');
+  });
+  $('mygroup-clear').addEventListener('click', function(){ prefs.myGroup = null; myGroupChanged(); });
+  updateMyGroupHint();
+
+  // ---------- картинка недели с QR-кодом ----------
+  var TYPE_ACCENT = { spo:'#4B4ADB', vo:'#D8432E', evening:'#0E8A6B', mag:'#9333B8' };
+  function hexA(hex, a){
+    var n = parseInt(hex.slice(1), 16);
+    return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';
+  }
+  function cleanSubject(t){ return (t||'').replace(/^(Лекция|Практика|Лабораторная)\s*:\s*/i, ''); }
+  function wrapCanvasText(ctx, text, maxW, maxLines){
+    var words = (text||'').split(/\s+/).filter(Boolean), lines = [], cur = '';
+    words.forEach(function(w){
+      var t = cur ? cur+' '+w : w;
+      if(ctx.measureText(t).width <= maxW){ cur = t; return; }
+      if(cur) lines.push(cur);
+      cur = w;
+      while(ctx.measureText(cur).width > maxW && cur.length > 1){
+        var k = cur.length;
+        while(k > 1 && ctx.measureText(cur.slice(0,k)+'-').width > maxW) k--;
+        lines.push(cur.slice(0,k)+'-');
+        cur = cur.slice(k);
+      }
+    });
+    if(cur) lines.push(cur);
+    if(lines.length > maxLines){
+      lines = lines.slice(0, maxLines);
+      var last = lines[maxLines-1];
+      while(last.length > 1 && ctx.measureText(last+'…').width > maxW) last = last.slice(0,-1);
+      lines[maxLines-1] = last+'…';
+    }
+    return lines;
+  }
+  function rrect(ctx, x, y, w, h, r){
+    ctx.beginPath(); ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r); ctx.arcTo(x, y, x+w, y, r); ctx.closePath();
+  }
+  async function buildWeekImageCanvas(offset){
     try{
+      if(document.fonts && document.fonts.load) await Promise.all([document.fonts.load('700 21px Roboto'), document.fonts.load('400 18px Roboto')]);
+    }catch(e){}
+    var base = new Date(); base.setHours(12,0,0,0); base.setDate(base.getDate()+offset*7);
+    var mon = new Date(base); mon.setDate(mon.getDate() - ((mon.getDay()+6)%7));
+    var info = getWeekInfoForDate(mon);
+    var teacherMode = state.browseMode==='teacher';
+    var title = teacherMode ? (state.selectedTeacher||'') : (state.selectedGroup||'');
+    var days = [], slotEnd = {};
+    for(var i=0; i<6; i++){
+      var date = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate()+i, 12, 0, 0);
+      var dayName = WEEKDAY_INDEX[date.getDay()];
+      var lessons = annotateParityFor(getRawLessons(dayName), info.parity)
+        .filter(function(l){ return !l.isGhost && l.startMin!=null; })
+        .sort(function(a,b){ return a.startMin-b.startMin; });
+      lessons.forEach(function(l){ if(slotEnd[l.startMin]==null) slotEnd[l.startMin] = l.endMin; });
+      days.push({ date:date, name:DAY_SHORT[dayName]||'', lessons:lessons });
+    }
+    var slots = Object.keys(slotEnd).map(Number).sort(function(a,b){ return a-b; });
+    var accent = TYPE_ACCENT[currentType] || '#4B4ADB';
+    var W = 1500, M = 48, TIMEW = 116, COLW = (W-2*M-TIMEW)/6, HEAD = 210, DAYH = 78, FOOT = 250, GAP = 10;
+    var c = document.createElement('canvas');
+    c.width = W; c.height = 200;
+    var ctx = c.getContext('2d');
+    // высота строк зависит от длины названий
+    var rowH = slots.map(function(st){
+      var h = 124;
+      days.forEach(function(d){
+        var l = d.lessons.filter(function(x){ return x.startMin===st; })[0];
+        if(!l) return;
+        ctx.font = '700 24px Roboto, Arial, sans-serif';
+        var n = wrapCanvasText(ctx, cleanSubject(l.subject), COLW-40, 5).length;
+        h = Math.max(h, 22 + n*31 + 62);
+      });
+      return h;
+    });
+    var tableH = slots.length ? rowH.reduce(function(a,b){ return a+b+GAP; }, 0) : 160;
+    var H = HEAD + DAYH + tableH + FOOT;
+    c.width = W; c.height = H;
+    ctx = c.getContext('2d');
+    ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, W, H);
+    // шапка
+    ctx.fillStyle = accent; ctx.fillRect(0, 0, W, HEAD);
+    ctx.fillStyle = '#FFFFFF'; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+    ctx.font = '700 74px Roboto, Arial, sans-serif';
+    ctx.fillText(wrapCanvasText(ctx, title, W-2*M-240, 1)[0] || '', M, 104);
+    ctx.font = '400 32px Roboto, Arial, sans-serif';
+    var rng = isoToRu(dateKey(mon))+' – '+isoToRu(dateKey(new Date(mon.getFullYear(), mon.getMonth(), mon.getDate()+5)));
+    ctx.fillText('Неделя '+info.num+' · '+(info.parity==='even' ? 'чётная' : 'нечётная')+' · '+rng, M, 160);
+    var label = SCHEDULE_TYPES[currentType].label;
+    ctx.font = '700 30px Roboto, Arial, sans-serif';
+    var lw = ctx.measureText(label).width + 48;
+    ctx.fillStyle = 'rgba(255,255,255,.22)'; rrect(ctx, W-M-lw, 44, lw, 60, 30); ctx.fill();
+    ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'center'; ctx.fillText(label, W-M-lw/2, 85);
+    // дни недели
+    var todayKey = dateKey(new Date());
+    days.forEach(function(d, i){
+      var x = M+TIMEW+i*COLW;
+      ctx.fillStyle = (dateKey(d.date)===todayKey) ? accent : '#1B1B23';
+      ctx.font = '700 29px Roboto, Arial, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(d.name, x+COLW/2, HEAD+36);
+      ctx.fillStyle = '#8B8B98'; ctx.font = '400 23px Roboto, Arial, sans-serif';
+      ctx.fillText(isoToRu(dateKey(d.date)), x+COLW/2, HEAD+66);
+    });
+    var y = HEAD + DAYH;
+    if(!slots.length){
+      ctx.fillStyle = '#8B8B98'; ctx.font = '400 34px Roboto, Arial, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('На этой неделе пар нет', W/2, y+100);
+    }
+    slots.forEach(function(st, ri){
+      var h = rowH[ri];
+      ctx.strokeStyle = '#E7E4F5'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(M, y); ctx.lineTo(W-M, y); ctx.stroke();
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#1B1B23'; ctx.font = '700 29px Roboto, Arial, sans-serif';
+      ctx.fillText(minToLabel(st), M+TIMEW/2, y+h/2-2);
+      ctx.fillStyle = '#8B8B98'; ctx.font = '400 23px Roboto, Arial, sans-serif';
+      ctx.fillText(minToLabel(slotEnd[st]!=null ? slotEnd[st] : st), M+TIMEW/2, y+h/2+30);
+      days.forEach(function(d, i){
+        var l = d.lessons.filter(function(x){ return x.startMin===st; })[0];
+        if(!l) return;
+        var x = M+TIMEW+i*COLW+4, w = COLW-8, ty = y+GAP/2+2;
+        ctx.fillStyle = hexA(accent, 0.11); rrect(ctx, x, ty, w, h-GAP-2, 16); ctx.fill();
+        ctx.fillStyle = accent; rrect(ctx, x, ty, 8, h-GAP-2, 4); ctx.fill();
+        ctx.textAlign = 'left'; ctx.fillStyle = '#1B1B23'; ctx.font = '700 24px Roboto, Arial, sans-serif';
+        var lines = wrapCanvasText(ctx, cleanSubject(l.subject), COLW-40, 5), ly = ty+38;
+        lines.forEach(function(t){ ctx.fillText(t, x+22, ly); ly += 31; });
+        ctx.fillStyle = '#5E5E6C'; ctx.font = '400 21px Roboto, Arial, sans-serif';
+        if(l.room){ ctx.fillText(wrapCanvasText(ctx, l.room, COLW-40, 1)[0], x+22, ly+2); ly += 27; }
+        var who = teacherMode ? (l.group||'') : (l.teacher||'');
+        if(who){ ctx.fillStyle = '#8B8B98'; ctx.fillText(wrapCanvasText(ctx, who, COLW-40, 1)[0], x+22, ly+2); }
+      });
+      y += h + GAP;
+    });
+    // низ: подпись слева, QR-код справа снизу
+    var fy = H - FOOT;
+    ctx.strokeStyle = '#E7E4F5'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(M, fy+10); ctx.lineTo(W-M, fy+10); ctx.stroke();
+    ctx.textAlign = 'left'; ctx.fillStyle = '#1B1B23'; ctx.font = '700 36px Roboto, Arial, sans-serif';
+    ctx.fillText('Расписание в телефоне', M, fy+96);
+    ctx.fillStyle = '#5E5E6C'; ctx.font = '400 25px Roboto, Arial, sans-serif';
+    ctx.fillText('Наведите камеру на QR-код — откроется веб-версия', M, fy+138);
+    if(state.ghDate){
+      ctx.fillStyle = '#8B8B98'; ctx.font = '400 23px Roboto, Arial, sans-serif';
+      ctx.fillText('Файл расписания от '+formatGhDate(state.ghDate), M, fy+178);
+    }
+    try{
+      var qr = qrcode(0, 'M'); qr.addData(PAGE_URL); qr.make();
+      var n = qr.getModuleCount(), cell = Math.max(3, Math.floor(176/n)), qs = n*cell, pad = 16;
+      var qx = W-M-qs-2*pad, qy = fy+30;
+      ctx.fillStyle = '#FFFFFF'; ctx.strokeStyle = '#E7E4F5'; ctx.lineWidth = 2;
+      rrect(ctx, qx, qy, qs+2*pad, qs+2*pad, 14); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#1B1B23';
+      for(var r=0; r<n; r++) for(var q=0; q<n; q++) if(qr.isDark(r,q)) ctx.fillRect(qx+pad+q*cell, qy+pad+r*cell, cell, cell);
+    }catch(e){}
+    return c;
+  }
+  async function shareWeekImage(offset){
+    var ok = state.parsed && (state.browseMode==='teacher' ? state.selectedTeacher : state.selectedGroup);
+    if(!ok){ showBanner('Сначала откройте расписание группы', 2600); return; }
+    showBanner('Готовлю картинку…', 2200);
+    try{
+      var canvas = await buildWeekImageCanvas(offset);
+      if(ANDROID){
+        bridgeCall('shareImage', canvas.toDataURL('image/png').split(',')[1], 'schedule-week.png');
+        return;
+      }
+      var blob = await new Promise(function(res){ canvas.toBlob(res, 'image/png'); });
+      if(!blob) throw new Error('empty');
+      var file = (typeof File!=='undefined') ? new File([blob], 'schedule-week.png', { type:'image/png' }) : null;
+      if(file && navigator.canShare && navigator.canShare({ files:[file] })){
+        await navigator.share({ files:[file], title:'Расписание' });
+      } else {
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = 'schedule-week.png';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      }
+    }catch(e){ showBanner('Не удалось создать картинку', 3000); }
+  }
+  $('share-img-this').addEventListener('click', function(){ shareWeekImage(0); });
+  $('share-img-next').addEventListener('click', function(){ shareWeekImage(1); });
+
+  // Ответы приложения о проверке версии
+  window.onAppUpdateInfo = function(json){
+    var d = null;
+    try{ d = JSON.parse(json); }catch(e){}
+    var m = $('app-update-msg');
+    if(!d) return;
+    if(d.error){ if(!d.auto) m.textContent = 'Не удалось проверить: '+d.error; return; }
+    appUpdateAvailable = !!d.available;
+    $('app-update-install-btn').style.display = d.available ? '' : 'none';
+    if(d.available){
+      m.textContent = 'Доступна версия '+d.version+(d.sizeMb? ' ('+d.sizeMb+' МБ)' : '')+'. Нажмите «Скачать и установить» — откроется установщик Android.';
+      if(d.auto) showBanner('Доступно обновление приложения '+d.version+': Настройки → Данные на телефоне', 6000);
+    } else if(!d.auto){
+      m.textContent = 'Установлена последняя версия.';
+    }
+  };
+  window.onAppUpdateProgress = function(pct){ $('app-update-msg').textContent = 'Скачиваю обновление… '+pct+'%'; };
+  window.onAppUpdateError = function(text){ $('app-update-msg').textContent = text; };
+
+  // Приложение вызывает это, когда закончило проверку свежих файлов (расписание, неделя, объявления)
+  window.onNativeDataUpdated = function(result){
+    try{
+      if(result) showSyncResult(result);
+      if(result && result!=='updated') return;
       ghListCache = {};
       refreshSfti();
       refreshAnnouncements();
@@ -2888,11 +3447,11 @@
       if($('screen-upload').classList.contains('active')) initGithubSchedules();
       if(state.ghName && state.parsed){
         fetchGithubSchedules(SCHEDULE_TYPES[currentType].ghDir).then(function(lst){
-          if(lst.length && isNewerGithubFile(lst[0], state.ghName, state.ghDate)) showBanner('Вышло новое расписание: Настройки → Загрузить другой файл', 5600);
+          if(lst.length && isNewerGithubFile(lst[0], state.ghName, state.ghDate, state.ghSha)) showBanner('Вышло новое расписание: Настройки → Загрузить другой файл', 5600);
         }).catch(function(){});
       }
       syncReminders();
-      if($('settings-sheet').classList.contains('show')) refreshAndroidStatus();
+      if($('data-sheet').classList.contains('show')) refreshAndroidStatus();
     }catch(e){}
   };
   window.onNativePermissionResult = function(){ refreshAndroidStatus(); syncReminders(); };
@@ -2901,6 +3460,9 @@
   window.__androidBack = function(){
     try{
       if($('settings-sheet').classList.contains('show')){ closeSheet(); return true; }
+      if($('mygroup-sheet').classList.contains('show')){ closeGenericSheet('mygroup-sheet','mygroup-scrim'); return true; }
+      if($('notify-sheet').classList.contains('show')){ closeGenericSheet('notify-sheet','notify-scrim'); return true; }
+      if($('data-sheet').classList.contains('show')){ closeGenericSheet('data-sheet','data-scrim'); return true; }
       if($('week-sheet').classList.contains('show')){ closeGenericSheet('week-sheet','week-scrim'); return true; }
       if($('share-sheet').classList.contains('show')){ closeGenericSheet('share-sheet','share-scrim'); return true; }
       if(Object.keys(expandedLessonKeys).length){ collapseAllLessonTiles(); return true; }
@@ -2940,7 +3502,8 @@
       }catch(e){}
     }
     $('sheet-info').textContent = info;
-    if(ANDROID){ updateRemindUI(); refreshAndroidStatus(); }
+    if(ANDROID) updateRemindHint();
+    updateMyGroupHint();
     openGenericSheet('settings-sheet','scrim');
   }
   function closeSheet(){ closeGenericSheet('settings-sheet','scrim'); }
@@ -3287,13 +3850,13 @@
       if(book){
         try{
           var parsed = parseWorkbook(book.wb, parseOptsForType(type));
-          entry = { parsed: parsed, fileName: book.meta.name, ghName: book.meta.name, ghDate: book.meta.date||null, from:'github' };
+          entry = { parsed: parsed, fileName: book.meta.name, ghName: book.meta.name, ghDate: book.meta.date||null, ghSha: book.meta.sha||null, from:'github' };
         }catch(e){ entry = null; }
       }
       if(!entry){
         var saved = await loadStateRawForType(type);
         if(saved && saved.parsed && saved.parserVersion===PARSER_VERSION){
-          entry = { parsed: saved.parsed, fileName: saved.fileName, ghName: saved.ghName||null, ghDate: saved.ghDate||null, from:'saved' };
+          entry = { parsed: saved.parsed, fileName: saved.fileName, ghName: saved.ghName||null, ghDate: saved.ghDate||null, ghSha: saved.ghSha||null, from:'saved' };
         }
       }
       if(entry) next[type] = entry;
@@ -3397,6 +3960,7 @@
     state.fileName = entry.fileName;
     state.ghName = entry.ghName;
     state.ghDate = entry.ghDate;
+    state.ghSha = entry.ghSha || null;
     state.selectedGroup = null;
     state.browseMode = 'teacher';
     state.selectedTeacher = name;
@@ -3421,6 +3985,7 @@
     state.savedAt = new Date().toISOString();
     state.ghName = entry.ghName;
     state.ghDate = entry.ghDate;
+    state.ghSha = entry.ghSha || null;
     state.viewMode = 'day';
     setSearchOpen(false);
     selectGroup(group);
@@ -3442,7 +4007,9 @@
     refreshSfti();
     await loadAnnouncementsFromCache();
     refreshAnnouncements();
+    if(ANDROID) setTimeout(function(){ bridgeCall('checkAppUpdate', false); }, 4000);
     currentType = SCHEDULE_TYPES[prefs.scheduleType] ? prefs.scheduleType : 'spo';
+    if(prefs.myGroup && SCHEDULE_TYPES[prefs.myGroup.type]){ currentType = prefs.myGroup.type; prefs.scheduleType = currentType; }
     applyTheme();
     applyScheduleTypeTheme();
     renderTypeSwitchUI();
@@ -3451,6 +4018,15 @@
     var saved = await loadStateRaw();
     var isStale = saved && saved.parserVersion !== PARSER_VERSION;
     var validSaved = (saved && !isStale && saved.parsed && saved.selectedGroup && saved.parsed.byGroup[saved.selectedGroup]) ? saved : null;
+    if(validSaved){
+      if(prefs.myGroup && prefs.myGroup.type===currentType && validSaved.parsed.byGroup[prefs.myGroup.group]){
+        validSaved.selectedGroup = prefs.myGroup.group;      // запуск всегда на «моей» группе, а не на последней просмотренной
+      } else if(!prefs.myGroup){
+        prefs.myGroup = { type:currentType, group:validSaved.selectedGroup };
+        savePrefs();
+      }
+    }
+    syncAlertPrefs();
 
     if(isStale){
       setUploadError('Разбор расписания был улучшен — загрузите файл ещё раз, чтобы обновить данные.', true);
@@ -3464,7 +4040,7 @@
       if(validSaved.ghName){
         try{
           var localList = await fetchGithubSchedules(SCHEDULE_TYPES[currentType].ghDir);
-          if(localList.length && isNewerGithubFile(localList[0], validSaved.ghName, validSaved.ghDate)) goDirect = false;
+          if(localList.length && isNewerGithubFile(localList[0], validSaved.ghName, validSaved.ghDate, validSaved.ghSha)) goDirect = false;
         }catch(e){}
       }
       if(goDirect){
