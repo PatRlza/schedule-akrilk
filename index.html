@@ -764,6 +764,15 @@
   .mf-btn{border:2px solid var(--outline);background:transparent;color:var(--text-secondary);border-radius:100px;padding:10px 22px;font-size:13px;font-weight:600;}
   .mf-btn:active{background:var(--surface-container);}
   .mf-link{border:none;background:none;color:var(--text-tertiary);font-size:12px;text-decoration:underline;padding:2px 6px;}
+  /* мини-перемена внутри пары: две половины и 5 минут между ними */
+  .lesson-bell{margin-top:10px;}
+  .lb-bar{display:flex;gap:3px;height:6px;align-items:stretch;}
+  .lb-seg{position:relative;border-radius:100px;background:var(--surface-container-high);overflow:hidden;}
+  .lb-seg i{position:absolute;left:0;top:0;bottom:0;background:var(--primary);border-radius:100px;transition:width .6s ease;}
+  .lb-gap{border-radius:100px;background:var(--secondary-container);transition:background-color .5s ease;}
+  .lb-gap.now{background:var(--secondary);}
+  .lb-text{font-size:12px;color:var(--text-secondary);margin-top:6px;line-height:1.4;}
+  .lesson.is-current .lb-text{color:var(--on-secondary-container);font-weight:600;}
   a{color:inherit;}
 </style>
 </head>
@@ -1134,15 +1143,6 @@
   <div class="sheet-note" id="data-sync-msg" style="padding-top:8px;"></div>
   <div class="sheet-block-title" style="padding-top:12px;">Приложение</div>
   <div class="sheet-note" id="app-version-line">—</div>
-  <button type="button" class="sheet-row" id="app-update-check-btn">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
-    Проверить обновление приложения
-  </button>
-  <button type="button" class="sheet-row" id="app-update-install-btn" style="display:none;">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4-4m4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-    Скачать и установить
-  </button>
-  <div class="sheet-note" id="app-update-msg" style="padding-top:8px;"></div>
 </div>
 
 <!-- Week parity sheet -->
@@ -1162,15 +1162,30 @@
     <img id="share-qr-img" alt="QR-код ссылки" width="180" height="180">
   </div>
   <button class="btn btn-filled btn-block" id="share-native-btn">Поделиться ссылкой…</button>
-  <button class="btn btn-tonal btn-block android-only-btn" id="share-apk-btn" style="margin-top:8px;">Поделиться приложением (APK)</button>
+  <div class="share-link-row">
+    <span class="share-link-text" id="share-link-text">patrlza.github.io/schedule-akrilk</span>
+    <button class="share-copy-btn" id="share-copy-btn">Копировать</button>
+  </div>
   <div class="sheet-block-title" style="padding-top:14px;">Расписание картинкой (с QR-кодом)</div>
+  <div class="sheet-note" style="padding-top:0;">В приложении картинка сохраняется в галерею, в папку «Расписание». На сайте — скачивается файл.</div>
+  <div class="sheet-note" style="padding:2px 0 4px;font-weight:600;color:var(--text);">Сохранить</div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn btn-filled" id="share-save-this" style="flex:1;padding:12px 8px;">Эта неделя</button>
+    <button class="btn btn-filled" id="share-save-next" style="flex:1;padding:12px 8px;">Следующая</button>
+  </div>
+  <div class="sheet-note" style="padding:10px 0 4px;font-weight:600;color:var(--text);">Отправить</div>
   <div style="display:flex;gap:8px;">
     <button class="btn btn-tonal" id="share-img-this" style="flex:1;padding:12px 8px;">Эта неделя</button>
     <button class="btn btn-tonal" id="share-img-next" style="flex:1;padding:12px 8px;">Следующая</button>
   </div>
-  <div class="share-link-row">
-    <span class="share-link-text" id="share-link-text">patrlza.github.io/schedule-akrilk</span>
-    <button class="share-copy-btn" id="share-copy-btn">Копировать</button>
+  <div class="sheet-block-title" style="padding-top:16px;">Автоматически</div>
+  <div class="sheet-toggle-row is-disabled" style="padding:6px 0;">
+    <div class="sheet-toggle-label">Создавать картинку при выходе нового расписания и сохранять в галерею <span class="sheet-toggle-soon">скоро</span></div>
+    <button class="switch" aria-checked="false" aria-disabled="true"><span class="switch-knob"></span></button>
+  </div>
+  <div class="sheet-toggle-row is-disabled" style="padding:6px 0;">
+    <div class="sheet-toggle-label">Отправлять в Telegram-группу (бот «Расписание») <span class="sheet-toggle-soon">скоро</span></div>
+    <button class="switch" aria-checked="false" aria-disabled="true"><span class="switch-knob"></span></button>
   </div>
 </div>
 
@@ -2703,6 +2718,56 @@
     '</div>';
   }
 
+  // Звонки колледжа (с листка у расписания): у каждой пары две половины и мини-перемена в 5 минут.
+  // a — первая половина, b — вторая (в минутах от полуночи).
+  var BELLS = [
+    { a:[510,555],   b:[560,605]   },   // I        08:30–09:15 | 09:20–10:05
+    { a:[615,660],   b:[665,710]   },   // II       10:15–11:00 | 11:05–11:50
+    { a:[770,815],   b:[820,865]   },   // III      12:50–13:35 | 13:40–14:25
+    { a:[875,915],   b:[920,965]   },   // IV       14:35–15:15 | 15:20–16:05
+    { a:[970,1005],  b:[1010,1045] },   // V        16:10–16:45 | 16:50–17:25
+    { a:[1050,1085], b:[1090,1125] },   // VI       17:30–18:05 | 18:10–18:45
+    { a:[1140,1180], b:[1185,1225] },   // вечер I  19:00–19:40 | 19:45–20:25
+    { a:[1235,1275], b:[1280,1320] }    // вечер II 20:35–21:15 | 21:20–22:00
+  ];
+  // Находим звонок для пары: по времени начала (допуск 10 минут) и по длительности целой пары
+  function bellFor(l){
+    if(l.startMin==null || l.endMin==null) return null;
+    var dur = l.endMin - l.startMin;
+    if(dur < 80 || dur > 110) return null;      // половинки пар и нестандартные занятия не трогаем
+    for(var i=0; i<BELLS.length; i++){
+      if(Math.abs(l.startMin - BELLS[i].a[0]) <= 10) return BELLS[i];
+    }
+    return null;
+  }
+  function pctOf(now, from, to){ return Math.max(0, Math.min(100, (now-from)/(to-from)*100)); }
+  // Блок «мини-перемена» внутри плитки: полоска из двух половин и подпись
+  function bellHtml(l, status){
+    if(l.isGhost || status==='done') return '';
+    var b = bellFor(l);
+    if(!b) return '';
+    var br0 = b.a[1], br1 = b.b[0];
+    var pa = 0, pb = 0, inBreak = false, text;
+    if(status==='current'){
+      var nm = nowMinutes();
+      pa = pctOf(nm, b.a[0], b.a[1]);
+      pb = pctOf(nm, b.b[0], b.b[1]);
+      if(nm < br0) text = 'До мини-перемены: '+fmtDuration(br0-nm);
+      else if(nm < br1){ inBreak = true; text = 'Мини-перемена: ещё '+fmtDuration(br1-nm)+' (до '+minToLabel(br1)+')'; }
+      else text = 'Вторая половина: до конца '+fmtDuration(Math.max(0, l.endMin-nm));
+    } else {
+      text = 'Мини-перемена: '+minToLabel(br0)+'–'+minToLabel(br1);
+    }
+    return '<div class="lesson-bell">'+
+      '<div class="lb-bar">'+
+        '<span class="lb-seg" style="flex:'+(b.a[1]-b.a[0])+'"><i style="width:'+pa.toFixed(1)+'%"></i></span>'+
+        '<span class="lb-gap'+(inBreak?' now':'')+'" style="flex:'+(br1-br0)+'"></span>'+
+        '<span class="lb-seg" style="flex:'+(b.b[1]-b.b[0])+'"><i style="width:'+pb.toFixed(1)+'%"></i></span>'+
+      '</div>'+
+      '<div class="lb-text">'+esc(text)+'</div>'+
+    '</div>';
+  }
+
   function timelineHtml(lessons, relation, day){
     // relation: 'past' | 'today' | 'future'. Kept accepting a boolean too (true→'today', false→'future')
     // for any old call sites, so nothing else needs to change.
@@ -2786,6 +2851,7 @@
           '<div class="lesson-head">'+lchip+'<div class="lesson-subject">'+esc(l.subject||'Занятие')+'</div></div>'+
           (metaParts.length? '<div class="lesson-meta">'+metaParts.join(' · ')+'</div>':'')+
           (l.note? '<div class="lesson-note">'+esc(l.note)+'</div>':'')+
+          bellHtml(l, status)+
           (tappable? '<div class="lesson-handle"></div>'+lessonActionsHtml(day, l) : '')+
         '</div>'+
       '</li>';
@@ -3217,7 +3283,6 @@
     var msg = $('data-sync-msg');
     if(msg && SYNC_MESSAGES[result]) msg.textContent = SYNC_MESSAGES[result];
   }
-  var appUpdateAvailable = false;
   function refreshAppVersionLine(){
     var info = null;
     try{ info = JSON.parse(bridgeCall('getAppInfo')); }catch(e){}
@@ -3262,7 +3327,6 @@
       prefs.notifyNews = !prefs.notifyNews; savePrefs(); updateRemindUI(); syncAlertPrefs();
       if(prefs.notifyNews) bridgeCall('requestNotificationPermission');
     });
-    $('share-apk-btn').addEventListener('click', function(){ bridgeCall('shareApk'); });
     $('data-sync-btn').addEventListener('click', function(){
       var msg = $('data-sync-msg');
       if(bridgeCall('isOnline')===false){ msg.textContent = SYNC_MESSAGES.offline; return; }
@@ -3271,16 +3335,6 @@
       clearTimeout(syncMsgTimer);
       syncMsgTimer = setTimeout(function(){ showSyncResult('error'); }, 45000);
       bridgeCall('syncNow');
-    });
-    $('app-update-check-btn').addEventListener('click', function(){
-      var m = $('app-update-msg');
-      if(bridgeCall('isOnline')===false){ m.textContent = 'Нет соединения с интернетом.'; return; }
-      m.textContent = 'Проверяю…';
-      bridgeCall('checkAppUpdate', true);
-    });
-    $('app-update-install-btn').addEventListener('click', function(){
-      $('app-update-msg').textContent = 'Скачиваю обновление…';
-      bridgeCall('installAppUpdate');
     });
   }
   ['notify','data'].forEach(function(n){
@@ -3481,8 +3535,29 @@
       ctx.fillStyle = '#1B1B23';
       for(var r=0; r<n; r++) for(var q=0; q<n; q++) if(qr.isDark(r,q)) ctx.fillRect(qx+pad+q*cell, qy+pad+r*cell, cell, cell);
     }catch(e){}
+    c.fileName = ('Расписание_'+title+'_неделя-'+info.num+'.png').replace(/[\\/:*?"<>|\s]+/g, '_');
     return c;
   }
+  // Сохранение картинки: в приложении — в галерею (Pictures/Расписание), на сайте — скачивание файла
+  async function saveWeekImage(offset){
+    var ok = state.parsed && (state.browseMode==='teacher' ? state.selectedTeacher : state.selectedGroup);
+    if(!ok){ showBanner('Сначала откройте расписание группы', 2600); return; }
+    showBanner('Готовлю картинку…', 2200);
+    try{
+      var canvas = await buildWeekImageCanvas(offset);
+      if(ANDROID){
+        bridgeCall('saveImage', canvas.toDataURL('image/png').split(',')[1], canvas.fileName || 'raspisanie.png');
+        return;
+      }
+      var blob = await new Promise(function(res){ canvas.toBlob(res, 'image/png'); });
+      if(!blob) throw new Error('empty');
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = canvas.fileName || 'raspisanie.png';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      showBanner('Картинка скачана', 2800);
+    }catch(e){ showBanner('Не удалось создать картинку', 3000); }
+  }
+  window.onImageSaved = function(ok, message){ showBanner(message || (ok ? 'Сохранено в галерею' : 'Не удалось сохранить'), ok ? 3800 : 4200); };
   async function shareWeekImage(offset){
     var ok = state.parsed && (state.browseMode==='teacher' ? state.selectedTeacher : state.selectedGroup);
     if(!ok){ showBanner('Сначала откройте расписание группы', 2600); return; }
@@ -3505,27 +3580,10 @@
       }
     }catch(e){ showBanner('Не удалось создать картинку', 3000); }
   }
+  $('share-save-this').addEventListener('click', function(){ saveWeekImage(0); });
+  $('share-save-next').addEventListener('click', function(){ saveWeekImage(1); });
   $('share-img-this').addEventListener('click', function(){ shareWeekImage(0); });
   $('share-img-next').addEventListener('click', function(){ shareWeekImage(1); });
-
-  // Ответы приложения о проверке версии
-  window.onAppUpdateInfo = function(json){
-    var d = null;
-    try{ d = JSON.parse(json); }catch(e){}
-    var m = $('app-update-msg');
-    if(!d) return;
-    if(d.error){ if(!d.auto) m.textContent = 'Не удалось проверить: '+d.error; return; }
-    appUpdateAvailable = !!d.available;
-    $('app-update-install-btn').style.display = d.available ? '' : 'none';
-    if(d.available){
-      m.textContent = 'Доступна версия '+d.version+(d.sizeMb? ' ('+d.sizeMb+' МБ)' : '')+'. Нажмите «Скачать и установить» — откроется установщик Android.';
-      if(d.auto) showBanner('Доступно обновление приложения '+d.version+': Настройки → Данные на телефоне', 6000);
-    } else if(!d.auto){
-      m.textContent = 'Установлена последняя версия.';
-    }
-  };
-  window.onAppUpdateProgress = function(pct){ $('app-update-msg').textContent = 'Скачиваю обновление… '+pct+'%'; };
-  window.onAppUpdateError = function(text){ $('app-update-msg').textContent = text; };
 
   // Приложение вызывает это, когда закончило проверку свежих файлов (расписание, неделя, объявления)
   window.onNativeDataUpdated = function(result){
@@ -4151,7 +4209,6 @@
     refreshSfti();
     await loadAnnouncementsFromCache();
     refreshAnnouncements();
-    if(ANDROID) setTimeout(function(){ bridgeCall('checkAppUpdate', false); }, 4000);
     currentType = SCHEDULE_TYPES[prefs.scheduleType] ? prefs.scheduleType : 'spo';
     if(prefs.myGroup && SCHEDULE_TYPES[prefs.myGroup.type]){ currentType = prefs.myGroup.type; prefs.scheduleType = currentType; }
     applyTheme();
