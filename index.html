@@ -509,7 +509,7 @@
     display:flex;flex-direction:column;gap:8px;max-height:0;opacity:0;overflow:hidden;margin-top:0;
     transition:max-height .25s ease, opacity .2s ease, margin-top .25s ease;
   }
-  .lesson.expanded .lesson-actions{max-height:220px;opacity:1;margin-top:8px;}
+  .lesson.expanded .lesson-actions{max-height:340px;opacity:1;margin-top:8px;}
   .lesson-teacher-full{
     font-size:12px;font-weight:600;color:var(--text-secondary);line-height:1.3;
   }
@@ -660,6 +660,7 @@
   .sunday-info-main{font-size:19px;font-weight:700;line-height:1.3;margin-bottom:6px;}
   .sunday-info-sub{font-size:13.5px;line-height:1.5;opacity:.92;}
   .sunday-info-card + .empty-state, .ann-wrap + .empty-state{padding-top:34px;}
+  .ann-stale{font-size:11px;color:var(--text-tertiary);padding:0 4px 8px;}
   .ann-title{font-size:12px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--text-tertiary);padding:16px 4px 8px;}
   .ann-card{
     position:relative;isolation:isolate;overflow:hidden;border-radius:var(--radius-lg);padding:16px 18px;margin-bottom:10px;
@@ -764,15 +765,14 @@
   .mf-btn{border:2px solid var(--outline);background:transparent;color:var(--text-secondary);border-radius:100px;padding:10px 22px;font-size:13px;font-weight:600;}
   .mf-btn:active{background:var(--surface-container);}
   .mf-link{border:none;background:none;color:var(--text-tertiary);font-size:12px;text-decoration:underline;padding:2px 6px;}
-  /* мини-перемена внутри пары: две половины и 5 минут между ними */
-  .lesson-bell{margin-top:10px;}
-  .lb-bar{display:flex;gap:3px;height:6px;align-items:stretch;}
+  /* мини-перемена внутри пары: тонкая полоска в самом верху плитки (две половины и 5 минут между ними) */
+  .lb-bar{display:flex;gap:3px;height:6px;align-items:stretch;margin:-2px 0 10px;}
   .lb-seg{position:relative;border-radius:100px;background:var(--surface-container-high);overflow:hidden;}
   .lb-seg i{position:absolute;left:0;top:0;bottom:0;background:var(--primary);border-radius:100px;transition:width .6s ease;}
   .lb-gap{border-radius:100px;background:var(--secondary-container);transition:background-color .5s ease;}
   .lb-gap.now{background:var(--secondary);}
-  .lb-text{font-size:12px;color:var(--text-secondary);margin-top:6px;line-height:1.4;}
-  .lesson.is-current .lb-text{color:var(--on-secondary-container);font-weight:600;}
+  .lb-info{font-size:12px;color:var(--text-secondary);line-height:1.45;}
+  .lb-info .lb-now{font-weight:600;color:var(--on-secondary-container);}
   a{color:inherit;}
 </style>
 </head>
@@ -1363,7 +1363,11 @@
   var annFetchedAt = 0;
   var ANN_KEY = 'schedule-announcements-cache-v1';
   function normalizeAnnouncements(data){
-    if(Array.isArray(data)) return data;
+    if(Array.isArray(data)){
+      var flat = [];
+      data.forEach(function(x){ if(Array.isArray(x)) Array.prototype.push.apply(flat, x); else flat.push(x); });   // на случай нескольких списков подряд
+      return flat;
+    }
     if(data && typeof data==='object'){
       var arr = data.announcements || data.items || data.posts;
       if(Array.isArray(arr)) return arr;
@@ -1371,6 +1375,21 @@
     }
     return [];
   }
+  // Файл объявлений правят вручную, поэтому читаем его терпимо: сначала как есть, а если не вышло —
+  // исправляем самые частые опечатки (забытая запятая между полями или объявлениями, лишняя запятая в конце,
+  // несколько списков подряд). Если и так не читается, остаётся последняя удачно загруженная копия.
+  function parseAnnouncementsText(text){
+    var t = (text||'').replace(/^\uFEFF/, '');
+    try{ return normalizeAnnouncements(JSON.parse(t)); }catch(e1){}
+    var fixed = t
+      .replace(/,(\s*[}\]])/g, '$1')                                                    // лишняя запятая перед закрывающей скобкой
+      .replace(/("|\d|true|false|null|[}\]])(\s*\n\s*)(")/g, '$1,$2$3')                // забытая запятая между полями
+      .replace(/\}(\s*)\{/g, '},$1{')                                                    // забытая запятая между объявлениями
+      .replace(/\](\s*)\[/g, '],$1[');                                                   // два списка подряд
+    if(/^\s*\[/.test(fixed) && /\],\s*\[/.test(fixed)) fixed = '[' + fixed + ']';        // и оборачиваем их в один
+    return normalizeAnnouncements(JSON.parse(fixed));
+  }
+  var annStale = false;     // true, если свежий файл прочитать не удалось и показаны старые объявления
   async function loadAnnouncementsFromCache(){
     var t = await kvGet(ANN_KEY);
     if(!t) return;
@@ -1385,10 +1404,19 @@
       if(tm) clearTimeout(tm);
       if(!res.ok) return;
       var text = await res.text();
-      var list = normalizeAnnouncements(JSON.parse(text));
+      var list;
+      try{
+        list = parseAnnouncementsText(text);
+      }catch(parseErr){
+        annStale = true;
+        if(window.console) console.warn('announcements.json не читается:', parseErr && parseErr.message);
+        if(state.parsed && $('screen-main').classList.contains('active') && state.viewedDay==='ВОСКРЕСЕНЬЕ') renderContentDispatch(true);
+        return;
+      }
+      annStale = false;
       var changed = JSON.stringify(list)!==JSON.stringify(announcements);
       announcements = list;
-      kvSet(ANN_KEY, text);
+      kvSet(ANN_KEY, JSON.stringify(list));
       if(changed && state.parsed && $('screen-main').classList.contains('active') && state.viewedDay==='ВОСКРЕСЕНЬЕ') renderContentDispatch(true);
     }catch(e){ /* нет сети — остаётся копия из кеша */ }
   }
@@ -1410,7 +1438,7 @@
   }
   function announcementsHtml(){
     if(!announcements.length) return '';
-    return '<div class="ann-wrap"><div class="ann-title">Объявления</div>'+announcements.map(function(a){
+    return '<div class="ann-wrap"><div class="ann-title">Объявления</div>'+(annStale ? '<div class="ann-stale">Показаны ранее загруженные объявления: свежие обновить не удалось.</div>' : '')+announcements.map(function(a){
       var img = annImageUrl(a.image || a.background || a.imageUrl || a.backgroundImage || '');
       return '<article class="ann-card"'+(img? ' style="background-image:url(\''+img+'\')"' : '')+'>'+
         '<div class="ann-top"><span class="ann-tag">'+esc(a.tag||'Объявление')+'</span>'+(a.date? '<span class="ann-date">'+esc(a.date)+'</span>' : '')+'</div>'+
@@ -2694,21 +2722,23 @@
       '<button type="button" class="lesson-action-btn" data-act="cal" data-start="'+start.getTime()+'" data-end="'+(start.getTime()+(l.endMin-l.startMin)*60000)+'" data-title="'+esc(title)+'" data-loc="'+esc(l.room||'')+'" data-desc="'+esc(desc)+'" data-rrule="'+rrule+'">'+CAL_ICON+'В календарь</button>'+
     '</div>';
   }
-  function lessonActionsHtml(day, l){
+  function lessonActionsHtml(day, l, bellInfo){
+    bellInfo = bellInfo || '';
     if(ANDROID){
       var fn = l.teacher ? getTeacherFullName(l.teacher) : null;
       var rh = roomInfoHtml(l.room);
       var nb = nativeActionButtonsHtml(day, l);
-      if(!fn && !rh && !nb) return '';
-      return '<div class="lesson-actions">'+(fn? '<div class="lesson-teacher-full">'+esc(fn)+'</div>' : '')+rh+nb+'</div>';
+      if(!fn && !rh && !nb && !bellInfo) return '';
+      return '<div class="lesson-actions">'+bellInfo+(fn? '<div class="lesson-teacher-full">'+esc(fn)+'</div>' : '')+rh+nb+'</div>';
     }
     var isAndroid = /Android/i.test(navigator.userAgent);
     var alarmHref = (SHOW_LESSON_ACTION_BUTTONS && isAndroid) ? buildAlarmHref(l) : null;
     var calHref = SHOW_LESSON_ACTION_BUTTONS ? buildCalendarHref(day, l) : null;
     var fullName = l.teacher ? getTeacherFullName(l.teacher) : null;
     var roomHtml = roomInfoHtml(l.room);
-    if(!alarmHref && !calHref && !fullName && !roomHtml) return '';
+    if(!alarmHref && !calHref && !fullName && !roomHtml && !bellInfo) return '';
     return '<div class="lesson-actions">'+
+      bellInfo+
       (fullName? '<div class="lesson-teacher-full">'+esc(fullName)+'</div>' : '')+
       roomHtml+
       (alarmHref || calHref ? '<div class="lesson-actions-btns">'+
@@ -2742,30 +2772,31 @@
   }
   function pctOf(now, from, to){ return Math.max(0, Math.min(100, (now-from)/(to-from)*100)); }
   // Блок «мини-перемена» внутри плитки: полоска из двух половин и подпись
-  function bellHtml(l, status){
-    if(l.isGhost || status==='done') return '';
+  // Мини-перемена у пары, которая идёт прямо сейчас:
+  //   bar  — тонкая полоска прогресса (две половины и перемена между ними) в самом верху плитки;
+  //   info — подробности (сколько длится перемена, какая часть пары идёт, сколько осталось) в раскрывающейся части.
+  function bellParts(l, status){
+    if(l.isGhost || status!=='current') return null;
     var b = bellFor(l);
-    if(!b) return '';
+    if(!b) return null;
     var br0 = b.a[1], br1 = b.b[0];
-    var pa = 0, pb = 0, inBreak = false, text;
-    if(status==='current'){
-      var nm = nowMinutes();
-      pa = pctOf(nm, b.a[0], b.a[1]);
-      pb = pctOf(nm, b.b[0], b.b[1]);
-      if(nm < br0) text = 'До мини-перемены: '+fmtDuration(br0-nm);
-      else if(nm < br1){ inBreak = true; text = 'Мини-перемена: ещё '+fmtDuration(br1-nm)+' (до '+minToLabel(br1)+')'; }
-      else text = 'Вторая половина: до конца '+fmtDuration(Math.max(0, l.endMin-nm));
-    } else {
-      text = 'Мини-перемена: '+minToLabel(br0)+'–'+minToLabel(br1);
-    }
-    return '<div class="lesson-bell">'+
-      '<div class="lb-bar">'+
+    var nm = nowMinutes();
+    var pa = pctOf(nm, b.a[0], b.a[1]), pb = pctOf(nm, b.b[0], b.b[1]);
+    var inBreak = nm>=br0 && nm<br1, now;
+    if(nm < br0) now = 'Сейчас первая половина пары · до перемены '+fmtDuration(br0-nm);
+    else if(inBreak) now = 'Сейчас мини-перемена · ещё '+fmtDuration(br1-nm);
+    else now = 'Сейчас вторая половина пары · до конца '+fmtDuration(Math.max(0, l.endMin-nm));
+    return {
+      bar: '<div class="lb-bar">'+
         '<span class="lb-seg" style="flex:'+(b.a[1]-b.a[0])+'"><i style="width:'+pa.toFixed(1)+'%"></i></span>'+
         '<span class="lb-gap'+(inBreak?' now':'')+'" style="flex:'+(br1-br0)+'"></span>'+
         '<span class="lb-seg" style="flex:'+(b.b[1]-b.b[0])+'"><i style="width:'+pb.toFixed(1)+'%"></i></span>'+
-      '</div>'+
-      '<div class="lb-text">'+esc(text)+'</div>'+
-    '</div>';
+      '</div>',
+      info: '<div class="lb-info">'+
+        '<div>Мини-перемена: '+minToLabel(br0)+'–'+minToLabel(br1)+' · длится '+(br1-br0)+' мин</div>'+
+        '<div class="lb-now">'+esc(now)+'</div>'+
+      '</div>'
+    };
   }
 
   function timelineHtml(lessons, relation, day){
@@ -2834,6 +2865,7 @@
       if(l.room) metaParts.push(esc(l.room));
       var tappable = !l.isGhost && l.startMin!=null;
       var key = lessonKey(day, l);
+      var bp = bellParts(l, status);
       var isExpanded = tappable && !!expandedLessonKeys[key];
       var lineCls2 = 'lesson';
       if(status==='done') lineCls2+=' is-done';
@@ -2848,11 +2880,11 @@
         '</div>'+
         '<div class="lesson-rail"><div class="lesson-dot"></div>'+(isLast?'':'<div class="lesson-line"></div>')+'</div>'+
         '<div class="lesson-card">'+
+          (bp ? bp.bar : '')+
           '<div class="lesson-head">'+lchip+'<div class="lesson-subject">'+esc(l.subject||'Занятие')+'</div></div>'+
           (metaParts.length? '<div class="lesson-meta">'+metaParts.join(' · ')+'</div>':'')+
           (l.note? '<div class="lesson-note">'+esc(l.note)+'</div>':'')+
-          bellHtml(l, status)+
-          (tappable? '<div class="lesson-handle"></div>'+lessonActionsHtml(day, l) : '')+
+          (tappable? '<div class="lesson-handle"></div>'+lessonActionsHtml(day, l, bp ? bp.info : '') : '')+
         '</div>'+
       '</li>';
     });
