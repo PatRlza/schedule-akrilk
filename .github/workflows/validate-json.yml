@@ -1,0 +1,34 @@
+name: Проверка JSON-файлов
+
+# Сразу после правки announcements.json (или файлов в папке notifications) GitHub проверяет, что они читаются.
+# Если забыта запятая или кавычка, во вкладке Actions появится красный крестик с номером строки,
+# и придёт письмо — так ошибку видно сразу, а не «через сутки».
+on:
+  push:
+    paths:
+      - 'announcements.json'
+      - 'notifications/**'
+      - 'weeks.json'
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Проверить, что файлы читаются
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          bad = 0
+          for p in ["announcements.json", "notifications/notifications.json", "weeks.json"]:
+              try:
+                  json.load(open(p, encoding="utf-8"))
+                  print("OK  ", p)
+              except FileNotFoundError:
+                  print("нет файла (пропускаю):", p)
+              except json.JSONDecodeError as e:
+                  bad += 1
+                  print("::error file=%s,line=%d::Ошибка в %s: строка %d, столбец %d: %s (обычно забыта запятая или кавычка)" % (p, e.lineno, p, e.lineno, e.colno, e.msg))
+          sys.exit(1 if bad else 0)
+          PY
